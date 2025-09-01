@@ -163,6 +163,7 @@
     --sidebar-accent-foreground: 215 15% 90%;
     --sidebar-border: 215 35% 12%;
     --sidebar-ring: 217 91% 65%;
+  }
 }
 
 @layer base {
