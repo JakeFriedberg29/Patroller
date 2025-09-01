@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Clock } from "lucide-react";
+import { Clock, Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,6 +47,8 @@ const filterOptions = [
 export default function Logs() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredLogs = activityLogs.filter(log => {
     const matchesSearch = log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -55,6 +57,10 @@ export default function Logs() {
     const matchesFilter = selectedFilter === "All" || log.action === selectedFilter;
     return matchesSearch && matchesFilter;
   });
+
+  const totalPages = Math.ceil(filteredLogs.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedLogs = filteredLogs.slice(startIndex, startIndex + rowsPerPage);
 
   return (
     <div className="space-y-6">
@@ -71,31 +77,31 @@ export default function Logs() {
         </div>
       </div>
 
-      {/* Controls */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-                <SelectTrigger className="w-[200px] bg-muted/50">
-                  <SelectValue placeholder="Filter by action" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border border-border">
-                  {filterOptions.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="text-sm text-muted-foreground">
-              Showing {filteredLogs.length} of {activityLogs.length} records
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search logs..." 
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+          <SelectTrigger className="w-[200px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Filter by action" />
+          </SelectTrigger>
+          <SelectContent>
+            {filterOptions.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Activity Logs Table */}
       <Card>
@@ -110,8 +116,8 @@ export default function Logs() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLogs.length > 0 ? (
-                filteredLogs.map((log) => (
+              {paginatedLogs.length > 0 ? (
+                paginatedLogs.map((log) => (
                   <TableRow key={log.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">{log.action}</TableCell>
                     <TableCell>{log.description}</TableCell>
@@ -128,6 +134,50 @@ export default function Logs() {
               )}
             </TableBody>
           </Table>
+          
+          {/* Pagination */}
+          <div className="flex items-center justify-between p-4 border-t">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows per page:</span>
+              <Select value={rowsPerPage.toString()} onValueChange={(value) => {
+                setRowsPerPage(Number(value));
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-16">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {startIndex + 1}-{Math.min(startIndex + rowsPerPage, filteredLogs.length)} of {filteredLogs.length}
+              </span>
+              <div className="flex gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

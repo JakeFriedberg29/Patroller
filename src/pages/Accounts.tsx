@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Building2, Mail, Phone, Users } from "lucide-react";
+import { Plus, Search, Building2, Mail, Phone, Users, Filter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const accounts = [
@@ -87,6 +87,10 @@ const typeColors: Record<string, "default" | "secondary" | "destructive" | "outl
 const Accounts = () => {
   const navigate = useNavigate();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("All Types");
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     type: "",
@@ -131,6 +135,20 @@ const Accounts = () => {
       zip: ""
     });
   };
+
+  // Filter and pagination logic
+  const filteredAccounts = accounts.filter(account => {
+    const matchesSearch = account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         account.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = selectedFilter === "All Types" || account.type === selectedFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  const totalPages = Math.ceil(filteredAccounts.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedAccounts = filteredAccounts.slice(startIndex, startIndex + rowsPerPage);
+
+  const accountTypes = [...new Set(accounts.map(account => account.type))];
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -155,12 +173,22 @@ const Accounts = () => {
           <Input 
             placeholder="Search accounts by name or email..."
             className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button variant="outline" className="gap-2">
-          <Building2 className="h-4 w-4" />
-          All Types
-        </Button>
+        <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+          <SelectTrigger className="w-[180px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All Types">All Types</SelectItem>
+            {accountTypes.map(type => (
+              <SelectItem key={type} value={type}>{type}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Accounts Table */}
@@ -178,7 +206,7 @@ const Accounts = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {accounts.map((account) => (
+              {paginatedAccounts.map((account) => (
                 <TableRow key={account.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
@@ -230,6 +258,50 @@ const Accounts = () => {
               ))}
             </TableBody>
           </Table>
+          
+          {/* Pagination */}
+          <div className="flex items-center justify-between p-4 border-t">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows per page:</span>
+              <Select value={rowsPerPage.toString()} onValueChange={(value) => {
+                setRowsPerPage(Number(value));
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-16">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {startIndex + 1}-{Math.min(startIndex + rowsPerPage, filteredAccounts.length)} of {filteredAccounts.length}
+              </span>
+              <div className="flex gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
