@@ -6,9 +6,12 @@ import {
   FileText, 
   Shield, 
   Settings,
-  Bell
+  Bell,
+  Monitor,
+  Package,
+  ArrowLeft
 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useParams } from "react-router-dom";
 
 import {
   Sidebar,
@@ -22,6 +25,7 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
 const mainItems = [
   { title: "Global View", url: "/", icon: Shield },
@@ -34,14 +38,32 @@ const adminItems = [
   { title: "Logs", url: "/logs", icon: BarChart3 },
 ];
 
+const organizationItems = [
+  { title: "Mission Control", url: "/mission-control", icon: Monitor },
+  { title: "Team Directory", url: "/team-directory", icon: Users },
+  { title: "Equipment", url: "/equipment", icon: Package },
+  { title: "Reports", url: "/reports", icon: FileText },
+  { title: "Logs", url: "/logs", icon: BarChart3 },
+];
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const { id } = useParams();
   const currentPath = location.pathname;
   
   const isCollapsed = state === "collapsed";
 
-  const isActive = (path: string) => currentPath === path;
+  // Check if we're in an organization context
+  const isInOrganization = currentPath.includes('/accounts/') && currentPath.split('/').length > 2;
+
+  const isActive = (path: string) => {
+    if (isInOrganization) {
+      return currentPath.includes(path);
+    }
+    return currentPath === path;
+  };
+  
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-sidebar-accent text-sidebar-primary-foreground font-medium" : "hover:bg-sidebar-accent/50";
 
@@ -64,32 +86,71 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 py-4">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="mr-3 h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              {adminItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="mr-3 h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {isInOrganization ? (
+          <>
+            {/* Back to Accounts Button */}
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/accounts" className="text-muted-foreground hover:text-foreground">
+                        <ArrowLeft className="mr-3 h-4 w-4" />
+                        {!isCollapsed && <span>Back to Accounts</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            
+            {/* Organization Menu Items */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Organization</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {organizationItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink to={`/accounts/${id}${item.url}`} className={getNavCls}>
+                          <item.icon className="mr-3 h-4 w-4" />
+                          {!isCollapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        ) : (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {mainItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.url} end className={getNavCls}>
+                        <item.icon className="mr-3 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.url} end className={getNavCls}>
+                        <item.icon className="mr-3 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );

@@ -11,6 +11,11 @@ import Reports from "./pages/Reports";
 import PlatformAdmins from "./pages/PlatformAdmins";
 import Logs from "./pages/Logs";
 import NotFound from "./pages/NotFound";
+import MissionControl from "./pages/MissionControl";
+import TeamDirectory from "./pages/TeamDirectory";
+import Equipment from "./pages/Equipment";
+import OrganizationReports from "./pages/OrganizationReports";
+import OrganizationLogs from "./pages/OrganizationLogs";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +30,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/accounts/:id" element={<AccountDetail />} />
+            <Route path="/accounts/:id/mission-control" element={<MissionControl />} />
+            <Route path="/accounts/:id/team-directory" element={<TeamDirectory />} />
+            <Route path="/accounts/:id/equipment" element={<Equipment />} />
+            <Route path="/accounts/:id/reports" element={<OrganizationReports />} />
+            <Route path="/accounts/:id/logs" element={<OrganizationLogs />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/admins" element={<PlatformAdmins />} />
             <Route path="/logs" element={<Logs />} />
