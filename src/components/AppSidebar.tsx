@@ -163,7 +163,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                  <Button variant="ghost" size="sm" className="w-full justify-start gap-2 bg-sidebar-accent/50 hover:bg-sidebar-accent">
                     <User className="h-4 w-4" />
                     {!isCollapsed && (
                       <>
