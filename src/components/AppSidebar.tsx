@@ -44,6 +44,7 @@ const organizationItems = [
   { title: "Equipment", url: "/equipment", icon: Package },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Logs", url: "/logs", icon: BarChart3 },
+  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {

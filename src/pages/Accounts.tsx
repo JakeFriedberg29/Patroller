@@ -106,7 +106,7 @@ const Accounts = () => {
   });
 
   const handleViewAccount = (accountId: number) => {
-    navigate(`/accounts/${accountId}`);
+    navigate(`/accounts/${accountId}/settings`);
   };
 
   const handleInputChange = (field: string, value: string) => {

@@ -16,6 +16,7 @@ import TeamDirectory from "./pages/TeamDirectory";
 import Equipment from "./pages/Equipment";
 import OrganizationReports from "./pages/OrganizationReports";
 import OrganizationLogs from "./pages/OrganizationLogs";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -32,9 +33,10 @@ const App = () => (
             <Route path="/accounts/:id" element={<AccountDetail />} />
             <Route path="/accounts/:id/mission-control" element={<MissionControl />} />
             <Route path="/accounts/:id/team-directory" element={<TeamDirectory />} />
-            <Route path="/accounts/:id/equipment" element={<Equipment />} />
-            <Route path="/accounts/:id/reports" element={<OrganizationReports />} />
-            <Route path="/accounts/:id/logs" element={<OrganizationLogs />} />
+          <Route path="/accounts/:id/equipment" element={<Equipment />} />
+          <Route path="/accounts/:id/reports" element={<OrganizationReports />} />
+          <Route path="/accounts/:id/logs" element={<OrganizationLogs />} />
+          <Route path="/accounts/:id/settings" element={<Settings />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/admins" element={<PlatformAdmins />} />
             <Route path="/logs" element={<Logs />} />
