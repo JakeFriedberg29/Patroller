@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2 } from "lucide-react";
+import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Plus, Users } from "lucide-react";
 
 const mockAccountData = {
   id: 1,
@@ -29,8 +29,19 @@ const mockAccountData = {
   state: "Colorado",
   zip: "80424",
   created: "2024-08-26",
-  members: 15
+  members: 15,
+  parentEnterprise: {
+    id: 2,
+    name: "Rocky Mountain Emergency Services",
+    type: "Enterprise"
+  }
 };
+
+const mockOrganizations = [
+  { id: 3, name: "Mountain Rescue Team Bravo", category: "Search & Rescue", status: "Active", members: 12 },
+  { id: 4, name: "Alpine Medical Response", category: "Event Medical", status: "Active", members: 8 },
+  { id: 5, name: "Summit Park Rangers", category: "Park Service", status: "Inactive", members: 6 }
+];
 
 export default function Settings() {
   const { id } = useParams();
@@ -95,14 +106,22 @@ export default function Settings() {
     // Here you would typically show a confirmation dialog and then call an API
   };
 
+  const handleAddOrganization = () => {
+    console.log("Adding new organization");
+    // Here you would typically open a dialog to create a new organization
+  };
+
+  const isEnterprise = formData.type === "Enterprise";
+  const isOrganization = formData.type === "Organization";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <SettingsIcon className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold">Organization Settings</h1>
-            <p className="text-muted-foreground">Manage organization details and configuration</p>
+            <h1 className="text-3xl font-bold">{isEnterprise ? 'Enterprise' : 'Organization'} Settings</h1>
+            <p className="text-muted-foreground">Manage {isEnterprise ? 'enterprise' : 'organization'} details and configuration</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -127,12 +146,12 @@ export default function Settings() {
       {/* Organization Details */}
       <Card>
         <CardHeader>
-          <CardTitle>Organization Details</CardTitle>
+          <CardTitle>{isEnterprise ? 'Enterprise' : 'Organization'} Details</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Organization Name *</Label>
+              <Label htmlFor="name">{isEnterprise ? 'Enterprise' : 'Organization'} Name *</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -181,6 +200,67 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Parent Enterprise - Only for Organizations */}
+      {isOrganization && mockAccountData.parentEnterprise && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Parent Enterprise
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold">{mockAccountData.parentEnterprise.name}</h3>
+                  <p className="text-sm text-muted-foreground">This organization is part of the above enterprise</p>
+                </div>
+                <Badge variant="secondary">{mockAccountData.parentEnterprise.type}</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Organizations Management - Only for Enterprises */}
+      {isEnterprise && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Organizations
+              </div>
+              <Button onClick={handleAddOrganization} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Organization
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {mockOrganizations.map((org) => (
+                <div key={org.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h3 className="font-semibold">{org.name}</h3>
+                    <p className="text-sm text-muted-foreground">{org.category} • {org.members} members</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={org.status === "Active" ? "default" : "secondary"}>
+                      {org.status}
+                    </Badge>
+                    <Button variant="outline" size="sm">
+                      Manage
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Contact Information */}
       <Card>
