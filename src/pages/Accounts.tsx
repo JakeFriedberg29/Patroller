@@ -1,7 +1,24 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -69,9 +86,50 @@ const typeColors: Record<string, "default" | "secondary" | "destructive" | "outl
 
 const Accounts = () => {
   const navigate = useNavigate();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "",
+    category: "",
+    primaryEmail: "",
+    primaryPhone: "",
+    secondaryEmail: "",
+    secondaryPhone: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: ""
+  });
 
   const handleViewAccount = (accountId: number) => {
     navigate(`/accounts/${accountId}`);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSubmit = () => {
+    // Here you would typically submit to an API
+    console.log("Creating account:", formData);
+    setIsAddModalOpen(false);
+    // Reset form
+    setFormData({
+      name: "",
+      type: "",
+      category: "",
+      primaryEmail: "",
+      primaryPhone: "",
+      secondaryEmail: "",
+      secondaryPhone: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: ""
+    });
   };
   return (
     <div className="space-y-6">
@@ -84,7 +142,7 @@ const Accounts = () => {
           </h1>
           <p className="text-muted-foreground mt-1">Manage accounts and their settings</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setIsAddModalOpen(true)}>
           <Plus className="h-4 w-4" />
           Add Account
         </Button>
@@ -174,6 +232,182 @@ const Accounts = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Add Account Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Account</DialogTitle>
+            <DialogDescription>
+              Create a new account in the system. Fill in all required information below.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                Basic Information
+              </h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    placeholder="Account name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="type">Type *</Label>
+                  <Select value={formData.type} onValueChange={(value) => handleInputChange("type", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select account type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Enterprise">Enterprise</SelectItem>
+                      <SelectItem value="Organization">Organization</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="category">Category *</Label>
+                  <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Search & Rescue">Search & Rescue</SelectItem>
+                      <SelectItem value="Lifeguard Service">Lifeguard Service</SelectItem>
+                      <SelectItem value="Park Service">Park Service</SelectItem>
+                      <SelectItem value="Event Medical">Event Medical</SelectItem>
+                      <SelectItem value="Ski Patrol">Ski Patrol</SelectItem>
+                      <SelectItem value="Harbor Master">Harbor Master</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                Contact Information
+              </h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="primaryEmail">Primary Email Address *</Label>
+                  <Input
+                    id="primaryEmail"
+                    type="email"
+                    value={formData.primaryEmail}
+                    onChange={(e) => handleInputChange("primaryEmail", e.target.value)}
+                    placeholder="primary@example.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="primaryPhone">Primary Phone Number *</Label>
+                  <Input
+                    id="primaryPhone"
+                    type="tel"
+                    value={formData.primaryPhone}
+                    onChange={(e) => handleInputChange("primaryPhone", e.target.value)}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="secondaryEmail">Secondary Email Address</Label>
+                  <Input
+                    id="secondaryEmail"
+                    type="email"
+                    value={formData.secondaryEmail}
+                    onChange={(e) => handleInputChange("secondaryEmail", e.target.value)}
+                    placeholder="secondary@example.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="secondaryPhone">Secondary Phone Number</Label>
+                  <Input
+                    id="secondaryPhone"
+                    type="tel"
+                    value={formData.secondaryPhone}
+                    onChange={(e) => handleInputChange("secondaryPhone", e.target.value)}
+                    placeholder="(555) 987-6543"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Address Information */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                Address Information
+              </h4>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="address">Street Address</Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange("address", e.target.value)}
+                    placeholder="123 Main Street"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => handleInputChange("city", e.target.value)}
+                      placeholder="City"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State</Label>
+                    <Input
+                      id="state"
+                      value={formData.state}
+                      onChange={(e) => handleInputChange("state", e.target.value)}
+                      placeholder="State"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="zip">ZIP Code</Label>
+                    <Input
+                      id="zip"
+                      value={formData.zip}
+                      onChange={(e) => handleInputChange("zip", e.target.value)}
+                      placeholder="12345"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit}>
+              Create Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
