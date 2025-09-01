@@ -250,7 +250,6 @@ const Accounts = () => {
                 id="name"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
-                placeholder="Account name"
               />
             </div>
 
@@ -258,7 +257,7 @@ const Accounts = () => {
               <Label htmlFor="type">Type *</Label>
               <Select value={formData.type} onValueChange={(value) => handleInputChange("type", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select account type" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Enterprise">Enterprise</SelectItem>
@@ -271,7 +270,7 @@ const Accounts = () => {
               <Label htmlFor="category">Category *</Label>
               <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Search & Rescue">Search & Rescue</SelectItem>
@@ -291,7 +290,6 @@ const Accounts = () => {
                 type="email"
                 value={formData.primaryEmail}
                 onChange={(e) => handleInputChange("primaryEmail", e.target.value)}
-                placeholder="primary@example.com"
               />
             </div>
 
@@ -302,7 +300,6 @@ const Accounts = () => {
                 type="tel"
                 value={formData.primaryPhone}
                 onChange={(e) => handleInputChange("primaryPhone", e.target.value)}
-                placeholder="(555) 123-4567"
               />
             </div>
 
@@ -313,7 +310,6 @@ const Accounts = () => {
                 type="email"
                 value={formData.secondaryEmail}
                 onChange={(e) => handleInputChange("secondaryEmail", e.target.value)}
-                placeholder="secondary@example.com"
               />
             </div>
 
@@ -324,7 +320,6 @@ const Accounts = () => {
                 type="tel"
                 value={formData.secondaryPhone}
                 onChange={(e) => handleInputChange("secondaryPhone", e.target.value)}
-                placeholder="(555) 987-6543"
               />
             </div>
 
@@ -334,7 +329,6 @@ const Accounts = () => {
                 id="address"
                 value={formData.address}
                 onChange={(e) => handleInputChange("address", e.target.value)}
-                placeholder="123 Main Street"
               />
             </div>
 
@@ -344,7 +338,6 @@ const Accounts = () => {
                 id="city"
                 value={formData.city}
                 onChange={(e) => handleInputChange("city", e.target.value)}
-                placeholder="City"
               />
             </div>
 
@@ -354,7 +347,6 @@ const Accounts = () => {
                 id="state"
                 value={formData.state}
                 onChange={(e) => handleInputChange("state", e.target.value)}
-                placeholder="State"
               />
             </div>
 
@@ -364,7 +356,6 @@ const Accounts = () => {
                 id="zip"
                 value={formData.zip}
                 onChange={(e) => handleInputChange("zip", e.target.value)}
-                placeholder="12345"
               />
             </div>
           </div>
