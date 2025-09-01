@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2 } from "lucide-react";
+import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2 } from "lucide-react";
 
 const mockAccountData = {
   id: 1,
@@ -36,11 +36,14 @@ export default function Settings() {
   const { id } = useParams();
   const [formData, setFormData] = useState({
     name: mockAccountData.name,
+    type: mockAccountData.type,
     category: mockAccountData.category,
     primaryEmail: mockAccountData.primaryEmail,
     primaryPhone: mockAccountData.primaryPhone,
+    primaryContact: "John Doe",
     secondaryEmail: mockAccountData.secondaryEmail,
     secondaryPhone: mockAccountData.secondaryPhone,
+    secondaryContact: "Jane Smith",
     address: mockAccountData.address,
     city: mockAccountData.city,
     state: mockAccountData.state,
@@ -66,17 +69,30 @@ export default function Settings() {
     // Reset form data to original values
     setFormData({
       name: mockAccountData.name,
+      type: mockAccountData.type,
       category: mockAccountData.category,
       primaryEmail: mockAccountData.primaryEmail,
       primaryPhone: mockAccountData.primaryPhone,
+      primaryContact: "John Doe",
       secondaryEmail: mockAccountData.secondaryEmail,
       secondaryPhone: mockAccountData.secondaryPhone,
+      secondaryContact: "Jane Smith",
       address: mockAccountData.address,
       city: mockAccountData.city,
       state: mockAccountData.state,
       zip: mockAccountData.zip
     });
     setIsEditing(false);
+  };
+
+  const handleDisableAccount = () => {
+    console.log("Disabling account");
+    // Here you would typically call an API to disable the account
+  };
+
+  const handleDeleteAccount = () => {
+    console.log("Deleting account");
+    // Here you would typically show a confirmation dialog and then call an API
   };
 
   return (
@@ -108,36 +124,6 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Organization Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Organization Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold">{mockAccountData.members}</div>
-              <div className="text-sm text-muted-foreground">Team Members</div>
-            </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold">Active</div>
-              <div className="text-sm text-muted-foreground">Status</div>
-            </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold">{mockAccountData.type}</div>
-              <div className="text-sm text-muted-foreground">Type</div>
-            </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold">{mockAccountData.created}</div>
-              <div className="text-sm text-muted-foreground">Created</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Organization Details */}
       <Card>
         <CardHeader>
@@ -153,6 +139,23 @@ export default function Settings() {
                 onChange={(e) => handleInputChange("name", e.target.value)}
                 disabled={!isEditing}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="type">Type *</Label>
+              <Select 
+                value={formData.type} 
+                onValueChange={(value) => handleInputChange("type", value)}
+                disabled={!isEditing}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Organization">Organization</SelectItem>
+                  <SelectItem value="Enterprise">Enterprise</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -212,6 +215,16 @@ export default function Settings() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="primaryContact">Primary Contact *</Label>
+              <Input
+                id="primaryContact"
+                value={formData.primaryContact}
+                onChange={(e) => handleInputChange("primaryContact", e.target.value)}
+                disabled={!isEditing}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="secondaryEmail">Secondary Email</Label>
               <Input
                 id="secondaryEmail"
@@ -229,6 +242,16 @@ export default function Settings() {
                 type="tel"
                 value={formData.secondaryPhone}
                 onChange={(e) => handleInputChange("secondaryPhone", e.target.value)}
+                disabled={!isEditing}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="secondaryContact">Secondary Contact</Label>
+              <Input
+                id="secondaryContact"
+                value={formData.secondaryContact}
+                onChange={(e) => handleInputChange("secondaryContact", e.target.value)}
                 disabled={!isEditing}
               />
             </div>
@@ -286,6 +309,52 @@ export default function Settings() {
                   disabled={!isEditing}
                 />
               </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Account Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserX className="h-5 w-5" />
+            Account Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg">
+              <div>
+                <h3 className="font-semibold text-destructive">Disable Account</h3>
+                <p className="text-sm text-muted-foreground">
+                  Temporarily disable this account. Users will not be able to access the platform.
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                onClick={handleDisableAccount}
+              >
+                <UserX className="h-4 w-4 mr-2" />
+                Disable Account
+              </Button>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border border-destructive rounded-lg bg-destructive/5">
+              <div>
+                <h3 className="font-semibold text-destructive">Delete Account</h3>
+                <p className="text-sm text-muted-foreground">
+                  Permanently delete this account and all associated data. This action cannot be undone.
+                </p>
+              </div>
+              <Button 
+                variant="destructive"
+                onClick={handleDeleteAccount}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Account
+              </Button>
             </div>
           </div>
         </CardContent>
