@@ -28,7 +28,7 @@ const mainItems = [
 ];
 
 const adminItems = [
-  { title: "Organizations", url: "/organizations", icon: Building2 },
+  { title: "Accounts", url: "/accounts", icon: Building2 },
   { title: "Platform Admins", url: "/admins", icon: Shield },
   { title: "Notification Center", url: "/notifications", icon: Bell },
   { title: "Logs", url: "/logs", icon: BarChart3 },

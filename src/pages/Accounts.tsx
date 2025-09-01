@@ -3,8 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Building2, Mail, Phone, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const organizations = [
+const accounts = [
   {
     id: 1,
     name: "Mountain Rescue Team Alpha",
@@ -58,7 +59,12 @@ const typeColors: Record<string, "default" | "secondary" | "destructive" | "outl
   "Adventure Tourism": "secondary"
 };
 
-const Organizations = () => {
+const Accounts = () => {
+  const navigate = useNavigate();
+
+  const handleViewAccount = (accountId: number) => {
+    navigate(`/accounts/${accountId}`);
+  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -66,13 +72,13 @@ const Organizations = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <Building2 className="h-8 w-8 text-primary" />
-            Organizations
+            Accounts
           </h1>
-          <p className="text-muted-foreground mt-1">Manage organizations and their settings</p>
+          <p className="text-muted-foreground mt-1">Manage accounts and their settings</p>
         </div>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Add Organization
+          Add Account
         </Button>
       </div>
 
@@ -81,7 +87,7 @@ const Organizations = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Search organizations by name or email..."
+            placeholder="Search accounts by name or email..."
             className="pl-10"
           />
         </div>
@@ -94,15 +100,15 @@ const Organizations = () => {
       {/* Organizations Grid */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">All Organizations (5)</h2>
+          <h2 className="text-lg font-semibold">All Accounts (5)</h2>
           <div className="text-sm text-muted-foreground">
             Show: <strong>10</strong>
           </div>
         </div>
 
         <div className="space-y-3">
-          {organizations.map((org) => (
-            <Card key={org.id} className="transition-all hover:shadow-md">
+          {accounts.map((account) => (
+            <Card key={account.id} className="transition-all hover:shadow-md">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1">
@@ -112,31 +118,35 @@ const Organizations = () => {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-semibold text-foreground">{org.name}</h3>
-                        <Badge variant={typeColors[org.type] || "default"}>{org.type}</Badge>
+                        <h3 className="font-semibold text-foreground">{account.name}</h3>
+                        <Badge variant={typeColors[account.type] || "default"}>{account.type}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">Created {org.created}</p>
+                      <p className="text-sm text-muted-foreground">Created {account.created}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-6 text-sm">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{org.members}</span>
+                      <span className="font-medium">{account.members}</span>
                     </div>
                     
                     <div className="hidden md:flex flex-col gap-1">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Mail className="h-4 w-4" />
-                        <span>{org.email}</span>
+                        <span>{account.email}</span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Phone className="h-4 w-4" />
-                        <span>{org.phone}</span>
+                        <span>{account.phone}</span>
                       </div>
                     </div>
 
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewAccount(account.id)}
+                    >
                       View
                     </Button>
                   </div>
@@ -150,4 +160,4 @@ const Organizations = () => {
   );
 };
 
-export default Organizations;
+export default Accounts;
