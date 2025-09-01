@@ -16,13 +16,8 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex-1 flex flex-col">
           {/* Header */}
           <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Organizations</span>
-                <span>›</span>
-                <span className="text-foreground font-medium">Wilderness Adventures Inc</span>
-              </div>
             </div>
             
             <div className="flex items-center gap-3">
