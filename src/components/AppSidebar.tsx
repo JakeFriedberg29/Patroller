@@ -9,7 +9,9 @@ import {
   Bell,
   Monitor,
   Package,
-  ArrowLeft
+  ArrowLeft,
+  User,
+  ChevronDown
 } from "lucide-react";
 import { NavLink, useLocation, useParams } from "react-router-dom";
 
@@ -23,6 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -153,6 +156,28 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
       </SidebarContent>
+
+      <SidebarFooter className="border-t border-sidebar-border p-3">
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                    <User className="h-4 w-4" />
+                    {!isCollapsed && (
+                      <>
+                        <span className="flex-1 text-left">Jake Friedberg</span>
+                        <ChevronDown className="h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarFooter>
     </Sidebar>
   );
 }
