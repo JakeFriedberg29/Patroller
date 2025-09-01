@@ -24,10 +24,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainItems = [
-  { title: "Mission Control", url: "/", icon: Shield },
-  { title: "Log Incident", url: "/incident", icon: AlertTriangle },
-  { title: "Team Directory", url: "/team", icon: Users },
-  { title: "Reports", url: "/reports", icon: FileText },
+  { title: "Global View", url: "/", icon: Shield },
 ];
 
 const adminItems = [
