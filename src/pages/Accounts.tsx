@@ -2,6 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Plus, Search, Building2, Mail, Phone, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -97,51 +105,61 @@ const Accounts = () => {
         </Button>
       </div>
 
-      {/* Organizations Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">All Accounts (5)</h2>
-          <div className="text-sm text-muted-foreground">
-            Show: <strong>10</strong>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {accounts.map((account) => (
-            <Card key={account.id} className="transition-all hover:shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                      <Building2 className="h-6 w-6 text-primary" />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-semibold text-foreground">{account.name}</h3>
-                        <Badge variant={typeColors[account.type] || "default"}>{account.type}</Badge>
+      {/* Accounts Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-semibold">Name</TableHead>
+                <TableHead className="font-semibold">Type</TableHead>
+                <TableHead className="font-semibold">Category</TableHead>
+                <TableHead className="font-semibold">Team Members</TableHead>
+                <TableHead className="font-semibold">Contact</TableHead>
+                <TableHead className="font-semibold">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {accounts.map((account) => (
+                <TableRow key={account.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                        <Building2 className="h-4 w-4 text-primary" />
                       </div>
-                      <p className="text-sm text-muted-foreground">Created {account.created}</p>
+                      <div>
+                        <div className="font-semibold">{account.name}</div>
+                        <div className="text-sm text-muted-foreground">Created {account.created}</div>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-6 text-sm">
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={typeColors[account.type] || "default"}>
+                      {account.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {account.type}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">{account.members}</span>
                     </div>
-                    
-                    <div className="hidden md:flex flex-col gap-1">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Mail className="h-4 w-4" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
                         <span>{account.email}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Phone className="h-4 w-4" />
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
                         <span>{account.phone}</span>
                       </div>
                     </div>
-
+                  </TableCell>
+                  <TableCell>
                     <Button 
                       variant="ghost" 
                       size="sm"
@@ -149,13 +167,13 @@ const Accounts = () => {
                     >
                       View
                     </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };
