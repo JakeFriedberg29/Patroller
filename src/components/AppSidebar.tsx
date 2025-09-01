@@ -31,7 +31,7 @@ const adminItems = [
   { title: "Organizations", url: "/organizations", icon: Building2 },
   { title: "Platform Admins", url: "/admins", icon: Shield },
   { title: "Notification Center", url: "/notifications", icon: Bell },
-  { title: "System Logs", url: "/logs", icon: BarChart3 },
+  { title: "Logs", url: "/logs", icon: BarChart3 },
 ];
 
 export function AppSidebar() {
