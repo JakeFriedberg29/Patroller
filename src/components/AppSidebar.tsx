@@ -11,7 +11,8 @@ import {
   Package,
   ArrowLeft,
   User,
-  ChevronDown
+  ChevronDown,
+  MapPin
 } from "lucide-react";
 import { NavLink, useLocation, useParams } from "react-router-dom";
 
@@ -44,6 +45,7 @@ const adminItems = [
 const organizationItems = [
   { title: "Mission Control", url: "/mission-control", icon: Monitor },
   { title: "Team Directory", url: "/team-directory", icon: Users },
+  { title: "Locations", url: "/locations", icon: MapPin },
   { title: "Equipment", url: "/equipment", icon: Package },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Logs", url: "/logs", icon: BarChart3 },
