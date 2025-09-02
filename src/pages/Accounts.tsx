@@ -27,8 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Building2, Mail, Phone, Users, Filter, ChevronRight, MoreHorizontal } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Search, Building2, Mail, Phone, Users, Filter, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const accounts = [
@@ -237,7 +236,7 @@ const Accounts = () => {
                 <TableHead className="font-semibold">Category</TableHead>
                 <TableHead className="font-semibold">Team Members</TableHead>
                 <TableHead className="font-semibold">Contact</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
+                <TableHead className="font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -283,19 +282,13 @@ const Accounts = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleViewAccount(account.id)}>
-                          View Account
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewAccount(account.id)}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

@@ -19,8 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package, Plus, Search, Calendar, MapPin, Filter, MoreHorizontal } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Package, Plus, Search, Calendar, MapPin, Filter } from "lucide-react";
 
 const mockEquipment = [
   {
@@ -145,7 +144,7 @@ export default function Equipment() {
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Location</TableHead>
                 <TableHead className="font-semibold">Maintenance</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
+                <TableHead className="font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -184,25 +183,9 @@ export default function Equipment() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          Schedule Maintenance
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button variant="ghost" size="sm">
+                      Edit
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
