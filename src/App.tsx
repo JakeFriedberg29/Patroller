@@ -20,6 +20,11 @@ import OrganizationLogs from "./pages/OrganizationLogs";
 import CreateReport from "./pages/CreateReport";
 import Settings from "./pages/Settings";
 import UserSettings from "./pages/UserSettings";
+import EnterpriseView from "./pages/EnterpriseView";
+import EnterpriseOrganizations from "./pages/EnterpriseOrganizations";
+import EnterpriseAdmins from "./pages/EnterpriseAdmins";
+import EnterpriseNotificationCenter from "./pages/EnterpriseNotificationCenter";
+import EnterpriseLogs from "./pages/EnterpriseLogs";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +47,11 @@ const App = () => (
           <Route path="/accounts/:id/reports" element={<OrganizationReports />} />
           <Route path="/accounts/:id/logs" element={<OrganizationLogs />} />
             <Route path="/accounts/:id/settings" element={<UserSettings />} />
+            <Route path="/enterprises/:id/enterprise-view" element={<EnterpriseView />} />
+            <Route path="/enterprises/:id/organizations" element={<EnterpriseOrganizations />} />
+            <Route path="/enterprises/:id/enterprise-admins" element={<EnterpriseAdmins />} />
+            <Route path="/enterprises/:id/notifications" element={<EnterpriseNotificationCenter />} />
+            <Route path="/enterprises/:id/logs" element={<EnterpriseLogs />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/admins" element={<PlatformAdmins />} />
             <Route path="/logs" element={<Logs />} />

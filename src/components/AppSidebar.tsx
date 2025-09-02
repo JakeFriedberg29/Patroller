@@ -44,6 +44,14 @@ const adminItems = [
   { title: "Logs", url: "/logs", icon: BarChart3 },
 ];
 
+const enterpriseItems = [
+  { title: "Enterprise View", url: "/enterprise-view", icon: Building2 },
+  { title: "Organizations", url: "/organizations", icon: Users },
+  { title: "Enterprise Admins", url: "/enterprise-admins", icon: Shield },
+  { title: "Notification Center", url: "/notifications", icon: Bell },
+  { title: "Logs", url: "/logs", icon: BarChart3 },
+];
+
 const organizationItems = [
   { title: "Mission Control", url: "/mission-control", icon: Monitor },
   { title: "Team Directory", url: "/team-directory", icon: Users },
@@ -63,11 +71,13 @@ export function AppSidebar() {
   
   const isCollapsed = state === "collapsed";
 
-  // Check if we're in an organization context
+  // Check navigation context
   const isInOrganization = currentPath.includes('/accounts/') && currentPath.split('/').length > 2;
+  const isInEnterprise = currentPath.includes('/enterprises/') || 
+    (currentPath.includes('/accounts/') && currentPath.includes('/enterprise'));
 
   const isActive = (path: string) => {
-    if (isInOrganization) {
+    if (isInOrganization || isInEnterprise) {
       return currentPath.includes(path);
     }
     return currentPath === path;
@@ -81,6 +91,8 @@ export function AppSidebar() {
   const handleSettingsClick = () => {
     if (isInOrganization) {
       navigate(`/accounts/${id}/settings`);
+    } else if (isInEnterprise) {
+      navigate(`/enterprises/${id}/settings`);
     } else {
       navigate('/settings');
     }
@@ -110,7 +122,44 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 py-4">
-        {isInOrganization ? (
+        {isInEnterprise ? (
+          <>
+            {/* Back to Accounts Button */}
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/accounts" className="text-white hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105">
+                        <ArrowLeft className="mr-3 h-4 w-4" />
+                        {!isCollapsed && <span>Back to Accounts</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            
+            {/* Enterprise Menu Items */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Enterprise</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {enterpriseItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink to={`/enterprises/${id}${item.url}`} className={getNavCls}>
+                          <item.icon className="mr-3 h-4 w-4" />
+                          {!isCollapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        ) : isInOrganization ? (
           <>
             {/* Back to Accounts Button */}
             <SidebarGroup>
