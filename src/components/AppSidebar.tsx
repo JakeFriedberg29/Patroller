@@ -85,8 +85,8 @@ export function AppSidebar() {
   
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive 
-      ? "bg-sidebar-accent text-blue-500 font-medium transition-all duration-200 hover:scale-105" 
-      : "text-white hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105";
+      ? "bg-primary/20 text-primary font-semibold border-r-2 border-primary shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-primary/30" 
+      : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1";
 
   const handleSettingsClick = () => {
     if (isInOrganization) {
@@ -130,7 +130,11 @@ export function AppSidebar() {
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
-                      <NavLink to="/accounts" className="text-white hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105">
+                      <NavLink to="/accounts" className={({ isActive }) => 
+                        isActive 
+                          ? "bg-primary/20 text-primary font-semibold border-r-2 border-primary shadow-sm backdrop-blur-sm transition-all duration-200" 
+                          : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1"
+                      }>
                         <ArrowLeft className="mr-3 h-4 w-4" />
                         {!isCollapsed && <span>Back to Accounts</span>}
                       </NavLink>
@@ -148,7 +152,7 @@ export function AppSidebar() {
                   {enterpriseItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
-                        <NavLink to={`/enterprises/${id}${item.url}`} className={getNavCls}>
+                        <NavLink to={`/enterprises/${id}${item.url}`} className={({ isActive }) => getNavCls({ isActive })}>
                           <item.icon className="mr-3 h-4 w-4" />
                           {!isCollapsed && <span>{item.title}</span>}
                         </NavLink>
@@ -167,7 +171,11 @@ export function AppSidebar() {
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
-                      <NavLink to="/accounts" className="text-white hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105">
+                      <NavLink to="/accounts" className={({ isActive }) => 
+                        isActive 
+                          ? "bg-primary/20 text-primary font-semibold border-r-2 border-primary shadow-sm backdrop-blur-sm transition-all duration-200" 
+                          : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1"
+                      }>
                         <ArrowLeft className="mr-3 h-4 w-4" />
                         {!isCollapsed && <span>Back to Accounts</span>}
                       </NavLink>
@@ -185,7 +193,7 @@ export function AppSidebar() {
                   {organizationItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
-                        <NavLink to={`/organization/${id}${item.url}`} className={getNavCls}>
+                        <NavLink to={`/organization/${id}${item.url}`} className={({ isActive }) => getNavCls({ isActive })}>
                           <item.icon className="mr-3 h-4 w-4" />
                           {!isCollapsed && <span>{item.title}</span>}
                         </NavLink>
@@ -203,7 +211,7 @@ export function AppSidebar() {
                 {mainItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <NavLink to={item.url} end className={getNavCls}>
+                      <NavLink to={item.url} end className={({ isActive }) => getNavCls({ isActive })}>
                         <item.icon className="mr-3 h-4 w-4" />
                         {!isCollapsed && <span>{item.title}</span>}
                       </NavLink>
@@ -213,7 +221,7 @@ export function AppSidebar() {
                 {adminItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <NavLink to={item.url} end className={getNavCls}>
+                      <NavLink to={item.url} end className={({ isActive }) => getNavCls({ isActive })}>
                         <item.icon className="mr-3 h-4 w-4" />
                         {!isCollapsed && <span>{item.title}</span>}
                       </NavLink>
