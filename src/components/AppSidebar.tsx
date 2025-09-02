@@ -11,10 +11,11 @@ import {
   Package,
   ArrowLeft,
   User,
-  ChevronDown,
-  MapPin
+  MoreHorizontal,
+  MapPin,
+  LogOut
 } from "lucide-react";
-import { NavLink, useLocation, useParams } from "react-router-dom";
+import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
 
 import {
   Sidebar,
@@ -30,6 +31,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const mainItems = [
   { title: "Global View", url: "/", icon: Shield },
@@ -56,6 +58,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { id } = useParams();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
   
   const isCollapsed = state === "collapsed";
@@ -74,6 +77,19 @@ export function AppSidebar() {
     isActive 
       ? "bg-sidebar-accent text-blue-500 font-medium transition-all duration-200 hover:scale-105" 
       : "text-white hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105";
+
+  const handleSettingsClick = () => {
+    if (isInOrganization) {
+      navigate(`/accounts/${id}/settings`);
+    } else {
+      navigate('/settings');
+    }
+  };
+
+  const handleSignOut = () => {
+    // Add sign out logic here
+    console.log('Sign out clicked');
+  };
 
   return (
     <Sidebar
@@ -166,17 +182,29 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-start gap-2 bg-sidebar-accent/50 hover:bg-sidebar-accent">
-                    <User className="h-4 w-4" />
-                    {!isCollapsed && (
-                      <>
-                        <span className="flex-1 text-left">Jake Friedberg</span>
-                        <ChevronDown className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </SidebarMenuButton>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton className="w-full justify-start gap-2 bg-sidebar-accent/50 hover:bg-sidebar-accent">
+                      <User className="h-4 w-4" />
+                      {!isCollapsed && (
+                        <>
+                          <span className="flex-1 text-left">Jake Friedberg</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </>
+                      )}
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={handleSettingsClick}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

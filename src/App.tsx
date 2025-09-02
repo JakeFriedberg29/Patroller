@@ -19,6 +19,7 @@ import OrganizationReports from "./pages/OrganizationReports";
 import OrganizationLogs from "./pages/OrganizationLogs";
 import CreateReport from "./pages/CreateReport";
 import Settings from "./pages/Settings";
+import UserSettings from "./pages/UserSettings";
 
 const queryClient = new QueryClient();
 
@@ -40,10 +41,11 @@ const App = () => (
           <Route path="/accounts/:id/reports/create/:templateId" element={<CreateReport />} />
           <Route path="/accounts/:id/reports" element={<OrganizationReports />} />
           <Route path="/accounts/:id/logs" element={<OrganizationLogs />} />
-          <Route path="/accounts/:id/settings" element={<Settings />} />
+            <Route path="/accounts/:id/settings" element={<UserSettings />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/admins" element={<PlatformAdmins />} />
             <Route path="/logs" element={<Logs />} />
+            <Route path="/settings" element={<UserSettings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
