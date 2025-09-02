@@ -46,7 +46,7 @@ const App = () => (
           <Route path="/organization/:id/reports/create/:templateId" element={<CreateReport />} />
           <Route path="/organization/:id/reports" element={<OrganizationReports />} />
           <Route path="/organization/:id/logs" element={<OrganizationLogs />} />
-            <Route path="/organization/:id/settings" element={<UserSettings />} />
+            <Route path="/organization/:id/settings" element={<Settings />} />
             <Route path="/enterprises/:id/enterprise-view" element={<EnterpriseView />} />
             <Route path="/enterprises/:id/organizations" element={<EnterpriseOrganizations />} />
             <Route path="/enterprises/:id/enterprise-admins" element={<EnterpriseAdmins />} />
