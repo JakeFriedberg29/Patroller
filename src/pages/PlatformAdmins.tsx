@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Plus, Search, Send, MoreHorizontal, X, Filter } from "lucide-react";
+import { Plus, Search, Send, MoreHorizontal, X, Filter, Edit, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -30,12 +31,21 @@ const mockAdmins: PlatformAdmin[] = [{
 export default function PlatformAdmins() {
   const [admins, setAdmins] = useState<PlatformAdmin[]>(mockAdmins);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All Status");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAdmins, setSelectedAdmins] = useState<string[]>([]);
+  const [currentAdmin, setCurrentAdmin] = useState<PlatformAdmin | null>(null);
   const [newAdmin, setNewAdmin] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: ""
+  });
+  const [editAdmin, setEditAdmin] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -60,6 +70,56 @@ export default function PlatformAdmins() {
         phone: ""
       });
       setIsAddDialogOpen(false);
+    }
+  };
+
+  const handleEditAdmin = (admin: PlatformAdmin) => {
+    setCurrentAdmin(admin);
+    setEditAdmin({
+      firstName: admin.firstName,
+      lastName: admin.lastName,
+      email: admin.email,
+      phone: admin.phone || ""
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateAdmin = () => {
+    if (currentAdmin && editAdmin.firstName && editAdmin.lastName && editAdmin.email) {
+      const updatedAdmins = admins.map(admin => 
+        admin.id === currentAdmin.id 
+          ? {
+              ...admin,
+              firstName: editAdmin.firstName,
+              lastName: editAdmin.lastName,
+              email: editAdmin.email,
+              phone: editAdmin.phone
+            }
+          : admin
+      );
+      setAdmins(updatedAdmins);
+      setIsEditDialogOpen(false);
+      setCurrentAdmin(null);
+      setEditAdmin({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: ""
+      });
+    }
+  };
+
+  const handleDeleteAdmin = (admin: PlatformAdmin) => {
+    setCurrentAdmin(admin);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (currentAdmin) {
+      const updatedAdmins = admins.filter(admin => admin.id !== currentAdmin.id);
+      setAdmins(updatedAdmins);
+      setIsDeleteDialogOpen(false);
+      setCurrentAdmin(null);
     }
   };
   const handleSelectAdmin = (adminId: string, checked: boolean) => {
@@ -188,8 +248,17 @@ export default function PlatformAdmins() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit Admin</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditAdmin(admin)} className="cursor-pointer">
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteAdmin(admin)} 
+                          className="cursor-pointer text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -302,5 +371,136 @@ export default function PlatformAdmins() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Admin Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Edit className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-bold">Edit Platform Admin</DialogTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Update administrator information.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="editFirstName">First Name *</Label>
+                <Input 
+                  id="editFirstName" 
+                  value={editAdmin.firstName} 
+                  onChange={e => setEditAdmin({
+                    ...editAdmin,
+                    firstName: e.target.value
+                  })} 
+                  placeholder="John" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editLastName">Last Name *</Label>
+                <Input 
+                  id="editLastName" 
+                  value={editAdmin.lastName} 
+                  onChange={e => setEditAdmin({
+                    ...editAdmin,
+                    lastName: e.target.value
+                  })} 
+                  placeholder="Doe" 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editEmail">Email Address *</Label>
+              <Input 
+                id="editEmail" 
+                type="email" 
+                value={editAdmin.email} 
+                onChange={e => setEditAdmin({
+                  ...editAdmin,
+                  email: e.target.value
+                })} 
+                placeholder="responder@organization.org" 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editPhone">Phone</Label>
+              <Input 
+                id="editPhone" 
+                type="tel" 
+                value={editAdmin.phone} 
+                onChange={e => setEditAdmin({
+                  ...editAdmin,
+                  phone: e.target.value
+                })} 
+                placeholder="(555) 123-4567" 
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUpdateAdmin} 
+              disabled={!editAdmin.firstName || !editAdmin.lastName || !editAdmin.email}
+            >
+              Update Admin
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
+                <Trash2 className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <AlertDialogTitle className="text-xl font-bold">Delete Platform Admin</AlertDialogTitle>
+                <AlertDialogDescription className="mt-1">
+                  This action cannot be undone. This will permanently remove the administrator from the platform.
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          
+          {currentAdmin && (
+            <div className="bg-muted/50 rounded-lg p-4 mb-4">
+              <h4 className="font-semibold mb-2">Administrator Details</h4>
+              <div className="space-y-1 text-sm">
+                <p><span className="font-medium">Name:</span> {currentAdmin.firstName} {currentAdmin.lastName}</p>
+                <p><span className="font-medium">Email:</span> {currentAdmin.email}</p>
+                <p><span className="font-medium">Role:</span> {currentAdmin.role}</p>
+                <p><span className="font-medium">Status:</span> {currentAdmin.status}</p>
+              </div>
+            </div>
+          )}
+
+          <AlertDialogFooter className="flex justify-between">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Delete Admin
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>;
 }
