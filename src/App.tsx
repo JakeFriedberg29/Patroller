@@ -25,6 +25,7 @@ import EnterpriseOrganizations from "./pages/EnterpriseOrganizations";
 import EnterpriseAdmins from "./pages/EnterpriseAdmins";
 import EnterpriseNotificationCenter from "./pages/EnterpriseNotificationCenter";
 import EnterpriseLogs from "./pages/EnterpriseLogs";
+import PlatformNotificationCenter from "./pages/PlatformNotificationCenter";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/enterprises/:id/settings" element={<Settings />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/admins" element={<PlatformAdmins />} />
+            <Route path="/notifications" element={<PlatformNotificationCenter />} />
             <Route path="/logs" element={<Logs />} />
             <Route path="/settings" element={<UserSettings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
