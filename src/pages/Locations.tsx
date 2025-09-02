@@ -435,33 +435,6 @@ export default function Locations() {
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-primary">3</div>
-            <p className="text-xs text-muted-foreground">Total Locations</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-success">2</div>
-            <p className="text-xs text-muted-foreground">Active Locations</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-warning">1</div>
-            <p className="text-xs text-muted-foreground">Under Maintenance</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-foreground">24</div>
-            <p className="text-xs text-muted-foreground">Total Personnel</p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Edit Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
