@@ -88,14 +88,24 @@ const reportTemplates = [
     id: 2,
     name: "Patient Care Report",
     description: "Medical care documentation for patient treatment and transport",
-    fields: [
-      { name: "patientName", label: "Patient Name", type: "text", required: true },
-      { name: "age", label: "Age", type: "number", required: true },
-      { name: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"], required: true },
-      { name: "chiefComplaint", label: "Chief Complaint", type: "textarea", required: true },
-      { name: "vitalSigns", label: "Vital Signs", type: "textarea", required: true },
-      { name: "treatmentProvided", label: "Treatment Provided", type: "textarea", required: true },
-      { name: "disposition", label: "Patient Disposition", type: "select", options: ["Transport to Hospital", "Refused Transport", "Released on Scene", "Other"], required: true }
+    sections: [
+      {
+        name: "Patient Information",
+        fields: [
+          { name: "patientName", label: "Patient Name", type: "text", required: true },
+          { name: "age", label: "Age", type: "number", required: true },
+          { name: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"], required: true },
+          { name: "chiefComplaint", label: "Chief Complaint", type: "textarea", required: true }
+        ]
+      },
+      {
+        name: "Medical Assessment",
+        fields: [
+          { name: "vitalSigns", label: "Vital Signs", type: "textarea", required: true },
+          { name: "treatmentProvided", label: "Treatment Provided", type: "textarea", required: true },
+          { name: "disposition", label: "Patient Disposition", type: "select", options: ["Transport to Hospital", "Refused Transport", "Released on Scene", "Other"], required: true }
+        ]
+      }
     ]
   }
   // Add more templates as needed
@@ -109,9 +119,8 @@ export default function CreateReport() {
   const [currentStep, setCurrentStep] = useState(0);
   
   const template = reportTemplates.find(t => t.id === Number(templateId)) || reportTemplates[0];
-  const isMultiStep = template.sections && template.sections.length > 0;
-  const sections = isMultiStep ? template.sections : [{ name: template.name, fields: template.fields }];
-  const currentSection = sections[currentStep];
+  const sections = template.sections || [];
+  const currentSection = sections[currentStep] || { name: template.name, fields: [] };
   const totalSteps = sections.length;
 
   // Auto-generate incident ID for new reports
@@ -285,7 +294,7 @@ export default function CreateReport() {
         </div>
       </div>
 
-      {isMultiStep && (
+      {totalSteps > 1 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
@@ -306,9 +315,9 @@ export default function CreateReport() {
               <FileText className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle>{isMultiStep ? currentSection.name : template.name}</CardTitle>
+              <CardTitle>{totalSteps > 1 ? currentSection.name : template.name}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                {isMultiStep ? `Section ${currentStep + 1} of ${totalSteps}` : template.description}
+                {totalSteps > 1 ? `Section ${currentStep + 1} of ${totalSteps}` : template.description}
               </p>
             </div>
           </div>
@@ -326,7 +335,7 @@ export default function CreateReport() {
             ))}
           </div>
 
-          {isMultiStep && (
+          {totalSteps > 1 && (
             <div className="flex justify-between pt-6 border-t">
               <Button
                 variant="outline"
