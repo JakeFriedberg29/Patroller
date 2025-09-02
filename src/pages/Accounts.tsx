@@ -120,7 +120,12 @@ const Accounts = () => {
   });
 
   const handleViewAccount = (accountId: number) => {
-    navigate(`/accounts/${accountId}/settings`);
+    const account = accounts.find(acc => acc.id === accountId);
+    if (account?.type === "Enterprise") {
+      navigate(`/accounts/${accountId}/enterprise-view`);
+    } else {
+      navigate(`/accounts/${accountId}/mission-control`);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
