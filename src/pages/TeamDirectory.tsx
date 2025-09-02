@@ -19,7 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Users, Plus, Search, Phone, Mail, Filter } from "lucide-react";
+import { Users, Plus, Search, Phone, Mail, Filter, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AddMemberModal } from "@/components/AddMemberModal";
 
 const mockTeamMembers = [
@@ -136,7 +137,7 @@ export default function TeamDirectory() {
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Contact</TableHead>
                 <TableHead className="font-semibold">Certification</TableHead>
-                <TableHead className="font-semibold">Actions</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -172,9 +173,25 @@ export default function TeamDirectory() {
                     <Badge variant="outline">{member.certification}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">
-                      Edit
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          Edit Member
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          Send Message
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

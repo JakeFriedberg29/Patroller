@@ -158,7 +158,7 @@ export default function OrganizationReports() {
                   <TableRow>
                     <TableHead className="font-semibold">Report Name</TableHead>
                     <TableHead className="font-semibold">Description</TableHead>
-                    <TableHead className="font-semibold">Actions</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -316,7 +316,7 @@ export default function OrganizationReports() {
                         <TableHead>File Name</TableHead>
                         <TableHead>Size</TableHead>
                         <TableHead>Date Modified</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
