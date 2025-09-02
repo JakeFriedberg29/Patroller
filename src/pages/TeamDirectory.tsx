@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Users, Plus, Search, Phone, Mail, Filter } from "lucide-react";
+import { AddMemberModal } from "@/components/AddMemberModal";
 
 const mockTeamMembers = [
   {
@@ -57,6 +58,7 @@ export default function TeamDirectory() {
   const [selectedFilter, setSelectedFilter] = useState("All Status");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -92,7 +94,7 @@ export default function TeamDirectory() {
             <p className="text-muted-foreground">Manage team members and contacts</p>
           </div>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setIsAddModalOpen(true)}>
           <Plus className="h-4 w-4" />
           Add Member
         </Button>
@@ -224,6 +226,11 @@ export default function TeamDirectory() {
           </div>
         </CardContent>
       </Card>
+
+      <AddMemberModal 
+        open={isAddModalOpen} 
+        onOpenChange={setIsAddModalOpen} 
+      />
     </div>
   );
 }
