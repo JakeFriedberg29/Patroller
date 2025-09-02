@@ -124,7 +124,7 @@ const Accounts = () => {
     if (account?.type === "Enterprise") {
       navigate(`/enterprises/${accountId}/enterprise-view`);
     } else {
-      navigate(`/accounts/${accountId}/mission-control`);
+      navigate(`/organization/${accountId}/mission-control`);
     }
   };
 

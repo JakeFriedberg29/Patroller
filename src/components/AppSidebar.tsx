@@ -73,9 +73,8 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
 
   // Check navigation context
-  const isInOrganization = currentPath.includes('/accounts/') && currentPath.split('/').length > 2;
-  const isInEnterprise = currentPath.includes('/enterprises/') || 
-    (currentPath.includes('/accounts/') && currentPath.includes('/enterprise'));
+  const isInOrganization = currentPath.includes('/organization/') && currentPath.split('/').length > 2;
+  const isInEnterprise = currentPath.includes('/enterprises/');
 
   const isActive = (path: string) => {
     if (isInOrganization || isInEnterprise) {
@@ -91,7 +90,7 @@ export function AppSidebar() {
 
   const handleSettingsClick = () => {
     if (isInOrganization) {
-      navigate(`/accounts/${id}/settings`);
+      navigate(`/organization/${id}/settings`);
     } else if (isInEnterprise) {
       navigate(`/enterprises/${id}/settings`);
     } else {
@@ -186,7 +185,7 @@ export function AppSidebar() {
                   {organizationItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
-                        <NavLink to={`/accounts/${id}${item.url}`} className={getNavCls}>
+                        <NavLink to={`/organization/${id}${item.url}`} className={getNavCls}>
                           <item.icon className="mr-3 h-4 w-4" />
                           {!isCollapsed && <span>{item.title}</span>}
                         </NavLink>

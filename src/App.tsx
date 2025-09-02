@@ -38,15 +38,15 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/accounts" element={<Accounts />} />
-            <Route path="/accounts/:id" element={<AccountDetail />} />
-            <Route path="/accounts/:id/mission-control" element={<MissionControl />} />
-            <Route path="/accounts/:id/team-directory" element={<TeamDirectory />} />
-            <Route path="/accounts/:id/locations" element={<Locations />} />
-          <Route path="/accounts/:id/equipment" element={<Equipment />} />
-          <Route path="/accounts/:id/reports/create/:templateId" element={<CreateReport />} />
-          <Route path="/accounts/:id/reports" element={<OrganizationReports />} />
-          <Route path="/accounts/:id/logs" element={<OrganizationLogs />} />
-            <Route path="/accounts/:id/settings" element={<UserSettings />} />
+            <Route path="/organization/:id" element={<AccountDetail />} />
+            <Route path="/organization/:id/mission-control" element={<MissionControl />} />
+            <Route path="/organization/:id/team-directory" element={<TeamDirectory />} />
+            <Route path="/organization/:id/locations" element={<Locations />} />
+          <Route path="/organization/:id/equipment" element={<Equipment />} />
+          <Route path="/organization/:id/reports/create/:templateId" element={<CreateReport />} />
+          <Route path="/organization/:id/reports" element={<OrganizationReports />} />
+          <Route path="/organization/:id/logs" element={<OrganizationLogs />} />
+            <Route path="/organization/:id/settings" element={<UserSettings />} />
             <Route path="/enterprises/:id/enterprise-view" element={<EnterpriseView />} />
             <Route path="/enterprises/:id/organizations" element={<EnterpriseOrganizations />} />
             <Route path="/enterprises/:id/enterprise-admins" element={<EnterpriseAdmins />} />
