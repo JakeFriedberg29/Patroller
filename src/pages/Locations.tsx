@@ -1,4 +1,4 @@
-import { MapPin, Plus, Search, Filter, MoreVertical, Edit, Eye, Trash2, Users, Wrench, Package } from "lucide-react";
+import { MapPin, Plus, Search, Filter, MoreHorizontal, Edit, Eye, Trash2, Users, Wrench, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -384,7 +384,7 @@ export default function Locations() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
+                            <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
