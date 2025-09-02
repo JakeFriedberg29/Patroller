@@ -8,15 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 interface PlatformAdmin {
   id: string;
   firstName: string;
@@ -26,18 +18,14 @@ interface PlatformAdmin {
   role: string;
   status: "Active" | "Pending" | "Inactive";
 }
-
-const mockAdmins: PlatformAdmin[] = [
-  {
-    id: "1",
-    firstName: "Jake",
-    lastName: "Friedberg",
-    email: "jakefriedberg32@gmail.com",
-    role: "Platform Admin",
-    status: "Pending"
-  }
-];
-
+const mockAdmins: PlatformAdmin[] = [{
+  id: "1",
+  firstName: "Jake",
+  lastName: "Friedberg",
+  email: "jakefriedberg32@gmail.com",
+  role: "Platform Admin",
+  status: "Pending"
+}];
 export default function PlatformAdmins() {
   const [admins, setAdmins] = useState<PlatformAdmin[]>(mockAdmins);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -52,7 +40,6 @@ export default function PlatformAdmins() {
     email: "",
     phone: ""
   });
-
   const handleAddAdmin = () => {
     if (newAdmin.firstName && newAdmin.lastName && newAdmin.email) {
       const admin: PlatformAdmin = {
@@ -64,13 +51,16 @@ export default function PlatformAdmins() {
         role: "Platform Admin",
         status: "Pending"
       };
-      
       setAdmins([...admins, admin]);
-      setNewAdmin({ firstName: "", lastName: "", email: "", phone: "" });
+      setNewAdmin({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: ""
+      });
       setIsAddDialogOpen(false);
     }
   };
-
   const handleSelectAdmin = (adminId: string, checked: boolean) => {
     if (checked) {
       setSelectedAdmins([...selectedAdmins, adminId]);
@@ -78,7 +68,6 @@ export default function PlatformAdmins() {
       setSelectedAdmins(selectedAdmins.filter(id => id !== adminId));
     }
   };
-
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedAdmins(admins.map(admin => admin.id));
@@ -86,32 +75,28 @@ export default function PlatformAdmins() {
       setSelectedAdmins([]);
     }
   };
-
   const filteredAdmins = admins.filter(admin => {
-    const matchesSearch = admin.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         admin.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         admin.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = admin.firstName.toLowerCase().includes(searchQuery.toLowerCase()) || admin.lastName.toLowerCase().includes(searchQuery.toLowerCase()) || admin.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = selectedFilter === "All Status" || admin.status === selectedFilter;
     return matchesSearch && matchesFilter;
   });
-
   const totalPages = Math.ceil(filteredAdmins.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const paginatedAdmins = filteredAdmins.slice(startIndex, startIndex + rowsPerPage);
-
   const statusOptions = [...new Set(admins.map(admin => admin.status))];
-
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "Active": return "default";
-      case "Pending": return "secondary";
-      case "Inactive": return "outline";
-      default: return "default";
+      case "Active":
+        return "default";
+      case "Pending":
+        return "secondary";
+      case "Inactive":
+        return "outline";
+      default:
+        return "default";
     }
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -134,12 +119,7 @@ export default function PlatformAdmins() {
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search platform admins by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+          <Input placeholder="Search platform admins by name or email..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
         </div>
         <Select value={selectedFilter} onValueChange={setSelectedFilter}>
           <SelectTrigger className="w-[180px]">
@@ -148,9 +128,7 @@ export default function PlatformAdmins() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All Status">All Status</SelectItem>
-            {statusOptions.map(status => (
-              <SelectItem key={status} value={status}>{status}</SelectItem>
-            ))}
+            {statusOptions.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -162,10 +140,7 @@ export default function PlatformAdmins() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
-                  <Checkbox
-                    checked={selectedAdmins.length === paginatedAdmins.length && paginatedAdmins.length > 0}
-                    onCheckedChange={handleSelectAll}
-                  />
+                  <Checkbox checked={selectedAdmins.length === paginatedAdmins.length && paginatedAdmins.length > 0} onCheckedChange={handleSelectAll} />
                 </TableHead>
                 <TableHead className="font-semibold">Name</TableHead>
                 <TableHead className="font-semibold">Role</TableHead>
@@ -175,13 +150,9 @@ export default function PlatformAdmins() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedAdmins.map((admin) => (
-                <TableRow key={admin.id} className="hover:bg-muted/50">
+              {paginatedAdmins.map(admin => <TableRow key={admin.id} className="hover:bg-muted/50">
                   <TableCell>
-                    <Checkbox
-                      checked={selectedAdmins.includes(admin.id)}
-                      onCheckedChange={(checked) => handleSelectAdmin(admin.id, checked as boolean)}
-                    />
+                    <Checkbox checked={selectedAdmins.includes(admin.id)} onCheckedChange={checked => handleSelectAdmin(admin.id, checked as boolean)} />
                   </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
@@ -200,25 +171,19 @@ export default function PlatformAdmins() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge 
-                      variant={getStatusBadgeVariant(admin.status)}
-                      className={admin.status === "Pending" ? "bg-orange-100 text-orange-800 hover:bg-orange-200" : ""}
-                    >
+                    <Badge variant={getStatusBadgeVariant(admin.status)} className={admin.status === "Pending" ? "bg-orange-100 text-orange-800 hover:bg-orange-200" : ""}>
                       {admin.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {admin.phone && (
-                      <div className="text-sm">{admin.phone}</div>
-                    )}
+                    {admin.phone && <div className="text-sm">{admin.phone}</div>}
                   </TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm">
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </TableCell>
-                </TableRow>
-              ))}
+                </TableRow>)}
             </TableBody>
           </Table>
           
@@ -226,10 +191,10 @@ export default function PlatformAdmins() {
           <div className="flex items-center justify-between p-4 border-t">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Rows per page:</span>
-              <Select value={rowsPerPage.toString()} onValueChange={(value) => {
-                setRowsPerPage(Number(value));
-                setCurrentPage(1);
-              }}>
+              <Select value={rowsPerPage.toString()} onValueChange={value => {
+              setRowsPerPage(Number(value));
+              setCurrentPage(1);
+            }}>
                 <SelectTrigger className="w-16">
                   <SelectValue />
                 </SelectTrigger>
@@ -239,12 +204,10 @@ export default function PlatformAdmins() {
                   <SelectItem value="50">50</SelectItem>
                 </SelectContent>
               </Select>
-              {selectedAdmins.length > 0 && (
-                <Button variant="outline" size="sm" className="gap-2 ml-4">
+              {selectedAdmins.length > 0 && <Button variant="outline" size="sm" className="gap-2 ml-4">
                   <Send className="h-4 w-4" />
                   Resend Activation Email ({selectedAdmins.length})
-                </Button>
-              )}
+                </Button>}
             </div>
             
             <div className="flex items-center gap-2">
@@ -252,20 +215,10 @@ export default function PlatformAdmins() {
                 {startIndex + 1}-{Math.min(startIndex + rowsPerPage, filteredAdmins.length)} of {filteredAdmins.length}
               </span>
               <div className="flex gap-1">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                >
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>
                   Previous
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                >
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>
                   Next
                 </Button>
               </div>
@@ -290,14 +243,7 @@ export default function PlatformAdmins() {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsAddDialogOpen(false)}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              
             </div>
           </DialogHeader>
 
@@ -305,63 +251,46 @@ export default function PlatformAdmins() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name *</Label>
-                <Input
-                  id="firstName"
-                  value={newAdmin.firstName}
-                  onChange={(e) => setNewAdmin({ ...newAdmin, firstName: e.target.value })}
-                  placeholder="John"
-                />
+                <Input id="firstName" value={newAdmin.firstName} onChange={e => setNewAdmin({
+                ...newAdmin,
+                firstName: e.target.value
+              })} placeholder="John" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last Name *</Label>
-                <Input
-                  id="lastName"
-                  value={newAdmin.lastName}
-                  onChange={(e) => setNewAdmin({ ...newAdmin, lastName: e.target.value })}
-                  placeholder="Doe"
-                />
+                <Input id="lastName" value={newAdmin.lastName} onChange={e => setNewAdmin({
+                ...newAdmin,
+                lastName: e.target.value
+              })} placeholder="Doe" />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email Address *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={newAdmin.email}
-                onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                placeholder="responder@organization.org"
-              />
+              <Input id="email" type="email" value={newAdmin.email} onChange={e => setNewAdmin({
+              ...newAdmin,
+              email: e.target.value
+            })} placeholder="responder@organization.org" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={newAdmin.phone}
-                onChange={(e) => setNewAdmin({ ...newAdmin, phone: e.target.value })}
-                placeholder="(555) 123-4567"
-              />
+              <Input id="phone" type="tel" value={newAdmin.phone} onChange={e => setNewAdmin({
+              ...newAdmin,
+              phone: e.target.value
+            })} placeholder="(555) 123-4567" />
             </div>
           </div>
 
           <div className="flex justify-end gap-3 mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setIsAddDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleAddAdmin}
-              disabled={!newAdmin.firstName || !newAdmin.lastName || !newAdmin.email}
-            >
+            <Button onClick={handleAddAdmin} disabled={!newAdmin.firstName || !newAdmin.lastName || !newAdmin.email}>
               Add Admin
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
