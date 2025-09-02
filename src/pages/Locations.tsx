@@ -1,8 +1,18 @@
-import { MapPin, Plus, Search, Filter } from "lucide-react";
+import { MapPin, Plus, Search, Filter, MoreVertical, Edit, Eye, Trash2, Users, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const locations = [
   {
@@ -13,6 +23,9 @@ const locations = [
     status: "Active",
     coordinates: "40.7128° N, 74.0060° W",
     personnel: 12,
+    admins: ["John Smith", "Sarah Johnson"],
+    equipment: ["Radio Systems", "Emergency Vehicles", "Communication Hub"],
+    users: ["Alice Cooper", "Bob Wilson", "Carol Davis", "David Lee"]
   },
   {
     id: 2,
@@ -22,6 +35,9 @@ const locations = [
     status: "Active",
     coordinates: "40.7589° N, 73.9851° W",
     personnel: 8,
+    admins: ["Mike Brown", "Lisa White"],
+    equipment: ["Patrol Vehicles", "First Aid Kits", "Surveillance Equipment"],
+    users: ["Emma Thompson", "Frank Miller", "Grace Chen", "Henry Taylor"]
   },
   {
     id: 3,
@@ -31,10 +47,56 @@ const locations = [
     status: "Maintenance",
     coordinates: "40.6782° N, 73.9442° W",
     personnel: 4,
+    admins: ["Robert Garcia"],
+    equipment: ["Supply Trucks", "Storage Systems", "Loading Equipment"],
+    users: ["Ivan Rodriguez", "Julia Martinez", "Kevin Anderson", "Laura Kim"]
   },
 ];
 
 export default function Locations() {
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<typeof locations[0] | null>(null);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const { toast } = useToast();
+
+  const handleEdit = (location: typeof locations[0]) => {
+    setSelectedLocation(location);
+    setEditModalOpen(true);
+  };
+
+  const handleSummary = (location: typeof locations[0]) => {
+    setSelectedLocation(location);
+    setSummaryModalOpen(true);
+  };
+
+  const handleDelete = (location: typeof locations[0]) => {
+    setSelectedLocation(location);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedLocation) {
+      toast({
+        title: "Location deleted",
+        description: `${selectedLocation.name} has been successfully deleted.`,
+      });
+      setDeleteDialogOpen(false);
+      setSelectedLocation(null);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (selectedLocation) {
+      toast({
+        title: "Location updated",
+        description: `${selectedLocation.name} has been successfully updated.`,
+      });
+      setEditModalOpen(false);
+      setSelectedLocation(null);
+    }
+  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -66,55 +128,100 @@ export default function Locations() {
         </Button>
       </div>
 
-      {/* Locations Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {locations.map((location) => (
-          <Card key={location.id} className="hover:shadow-medium transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">{location.name}</CardTitle>
-                </div>
-                <Badge 
-                  variant={location.status === "Active" ? "default" : "secondary"}
-                  className={location.status === "Active" ? "bg-success text-success-foreground" : ""}
-                >
-                  {location.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="font-medium text-foreground">Address:</span>
-                  <p className="text-muted-foreground">{location.address}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-foreground">Type:</span>
-                  <p className="text-muted-foreground">{location.type}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-foreground">Coordinates:</span>
-                  <p className="text-muted-foreground font-mono text-xs">{location.coordinates}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-foreground">Personnel:</span>
-                  <p className="text-muted-foreground">{location.personnel} active</p>
-                </div>
-              </div>
-              
-              <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  View Details
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  Edit
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Locations Table */}
+      <div className="space-y-4">
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Personnel</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {locations.slice(0, rowsPerPage).map((location) => (
+                  <TableRow key={location.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <div>
+                          <div className="font-medium">{location.name}</div>
+                          <div className="text-sm text-muted-foreground">{location.type}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{location.address}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant={location.status === "Active" ? "default" : "secondary"}
+                          className={location.status === "Active" ? "bg-success text-success-foreground" : ""}
+                        >
+                          {location.status}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {location.personnel} active
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => handleEdit(location)} className="gap-2">
+                            <Edit className="h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSummary(location)} className="gap-2">
+                            <Eye className="h-4 w-4" />
+                            Summary
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleDelete(location)} 
+                            className="gap-2 text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Show</span>
+            <Select value={rowsPerPage.toString()} onValueChange={(value) => setRowsPerPage(parseInt(value))}>
+              <SelectTrigger className="w-16">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-muted-foreground">rows</span>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Showing {Math.min(rowsPerPage, locations.length)} of {locations.length} locations
+          </div>
+        </div>
       </div>
 
       {/* Summary Stats */}
@@ -144,6 +251,225 @@ export default function Locations() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Location</DialogTitle>
+            <DialogDescription>
+              Modify equipment and users assigned to {selectedLocation?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedLocation && (
+            <div className="space-y-6">
+              {/* Location Info */}
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Location Details</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label className="text-muted-foreground">Name</Label>
+                    <div className="font-medium">{selectedLocation.name}</div>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Address</Label>
+                    <div className="font-medium">{selectedLocation.address}</div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Equipment Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Wrench className="h-5 w-5" />
+                    Equipment
+                  </h3>
+                  <Button size="sm" variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Equipment
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {selectedLocation.equipment.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 border rounded">
+                      <span className="text-sm">{item}</span>
+                      <Button size="sm" variant="ghost" className="text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Users Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Assigned Users
+                  </h3>
+                  <Button size="sm" variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add User
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {selectedLocation.users.map((user, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 border rounded">
+                      <span className="text-sm">{user}</span>
+                      <Button size="sm" variant="ghost" className="text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Summary Modal */}
+      <Dialog open={summaryModalOpen} onOpenChange={setSummaryModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Location Summary</DialogTitle>
+            <DialogDescription>
+              Complete overview of {selectedLocation?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedLocation && (
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Basic Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Location Name</Label>
+                    <div className="font-medium">{selectedLocation.name}</div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Type</Label>
+                    <div className="font-medium">{selectedLocation.type}</div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Address</Label>
+                    <div className="font-medium">{selectedLocation.address}</div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Status</Label>
+                    <Badge 
+                      variant={selectedLocation.status === "Active" ? "default" : "secondary"}
+                      className={selectedLocation.status === "Active" ? "bg-success text-success-foreground" : ""}
+                    >
+                      {selectedLocation.status}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label className="text-sm text-muted-foreground">Coordinates</Label>
+                    <div className="font-mono text-sm">{selectedLocation.coordinates}</div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Assigned Admins */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Assigned Admins</h3>
+                <div className="space-y-2">
+                  {selectedLocation.admins.map((admin, index) => (
+                    <div key={index} className="flex items-center gap-3 p-2 border rounded">
+                      <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
+                        <Users className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">{admin}</div>
+                        <div className="text-xs text-muted-foreground">Location Admin</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Equipment */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Equipment ({selectedLocation.equipment.length})</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {selectedLocation.equipment.map((item, index) => (
+                    <div key={index} className="flex items-center gap-3 p-2 bg-muted/50 rounded">
+                      <Wrench className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Personnel */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Personnel ({selectedLocation.users.length})</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedLocation.users.map((user, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-muted/50 rounded">
+                      <div className="h-6 w-6 bg-primary/20 rounded-full flex items-center justify-center">
+                        <span className="text-xs font-medium text-primary">
+                          {user.split(' ').map(n => n[0]).join('')}
+                        </span>
+                      </div>
+                      <span className="text-sm">{user}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSummaryModalOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Location</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{selectedLocation?.name}</strong>? This action cannot be undone.
+              All equipment and user assignments will be removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete Location
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
