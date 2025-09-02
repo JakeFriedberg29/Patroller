@@ -34,7 +34,8 @@ const accounts = [
   {
     id: 1,
     name: "Mountain Rescue Team Alpha",
-    type: "Search & Rescue",
+    type: "Organization",
+    category: "Search & Rescue",
     members: 0,
     email: "dispatch@mrt-alpha.org",
     phone: "(555) 123-4567",
@@ -43,7 +44,8 @@ const accounts = [
   {
     id: 2,
     name: "Coastal Lifeguard Services",
-    type: "Lifeguard Service",
+    type: "Enterprise",
+    category: "Lifeguard Service",
     members: 0,
     email: "ops@coastallifeguard.org",
     phone: "(555) 987-6543",
@@ -52,7 +54,8 @@ const accounts = [
   {
     id: 3,
     name: "Wilderness Adventures Inc",
-    type: "Adventure Tourism",
+    type: "Enterprise",
+    category: "Event Medical",
     members: 0,
     email: "safety@wildadventures.com",
     phone: "(555) 456-7890",
@@ -61,7 +64,8 @@ const accounts = [
   {
     id: 4,
     name: "Coastal Lifeguard Division",
-    type: "Lifeguard Service",
+    type: "Organization",
+    category: "Lifeguard Service",
     members: 1,
     email: "operations@coastallifeguard.gov",
     phone: "(555) 987-6543",
@@ -70,7 +74,8 @@ const accounts = [
   {
     id: 5,
     name: "Mountain Ridge SAR",
-    type: "Search & Rescue",
+    type: "Organization",
+    category: "Search & Rescue",
     members: 0,
     email: "dispatch@mountainridgesar.org",
     phone: "(555) 123-4567",
@@ -79,16 +84,25 @@ const accounts = [
 ];
 
 const typeColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  "Enterprise": "default",
+  "Organization": "secondary"
+};
+
+const categoryColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   "Search & Rescue": "destructive",
   "Lifeguard Service": "default",
-  "Adventure Tourism": "secondary"
+  "Park Service": "secondary",
+  "Event Medical": "outline",
+  "Ski Patrol": "secondary",
+  "Harbor Master": "default"
 };
 
 const Accounts = () => {
   const navigate = useNavigate();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("All Types");
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState("All Types");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("All Categories");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
@@ -139,9 +153,11 @@ const Accounts = () => {
   // Filter and pagination logic
   const filteredAccounts = accounts.filter(account => {
     const matchesSearch = account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         account.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = selectedFilter === "All Types" || account.type === selectedFilter;
-    return matchesSearch && matchesFilter;
+                         account.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         account.phone.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTypeFilter = selectedTypeFilter === "All Types" || account.type === selectedTypeFilter;
+    const matchesCategoryFilter = selectedCategoryFilter === "All Categories" || account.category === selectedCategoryFilter;
+    return matchesSearch && matchesTypeFilter && matchesCategoryFilter;
   });
 
   const totalPages = Math.ceil(filteredAccounts.length / rowsPerPage);
@@ -149,6 +165,7 @@ const Accounts = () => {
   const paginatedAccounts = filteredAccounts.slice(startIndex, startIndex + rowsPerPage);
 
   const accountTypes = [...new Set(accounts.map(account => account.type))];
+  const accountCategories = [...new Set(accounts.map(account => account.category))];
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -171,13 +188,13 @@ const Accounts = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Search accounts by name or email..."
+            placeholder="Search accounts by name, email, or phone..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+        <Select value={selectedTypeFilter} onValueChange={setSelectedTypeFilter}>
           <SelectTrigger className="w-[180px]">
             <Filter className="h-4 w-4 mr-2" />
             <SelectValue />
@@ -186,6 +203,18 @@ const Accounts = () => {
             <SelectItem value="All Types">All Types</SelectItem>
             {accountTypes.map(type => (
               <SelectItem key={type} value={type}>{type}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+          <SelectTrigger className="w-[180px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All Categories">All Categories</SelectItem>
+            {accountCategories.map(category => (
+              <SelectItem key={category} value={category}>{category}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -224,8 +253,10 @@ const Accounts = () => {
                       {account.type}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {account.type}
+                  <TableCell>
+                    <Badge variant={categoryColors[account.category] || "default"}>
+                      {account.category}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
