@@ -3,21 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { 
-  Building2, 
-  Users, 
-  AlertTriangle, 
-  CheckCircle, 
-  Activity,
-  TrendingUp,
-  Settings,
-  Plus,
-  Search,
-  MapPin
-} from "lucide-react";
+import { Building2, Users, AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, Plus, Search, MapPin } from "lucide-react";
 import { MetricCard } from "@/components/ui/metric-card";
 import { useState } from "react";
-
 const mockEnterprise = {
   id: "ent-001",
   name: "MegaCorp Industries",
@@ -30,102 +18,84 @@ const mockEnterprise = {
   resolvedToday: 15,
   complianceScore: 94
 };
-
-const mockOrganizations = [
-  {
-    id: "org-001",
-    name: "MegaCorp Manufacturing",
-    location: "Detroit, MI",
-    users: 456,
-    status: "Active",
-    lastActivity: "2 hours ago",
-    type: "Manufacturing"
-  },
-  {
-    id: "org-002", 
-    name: "MegaCorp Logistics",
-    location: "Atlanta, GA",
-    users: 203,
-    status: "Active",
-    lastActivity: "30 minutes ago",
-    type: "Logistics"
-  },
-  {
-    id: "org-003",
-    name: "MegaCorp R&D",
-    location: "San Francisco, CA", 
-    users: 189,
-    status: "Active",
-    lastActivity: "1 hour ago",
-    type: "Research"
-  },
-  {
-    id: "org-004",
-    name: "MegaCorp Energy",
-    location: "Houston, TX",
-    users: 334,
-    status: "Warning",
-    lastActivity: "5 hours ago",
-    type: "Energy"
-  }
-];
+const mockOrganizations = [{
+  id: "org-001",
+  name: "MegaCorp Manufacturing",
+  location: "Detroit, MI",
+  users: 456,
+  status: "Active",
+  lastActivity: "2 hours ago",
+  type: "Manufacturing"
+}, {
+  id: "org-002",
+  name: "MegaCorp Logistics",
+  location: "Atlanta, GA",
+  users: 203,
+  status: "Active",
+  lastActivity: "30 minutes ago",
+  type: "Logistics"
+}, {
+  id: "org-003",
+  name: "MegaCorp R&D",
+  location: "San Francisco, CA",
+  users: 189,
+  status: "Active",
+  lastActivity: "1 hour ago",
+  type: "Research"
+}, {
+  id: "org-004",
+  name: "MegaCorp Energy",
+  location: "Houston, TX",
+  users: 334,
+  status: "Warning",
+  lastActivity: "5 hours ago",
+  type: "Energy"
+}];
 
 // Available organizations that can be added to the enterprise
-const availableOrganizations = [
-  {
-    id: "org-005",
-    name: "City Emergency Response",
-    location: "New York, NY",
-    users: 89,
-    type: "Search & Rescue",
-    description: "Urban emergency response and rescue operations"
-  },
-  {
-    id: "org-006",
-    name: "Coastal Lifeguard Services",
-    location: "Miami, FL",
-    users: 156,
-    type: "Lifeguard Service",
-    description: "Beach and coastal water safety operations"
-  },
-  {
-    id: "org-007",
-    name: "Mountain Rescue Team",
-    location: "Denver, CO",
-    users: 67,
-    type: "Search & Rescue",
-    description: "High altitude and wilderness rescue operations"
-  },
-  {
-    id: "org-008",
-    name: "Park Emergency Services",
-    location: "Sacramento, CA",
-    users: 134,
-    type: "Park Service",
-    description: "National and state park emergency services"
-  },
-  {
-    id: "org-009",
-    name: "Event Medical Response",
-    location: "Las Vegas, NV",
-    users: 78,
-    type: "Event Medical",
-    description: "Large event and concert medical support"
-  }
-];
-
+const availableOrganizations = [{
+  id: "org-005",
+  name: "City Emergency Response",
+  location: "New York, NY",
+  users: 89,
+  type: "Search & Rescue",
+  description: "Urban emergency response and rescue operations"
+}, {
+  id: "org-006",
+  name: "Coastal Lifeguard Services",
+  location: "Miami, FL",
+  users: 156,
+  type: "Lifeguard Service",
+  description: "Beach and coastal water safety operations"
+}, {
+  id: "org-007",
+  name: "Mountain Rescue Team",
+  location: "Denver, CO",
+  users: 67,
+  type: "Search & Rescue",
+  description: "High altitude and wilderness rescue operations"
+}, {
+  id: "org-008",
+  name: "Park Emergency Services",
+  location: "Sacramento, CA",
+  users: 134,
+  type: "Park Service",
+  description: "National and state park emergency services"
+}, {
+  id: "org-009",
+  name: "Event Medical Response",
+  location: "Las Vegas, NV",
+  users: 78,
+  type: "Event Medical",
+  description: "Large event and concert medical support"
+}];
 export default function EnterpriseView() {
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [organizations, setOrganizations] = useState(mockOrganizations);
 
   // Filter available organizations based on search term
-  const filteredOrganizations = availableOrganizations.filter(org =>
-    org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  const filteredOrganizations = availableOrganizations.filter(org => org.name.toLowerCase().includes(searchTerm.toLowerCase()) || org.location.toLowerCase().includes(searchTerm.toLowerCase()) || org.type.toLowerCase().includes(searchTerm.toLowerCase()));
   const handleAddOrganization = (org: typeof availableOrganizations[0]) => {
     const newOrg = {
       ...org,
@@ -136,8 +106,7 @@ export default function EnterpriseView() {
     setIsAddOrgModalOpen(false);
     setSearchTerm("");
   };
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
@@ -146,51 +115,16 @@ export default function EnterpriseView() {
           </h1>
           <p className="text-muted-foreground">{mockEnterprise.description}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge variant={mockEnterprise.status === 'Active' ? 'default' : 'secondary'}>
-            {mockEnterprise.status}
-          </Badge>
-          <Button>
-            <Settings className="mr-2 h-4 w-4" />
-            Manage Enterprise
-          </Button>
-        </div>
+        
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <MetricCard
-          title="Organizations"
-          value={mockEnterprise.totalOrganizations.toString()}
-          description="Active organizations"
-          icon={Building2}
-        />
-        <MetricCard
-          title="Total Users"
-          value={mockEnterprise.totalUsers.toLocaleString()}
-          description="Across all organizations"
-          icon={Users}
-        />
-        <MetricCard
-          title="Active Incidents"
-          value={mockEnterprise.activeIncidents.toString()}
-          description="Requiring attention"
-          icon={AlertTriangle}
-          variant="critical"
-        />
-        <MetricCard
-          title="Resolved Today"
-          value={mockEnterprise.resolvedToday.toString()}
-          description="Incidents closed"
-          icon={CheckCircle}
-          variant="success"
-        />
-        <MetricCard
-          title="Compliance Score"
-          value={`${mockEnterprise.complianceScore}%`}
-          description="Overall compliance"
-          icon={TrendingUp}
-        />
+        <MetricCard title="Organizations" value={mockEnterprise.totalOrganizations.toString()} description="Active organizations" icon={Building2} />
+        <MetricCard title="Total Users" value={mockEnterprise.totalUsers.toLocaleString()} description="Across all organizations" icon={Users} />
+        <MetricCard title="Active Incidents" value={mockEnterprise.activeIncidents.toString()} description="Requiring attention" icon={AlertTriangle} variant="critical" />
+        <MetricCard title="Resolved Today" value={mockEnterprise.resolvedToday.toString()} description="Incidents closed" icon={CheckCircle} variant="success" />
+        <MetricCard title="Compliance Score" value={`${mockEnterprise.complianceScore}%`} description="Overall compliance" icon={TrendingUp} />
       </div>
 
       {/* Organizations Overview */}
@@ -219,19 +153,12 @@ export default function EnterpriseView() {
                 {/* Search Bar */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search organizations by name, location, or type..."
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                  <Input placeholder="Search organizations by name, location, or type..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                 </div>
 
                 {/* Search Results */}
                 <div className="space-y-3">
-                  {filteredOrganizations.length > 0 ? (
-                    filteredOrganizations.map((org) => (
-                      <div key={org.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  {filteredOrganizations.length > 0 ? filteredOrganizations.map(org => <div key={org.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -255,23 +182,16 @@ export default function EnterpriseView() {
                             <span className="text-sm text-muted-foreground">{org.users} users</span>
                           </div>
                         </div>
-                        <Button 
-                          onClick={() => handleAddOrganization(org)}
-                          className="ml-4"
-                        >
+                        <Button onClick={() => handleAddOrganization(org)} className="ml-4">
                           Add to Enterprise
                         </Button>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-12">
+                      </div>) : <div className="text-center py-12">
                       <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <h3 className="text-lg font-semibold mb-2">No organizations found</h3>
                       <p className="text-muted-foreground">
                         {searchTerm ? "Try adjusting your search terms." : "No organizations available to add."}
                       </p>
-                    </div>
-                  )}
+                    </div>}
                 </div>
               </div>
             </DialogContent>
@@ -279,8 +199,7 @@ export default function EnterpriseView() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {organizations.map((org) => (
-              <div key={org.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+            {organizations.map(org => <div key={org.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
                     <h3 className="font-semibold">{org.name}</h3>
@@ -294,15 +213,12 @@ export default function EnterpriseView() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Activity className={`h-4 w-4 ${
-                    org.status === 'Active' ? 'text-green-500' : 'text-yellow-500'
-                  }`} />
+                  <Activity className={`h-4 w-4 ${org.status === 'Active' ? 'text-green-500' : 'text-yellow-500'}`} />
                   <Button variant="outline" size="sm">
                     View Details
                   </Button>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </CardContent>
       </Card>
@@ -339,6 +255,5 @@ export default function EnterpriseView() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
