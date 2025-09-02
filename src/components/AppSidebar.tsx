@@ -73,7 +73,7 @@ export function AppSidebar() {
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive 
       ? "bg-sidebar-accent text-sidebar-primary font-medium transition-all duration-200 hover:scale-105" 
-      : "text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105";
+      : "text-white hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105";
 
   return (
     <Sidebar
