@@ -64,18 +64,16 @@ export function AppSidebar() {
   const isInOrganization = currentPath.includes('/accounts/') && currentPath.split('/').length > 2;
 
   const isActive = (path: string) => {
-    const active = isInOrganization ? currentPath.includes(path) : currentPath === path;
-    console.log(`Path: ${path}, Current: ${currentPath}, Active: ${active}, InOrg: ${isInOrganization}`);
-    return active;
+    if (isInOrganization) {
+      return currentPath.includes(path);
+    }
+    return currentPath === path;
   };
   
-  const getNavCls = ({ isActive }: { isActive: boolean }) => {
-    const classes = isActive 
-      ? "bg-sidebar-accent text-sidebar-primary font-medium transition-all duration-200 hover:scale-105" 
-      : "text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105";
-    console.log(`Nav classes for active=${isActive}:`, classes);
-    return classes;
-  };
+  const getNavCls = ({ isActive }: { isActive: boolean }) =>
+    isActive 
+      ? "bg-sidebar-accent text-blue-500 font-medium transition-all duration-200 hover:scale-105" 
+      : "text-white hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105";
 
   return (
     <Sidebar
@@ -104,7 +102,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
-                      <NavLink to="/accounts" className="text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105">
+                      <NavLink to="/accounts" className="text-white hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105">
                         <ArrowLeft className="mr-3 h-4 w-4" />
                         {!isCollapsed && <span>Back to Accounts</span>}
                       </NavLink>
