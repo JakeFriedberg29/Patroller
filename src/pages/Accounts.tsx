@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Building2, Mail, Phone, Users, Filter } from "lucide-react";
+import { Plus, Search, Building2, Mail, Phone, Users, Filter, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const accounts = [
@@ -287,7 +287,7 @@ const Accounts = () => {
                       size="sm"
                       onClick={() => handleViewAccount(account.id)}
                     >
-                      View
+                      <ChevronRight className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
