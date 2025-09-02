@@ -116,7 +116,7 @@ export function AppSidebar() {
             <div>
               <h2 className="text-lg font-bold text-sidebar-foreground">MissionLog</h2>
               <p className="text-xs text-sidebar-foreground/70">
-                {isInEnterprise ? 'Enterprise View' : isInOrganization ? 'Organization View' : 'Platform Console'}
+                {isInEnterprise ? 'Enterprise View' : isInOrganization ? 'Organization View' : 'Platform View'}
               </p>
             </div>
           )}
