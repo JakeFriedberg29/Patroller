@@ -292,7 +292,7 @@ export default function PlatformAdmins() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="flex justify-between mt-6">
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
             </Button>

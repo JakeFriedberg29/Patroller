@@ -8,7 +8,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -475,14 +474,14 @@ const Accounts = () => {
             </div>
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-between">
             <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleSubmit}>
               Create Account
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

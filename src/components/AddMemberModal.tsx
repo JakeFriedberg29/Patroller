@@ -275,7 +275,7 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
               )}
             />
 
-            <div className="flex justify-end space-x-4 pt-4">
+            <div className="flex justify-between pt-4">
               <Button
                 type="button"
                 variant="outline"
