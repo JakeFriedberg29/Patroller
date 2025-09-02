@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { 
   Building2, 
   Users, 
@@ -9,9 +11,12 @@ import {
   Activity,
   TrendingUp,
   Settings,
-  Plus
+  Plus,
+  Search,
+  MapPin
 } from "lucide-react";
 import { MetricCard } from "@/components/ui/metric-card";
+import { useState } from "react";
 
 const mockEnterprise = {
   id: "ent-001",
@@ -65,7 +70,72 @@ const mockOrganizations = [
   }
 ];
 
+// Available organizations that can be added to the enterprise
+const availableOrganizations = [
+  {
+    id: "org-005",
+    name: "City Emergency Response",
+    location: "New York, NY",
+    users: 89,
+    type: "Search & Rescue",
+    description: "Urban emergency response and rescue operations"
+  },
+  {
+    id: "org-006",
+    name: "Coastal Lifeguard Services",
+    location: "Miami, FL",
+    users: 156,
+    type: "Lifeguard Service",
+    description: "Beach and coastal water safety operations"
+  },
+  {
+    id: "org-007",
+    name: "Mountain Rescue Team",
+    location: "Denver, CO",
+    users: 67,
+    type: "Search & Rescue",
+    description: "High altitude and wilderness rescue operations"
+  },
+  {
+    id: "org-008",
+    name: "Park Emergency Services",
+    location: "Sacramento, CA",
+    users: 134,
+    type: "Park Service",
+    description: "National and state park emergency services"
+  },
+  {
+    id: "org-009",
+    name: "Event Medical Response",
+    location: "Las Vegas, NV",
+    users: 78,
+    type: "Event Medical",
+    description: "Large event and concert medical support"
+  }
+];
+
 export default function EnterpriseView() {
+  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [organizations, setOrganizations] = useState(mockOrganizations);
+
+  // Filter available organizations based on search term
+  const filteredOrganizations = availableOrganizations.filter(org =>
+    org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    org.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    org.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAddOrganization = (org: typeof availableOrganizations[0]) => {
+    const newOrg = {
+      ...org,
+      status: "Active" as const,
+      lastActivity: "Just added"
+    };
+    setOrganizations([...organizations, newOrg]);
+    setIsAddOrgModalOpen(false);
+    setSearchTerm("");
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -130,14 +200,86 @@ export default function EnterpriseView() {
             <Building2 className="h-5 w-5" />
             Organizations Overview
           </CardTitle>
-          <Button variant="outline" size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Organization
-          </Button>
+          <Dialog open={isAddOrgModalOpen} onOpenChange={setIsAddOrgModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Organization
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Add Organization to Enterprise
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search organizations by name, location, or type..."
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                {/* Search Results */}
+                <div className="space-y-3">
+                  {filteredOrganizations.length > 0 ? (
+                    filteredOrganizations.map((org) => (
+                      <div key={org.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                              <Building2 className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold">{org.name}</h3>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <MapPin className="h-3 w-3" />
+                                <span>{org.location}</span>
+                                <span>•</span>
+                                <span>{org.type}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground ml-11">
+                            {org.description}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2 ml-11">
+                            <Users className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">{org.users} users</span>
+                          </div>
+                        </div>
+                        <Button 
+                          onClick={() => handleAddOrganization(org)}
+                          className="ml-4"
+                        >
+                          Add to Enterprise
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No organizations found</h3>
+                      <p className="text-muted-foreground">
+                        {searchTerm ? "Try adjusting your search terms." : "No organizations available to add."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockOrganizations.map((org) => (
+            {organizations.map((org) => (
               <div key={org.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
