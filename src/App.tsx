@@ -17,6 +17,7 @@ import Locations from "./pages/Locations";
 import Equipment from "./pages/Equipment";
 import OrganizationReports from "./pages/OrganizationReports";
 import OrganizationLogs from "./pages/OrganizationLogs";
+import CreateReport from "./pages/CreateReport";
 import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/accounts/:id/team-directory" element={<TeamDirectory />} />
             <Route path="/accounts/:id/locations" element={<Locations />} />
           <Route path="/accounts/:id/equipment" element={<Equipment />} />
+          <Route path="/accounts/:id/reports/create/:templateId" element={<CreateReport />} />
           <Route path="/accounts/:id/reports" element={<OrganizationReports />} />
           <Route path="/accounts/:id/logs" element={<OrganizationLogs />} />
           <Route path="/accounts/:id/settings" element={<Settings />} />

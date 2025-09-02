@@ -10,7 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, BarChart3, FileIcon, Upload } from "lucide-react";
+import { FileText, BarChart3, FileIcon, Upload, Download, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const reportTemplates = [
   {
@@ -67,6 +68,25 @@ const reportTemplates = [
 
 export default function OrganizationReports() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
+  const handleDownloadTemplate = (template: typeof reportTemplates[0]) => {
+    // Create a simple Word document template download
+    const content = `${template.name}\n\n${template.description}\n\n[Template fields would be here]`;
+    const blob = new Blob([content], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${template.name.replace(/\s+/g, '_')}_Template.docx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCreateReport = (template: typeof reportTemplates[0]) => {
+    navigate(`/accounts/${id}/reports/create/${template.id}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -116,9 +136,26 @@ export default function OrganizationReports() {
                         {template.description}
                       </TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm">
-                          View More
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-2"
+                            onClick={() => handleDownloadTemplate(template)}
+                          >
+                            <Download className="h-4 w-4" />
+                            Download Template
+                          </Button>
+                          <Button 
+                            variant="default" 
+                            size="sm" 
+                            className="gap-2"
+                            onClick={() => handleCreateReport(template)}
+                          >
+                            <Plus className="h-4 w-4" />
+                            Create Report
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
