@@ -10,8 +10,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, BarChart3, FileIcon, Upload, Download, Plus } from "lucide-react";
+import { FileText, BarChart3, FileIcon, Upload, Download, Plus, MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const reportTemplates = [
   {
@@ -136,26 +137,24 @@ export default function OrganizationReports() {
                         {template.description}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="gap-2"
-                            onClick={() => handleDownloadTemplate(template)}
-                          >
-                            <Download className="h-4 w-4" />
-                            Download Template
-                          </Button>
-                          <Button 
-                            variant="default" 
-                            size="sm" 
-                            className="gap-2"
-                            onClick={() => handleCreateReport(template)}
-                          >
-                            <Plus className="h-4 w-4" />
-                            Create Report
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem onClick={() => handleDownloadTemplate(template)}>
+                              <Download className="mr-2 h-4 w-4" />
+                              Download Template
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleCreateReport(template)}>
+                              <Plus className="mr-2 h-4 w-4" />
+                              Create Report
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
