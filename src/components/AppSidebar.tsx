@@ -64,16 +64,18 @@ export function AppSidebar() {
   const isInOrganization = currentPath.includes('/accounts/') && currentPath.split('/').length > 2;
 
   const isActive = (path: string) => {
-    if (isInOrganization) {
-      return currentPath.includes(path);
-    }
-    return currentPath === path;
+    const active = isInOrganization ? currentPath.includes(path) : currentPath === path;
+    console.log(`Path: ${path}, Current: ${currentPath}, Active: ${active}, InOrg: ${isInOrganization}`);
+    return active;
   };
   
-  const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive 
+  const getNavCls = ({ isActive }: { isActive: boolean }) => {
+    const classes = isActive 
       ? "bg-sidebar-accent text-sidebar-primary font-medium transition-all duration-200 hover:scale-105" 
       : "text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200 hover:scale-105";
+    console.log(`Nav classes for active=${isActive}:`, classes);
+    return classes;
+  };
 
   return (
     <Sidebar
