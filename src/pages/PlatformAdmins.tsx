@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Search, Send, ChevronRight, X, Filter } from "lucide-react";
+import { Plus, Search, Send, MoreHorizontal, X, Filter } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -146,7 +147,7 @@ export default function PlatformAdmins() {
                 <TableHead className="font-semibold">Role</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Contact</TableHead>
-                <TableHead className="font-semibold">Actions</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -179,9 +180,18 @@ export default function PlatformAdmins() {
                     {admin.phone && <div className="text-sm">{admin.phone}</div>}
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuItem>Edit Admin</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>)}
             </TableBody>

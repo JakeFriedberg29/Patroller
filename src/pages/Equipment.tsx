@@ -19,7 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package, Plus, Search, Calendar, MapPin, Filter } from "lucide-react";
+import { Package, Plus, Search, Calendar, MapPin, Filter, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const mockEquipment = [
   {
@@ -144,7 +145,7 @@ export default function Equipment() {
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Location</TableHead>
                 <TableHead className="font-semibold">Maintenance</TableHead>
-                <TableHead className="font-semibold">Actions</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -183,9 +184,18 @@ export default function Equipment() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">
-                      Edit
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>Edit Equipment</DropdownMenuItem>
+                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

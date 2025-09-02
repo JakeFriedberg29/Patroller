@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, AlertTriangle, Heart, Flame, Users, Truck, Shield, UserX, FileSpreadsheet, Scale } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { FileText, AlertTriangle, Heart, Flame, Users, Truck, Shield, UserX, FileSpreadsheet, Scale, MoreHorizontal } from "lucide-react";
 
 const reportTemplates = [
   {
@@ -92,7 +93,7 @@ const Reports = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -110,9 +111,18 @@ const Reports = () => {
                       {template.description}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
-                        View More
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>View Template</DropdownMenuItem>
+                          <DropdownMenuItem>Download</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
