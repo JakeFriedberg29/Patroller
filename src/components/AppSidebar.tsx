@@ -115,7 +115,9 @@ export function AppSidebar() {
           {!isCollapsed && (
             <div>
               <h2 className="text-lg font-bold text-sidebar-foreground">MissionLog</h2>
-              <p className="text-xs text-sidebar-foreground/70">Platform Console</p>
+              <p className="text-xs text-sidebar-foreground/70">
+                {isInEnterprise ? 'Enterprise View' : isInOrganization ? 'Organization View' : 'Platform Console'}
+              </p>
             </div>
           )}
         </div>
