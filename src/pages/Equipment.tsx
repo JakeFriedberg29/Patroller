@@ -4,6 +4,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -19,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package, Plus, Search, Calendar, MapPin, Filter, MoreHorizontal } from "lucide-react";
+import { Package, Plus, Search, Calendar as CalendarIcon2, MapPin, Filter, MoreHorizontal } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const mockEquipment = [
@@ -67,6 +76,49 @@ export default function Equipment() {
   const [selectedFilter, setSelectedFilter] = useState("All Status");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const { toast } = useToast();
+
+  const [newEquipment, setNewEquipment] = useState({
+    name: "",
+    type: "",
+    status: "Available",
+    location: "",
+    description: "",
+    serialNumber: "",
+    purchaseDate: undefined as Date | undefined,
+    lastMaintenance: undefined as Date | undefined,
+    nextMaintenance: undefined as Date | undefined,
+  });
+
+  const equipmentTypes = ["Watercraft", "Vehicle", "Medical", "Rescue Gear", "Communication", "Safety", "Tools"];
+  const statusTypes = ["Available", "In Use", "Maintenance", "Out of Service"];
+  const locations = ["Dock A", "Dock B", "Base Station", "Medical Bay", "Equipment Room", "Field Office"];
+
+  const resetNewEquipment = () => {
+    setNewEquipment({
+      name: "",
+      type: "",
+      status: "Available",
+      location: "",
+      description: "",
+      serialNumber: "",
+      purchaseDate: undefined,
+      lastMaintenance: undefined,
+      nextMaintenance: undefined,
+    });
+  };
+
+  const handleAddEquipment = () => {
+    if (newEquipment.name && newEquipment.type && newEquipment.location) {
+      toast({
+        title: "Equipment added",
+        description: `${newEquipment.name} has been successfully added to the inventory.`,
+      });
+      setAddModalOpen(false);
+      resetNewEquipment();
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -103,7 +155,7 @@ export default function Equipment() {
             <p className="text-muted-foreground">Track and manage equipment inventory</p>
           </div>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setAddModalOpen(true)}>
           <Plus className="h-4 w-4" />
           Add Equipment
         </Button>
@@ -174,11 +226,11 @@ export default function Equipment() {
                   <TableCell>
                     <div className="space-y-1">
                       <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        <CalendarIcon2 className="h-3 w-3 text-muted-foreground" />
                         <span>Last: {item.lastMaintenance}</span>
                       </div>
                       <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        <CalendarIcon2 className="h-3 w-3 text-muted-foreground" />
                         <span>Next: {item.nextMaintenance}</span>
                       </div>
                     </div>
@@ -247,6 +299,203 @@ export default function Equipment() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Equipment Modal */}
+      <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Equipment</DialogTitle>
+            <DialogDescription>
+              Enter the details for the new equipment item
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Equipment Name *</Label>
+                  <Input
+                    id="name"
+                    value={newEquipment.name}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter equipment name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="type">Type *</Label>
+                  <Select 
+                    value={newEquipment.type} 
+                    onValueChange={(value) => setNewEquipment(prev => ({ ...prev, type: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select equipment type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {equipmentTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select 
+                    value={newEquipment.status} 
+                    onValueChange={(value) => setNewEquipment(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusTypes.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location *</Label>
+                  <Select 
+                    value={newEquipment.location} 
+                    onValueChange={(value) => setNewEquipment(prev => ({ ...prev, location: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map(location => (
+                        <SelectItem key={location} value={location}>{location}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="serialNumber">Serial Number</Label>
+                  <Input
+                    id="serialNumber"
+                    value={newEquipment.serialNumber}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, serialNumber: e.target.value }))}
+                    placeholder="Enter serial number"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={newEquipment.description}
+                onChange={(e) => setNewEquipment(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter equipment description"
+                rows={3}
+              />
+            </div>
+
+            {/* Dates */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Important Dates</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Purchase Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !newEquipment.purchaseDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {newEquipment.purchaseDate ? format(newEquipment.purchaseDate, "PPP") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={newEquipment.purchaseDate}
+                        onSelect={(date) => setNewEquipment(prev => ({ ...prev, purchaseDate: date }))}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-2">
+                  <Label>Last Maintenance</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !newEquipment.lastMaintenance && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {newEquipment.lastMaintenance ? format(newEquipment.lastMaintenance, "PPP") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={newEquipment.lastMaintenance}
+                        onSelect={(date) => setNewEquipment(prev => ({ ...prev, lastMaintenance: date }))}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-2">
+                  <Label>Next Maintenance</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !newEquipment.nextMaintenance && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {newEquipment.nextMaintenance ? format(newEquipment.nextMaintenance, "PPP") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={newEquipment.nextMaintenance}
+                        onSelect={(date) => setNewEquipment(prev => ({ ...prev, nextMaintenance: date }))}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => {
+              setAddModalOpen(false);
+              resetNewEquipment();
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddEquipment}>
+              Add Equipment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
