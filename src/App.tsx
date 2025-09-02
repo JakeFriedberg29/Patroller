@@ -52,6 +52,7 @@ const App = () => (
             <Route path="/enterprises/:id/enterprise-admins" element={<EnterpriseAdmins />} />
             <Route path="/enterprises/:id/notifications" element={<EnterpriseNotificationCenter />} />
             <Route path="/enterprises/:id/logs" element={<EnterpriseLogs />} />
+            <Route path="/enterprises/:id/settings" element={<Settings />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/admins" element={<PlatformAdmins />} />
             <Route path="/logs" element={<Logs />} />

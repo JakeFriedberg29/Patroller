@@ -50,6 +50,7 @@ const enterpriseItems = [
   { title: "Enterprise Admins", url: "/enterprise-admins", icon: Shield },
   { title: "Notification Center", url: "/notifications", icon: Bell },
   { title: "Logs", url: "/logs", icon: BarChart3 },
+  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const organizationItems = [
