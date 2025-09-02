@@ -7,22 +7,26 @@ interface MetricCardProps {
   value: string | number;
   description: string;
   icon: LucideIcon;
-  variant?: 'critical' | 'warning' | 'success' | 'info';
+  variant?: 'critical' | 'warning' | 'success' | 'info' | 'neutral';
   className?: string;
+  changePercent?: number;
+  changePeriod?: string;
 }
 
 const variantStyles = {
   critical: "border-critical/20 bg-critical-bg",
   warning: "border-warning/20 bg-warning-bg", 
   success: "border-success/20 bg-success-bg",
-  info: "border-info/20 bg-info-bg"
+  info: "border-info/20 bg-info-bg",
+  neutral: "border-border bg-card"
 };
 
 const iconStyles = {
   critical: "text-critical",
   warning: "text-warning",
   success: "text-success", 
-  info: "text-info"
+  info: "text-info",
+  neutral: "text-muted-foreground"
 };
 
 export function MetricCard({ 
@@ -30,8 +34,10 @@ export function MetricCard({
   value, 
   description, 
   icon: Icon, 
-  variant = 'info',
-  className 
+  variant = 'neutral',
+  className,
+  changePercent,
+  changePeriod
 }: MetricCardProps) {
   return (
     <Card className={cn(
@@ -50,6 +56,14 @@ export function MetricCard({
               <div className="text-3xl font-bold text-foreground">{value}</div>
             </div>
             <p className="text-sm text-muted-foreground">{description}</p>
+            {changePercent !== undefined && changePeriod && (
+              <div className="flex items-center gap-1 mt-2">
+                <span className={`text-xs font-medium ${changePercent >= 0 ? 'text-success' : 'text-critical'}`}>
+                  {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(1)}%
+                </span>
+                <span className="text-xs text-muted-foreground">vs last {changePeriod}</span>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
