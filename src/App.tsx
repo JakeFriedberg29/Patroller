@@ -13,6 +13,7 @@ import Logs from "./pages/Logs";
 import NotFound from "./pages/NotFound";
 import MissionControl from "./pages/MissionControl";
 import TeamDirectory from "./pages/TeamDirectory";
+import Locations from "./pages/Locations";
 import Equipment from "./pages/Equipment";
 import OrganizationReports from "./pages/OrganizationReports";
 import OrganizationLogs from "./pages/OrganizationLogs";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/accounts/:id" element={<AccountDetail />} />
             <Route path="/accounts/:id/mission-control" element={<MissionControl />} />
             <Route path="/accounts/:id/team-directory" element={<TeamDirectory />} />
+            <Route path="/accounts/:id/locations" element={<Locations />} />
           <Route path="/accounts/:id/equipment" element={<Equipment />} />
           <Route path="/accounts/:id/reports" element={<OrganizationReports />} />
           <Route path="/accounts/:id/logs" element={<OrganizationLogs />} />
