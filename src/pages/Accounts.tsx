@@ -122,7 +122,7 @@ const Accounts = () => {
   const handleViewAccount = (accountId: number) => {
     const account = accounts.find(acc => acc.id === accountId);
     if (account?.type === "Enterprise") {
-      navigate(`/accounts/${accountId}/enterprise-view`);
+      navigate(`/enterprises/${accountId}/enterprise-view`);
     } else {
       navigate(`/accounts/${accountId}/mission-control`);
     }
