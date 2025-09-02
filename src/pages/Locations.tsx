@@ -1,4 +1,4 @@
-import { MapPin, Plus, Search, Filter, MoreVertical, Edit, Eye, Trash2, Users, Wrench } from "lucide-react";
+import { MapPin, Plus, Search, Filter, MoreVertical, Edit, Eye, Trash2, Users, Wrench, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,6 +22,7 @@ const locations = [
     name: "Downtown Command Center",
     address: "123 Main St, Downtown",
     type: "Command Center",
+    organizationType: "Search & Rescue",
     status: "Active",
     coordinates: "40.7128° N, 74.0060° W",
     personnel: 12,
@@ -32,6 +35,7 @@ const locations = [
     name: "North District Station",
     address: "456 Oak Ave, North District",
     type: "Field Station",
+    organizationType: "Lifeguard Service",
     status: "Active",
     coordinates: "40.7589° N, 73.9851° W",
     personnel: 8,
@@ -44,6 +48,7 @@ const locations = [
     name: "Emergency Response Depot",
     address: "789 Pine Rd, Industrial Zone",
     type: "Supply Depot",
+    organizationType: "Park Service",
     status: "Maintenance",
     coordinates: "40.6782° N, 73.9442° W",
     personnel: 4,
@@ -53,13 +58,108 @@ const locations = [
   },
 ];
 
+// Predefined equipment mappings based on organization type
+const equipmentMappings = {
+  "Search & Rescue": {
+    "Core Equipment": [
+      "Ropes", "Harnesses", "Helmets", "Carabiners", "Headlamps", 
+      "GPS", "Survival kits", "Stretchers"
+    ],
+    "Medical Gear": [
+      "First aid kits", "Trauma kits", "AEDs"
+    ],
+    "Comms / Tech": [
+      "Radios", "Satellite phones", "GPS beacons", "Drones"
+    ],
+    "Transport / Other": [
+      "Rescue vehicles", "Boats", "ATVs", "K9 units"
+    ]
+  },
+  "Lifeguard Service": {
+    "Core Equipment": [
+      "Rescue tubes", "Rescue cans", "Fins", "Masks/snorkels", 
+      "Whistles", "Umbrellas", "Binoculars"
+    ],
+    "Medical Gear": [
+      "First aid kits", "Oxygen", "AEDs", "Spinal boards"
+    ],
+    "Comms / Tech": [
+      "Radios", "Whistles", "Public address systems"
+    ],
+    "Transport / Other": [
+      "Rescue boards", "Jet skis", "Boats", "Towers"
+    ]
+  },
+  "Park Service": {
+    "Core Equipment": [
+      "Maps", "Compasses", "Hiking gear", "Binoculars", 
+      "Wildlife deterrents", "Flashlights"
+    ],
+    "Medical Gear": [
+      "First aid kits", "Trauma kits"
+    ],
+    "Comms / Tech": [
+      "Radios", "GPS", "Mobile apps"
+    ],
+    "Transport / Other": [
+      "Patrol vehicles", "ATVs", "Horses (sometimes)"
+    ]
+  },
+  "Event Medical": {
+    "Core Equipment": [
+      "Tents", "Cots", "Wheelchairs", "Shade structures", "Signage"
+    ],
+    "Medical Gear": [
+      "Trauma kits", "First aid kits", "AEDs", "Oxygen", "Splints"
+    ],
+    "Comms / Tech": [
+      "Radios", "Tablets for logging", "Public address"
+    ],
+    "Transport / Other": [
+      "Golf carts", "Stretchers", "Ambulances (partnered)"
+    ]
+  },
+  "Ski Patrol": {
+    "Core Equipment": [
+      "Rescue toboggans", "Shovels", "Avalanche probes", 
+      "Snowmobiles", "Skis/snowboards"
+    ],
+    "Medical Gear": [
+      "Trauma packs", "Oxygen", "AEDs", "Splints", "Spine boards"
+    ],
+    "Comms / Tech": [
+      "Radios", "GPS", "Avalanche beacons"
+    ],
+    "Transport / Other": [
+      "Snowmobiles", "ATVs", "Helicopters (sometimes)"
+    ]
+  },
+  "Harbor Master": {
+    "Core Equipment": [
+      "Life vests", "Buoys", "Ropes", "Flares", 
+      "Firefighting equipment", "Binoculars"
+    ],
+    "Medical Gear": [
+      "First aid kits", "Trauma gear", "AEDs"
+    ],
+    "Comms / Tech": [
+      "Marine radios (VHF)", "Radar", "GPS"
+    ],
+    "Transport / Other": [
+      "Patrol boats", "Docks", "Vehicles", "Cranes/lifts (ports)"
+    ]
+  }
+};
+
 export default function Locations() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [equipmentModalOpen, setEquipmentModalOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<typeof locations[0] | null>(null);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedEquipment, setSelectedEquipment] = useState<{[key: string]: string[]}>({});
   const { toast } = useToast();
 
   const [newLocation, setNewLocation] = useState({
@@ -176,6 +276,37 @@ export default function Locations() {
       ...prev,
       users: prev.users.filter((_, i) => i !== index)
     }));
+  };
+
+  // Equipment assignment handlers
+  const openEquipmentAssignment = (location: typeof locations[0]) => {
+    setSelectedLocation(location);
+    setSelectedEquipment({});
+    setEquipmentModalOpen(true);
+  };
+
+  const handleEquipmentSelection = (category: string, equipment: string, checked: boolean) => {
+    setSelectedEquipment(prev => {
+      const categoryEquipment = prev[category] || [];
+      if (checked) {
+        return { ...prev, [category]: [...categoryEquipment, equipment] };
+      } else {
+        return { ...prev, [category]: categoryEquipment.filter(item => item !== equipment) };
+      }
+    });
+  };
+
+  const assignSelectedEquipment = () => {
+    if (selectedLocation && Object.keys(selectedEquipment).length > 0) {
+      const allSelectedEquipment = Object.values(selectedEquipment).flat();
+      toast({
+        title: "Equipment assigned",
+        description: `${allSelectedEquipment.length} equipment items have been assigned to ${selectedLocation.name}.`,
+      });
+      setEquipmentModalOpen(false);
+      setSelectedEquipment({});
+      setSelectedLocation(null);
+    }
   };
   return (
     <div className="space-y-6">
@@ -368,7 +499,7 @@ export default function Locations() {
                     <Wrench className="h-5 w-5" />
                     Equipment
                   </h3>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={() => openEquipmentAssignment(selectedLocation)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Equipment
                   </Button>
@@ -744,6 +875,91 @@ export default function Locations() {
             </Button>
             <Button onClick={handleAddLocation} disabled={!newLocation.name || !newLocation.address || !newLocation.type}>
               Add Location
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Equipment Assignment Modal */}
+      <Dialog open={equipmentModalOpen} onOpenChange={setEquipmentModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Assign Equipment to {selectedLocation?.name}</DialogTitle>
+            <DialogDescription>
+              Select equipment from predefined categories based on organization type: {selectedLocation?.organizationType}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedLocation && selectedLocation.organizationType && equipmentMappings[selectedLocation.organizationType as keyof typeof equipmentMappings] && (
+            <div className="space-y-4">
+              <Tabs defaultValue="Core Equipment" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  {Object.keys(equipmentMappings[selectedLocation.organizationType as keyof typeof equipmentMappings]).map((category) => (
+                    <TabsTrigger key={category} value={category} className="text-xs">
+                      {category}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                {Object.entries(equipmentMappings[selectedLocation.organizationType as keyof typeof equipmentMappings]).map(([category, items]) => (
+                  <TabsContent key={category} value={category} className="space-y-4">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-3 flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        {category}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {items.map((equipment) => (
+                          <div key={equipment} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`${category}-${equipment}`}
+                              checked={selectedEquipment[category]?.includes(equipment) || false}
+                              onCheckedChange={(checked) => 
+                                handleEquipmentSelection(category, equipment, checked as boolean)
+                              }
+                            />
+                            <Label 
+                              htmlFor={`${category}-${equipment}`} 
+                              className="text-sm cursor-pointer flex-1"
+                            >
+                              {equipment}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+              
+              {/* Selected Equipment Summary */}
+              {Object.keys(selectedEquipment).length > 0 && (
+                <div className="border rounded-lg p-4 bg-muted/50">
+                  <h4 className="font-medium mb-3">Selected Equipment ({Object.values(selectedEquipment).flat().length} items)</h4>
+                  <div className="space-y-2">
+                    {Object.entries(selectedEquipment).map(([category, items]) => (
+                      items.length > 0 && (
+                        <div key={category}>
+                          <div className="text-sm font-medium text-muted-foreground">{category}:</div>
+                          <div className="text-sm ml-2">{items.join(", ")}</div>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => setEquipmentModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={assignSelectedEquipment}
+              disabled={Object.keys(selectedEquipment).length === 0}
+            >
+              Assign Selected Equipment
             </Button>
           </DialogFooter>
         </DialogContent>
