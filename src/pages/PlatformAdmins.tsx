@@ -5,12 +5,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 interface PlatformAdmin {
   id: string;
   firstName: string;
@@ -29,6 +30,7 @@ const mockAdmins: PlatformAdmin[] = [{
   status: "Pending"
 }];
 export default function PlatformAdmins() {
+  const { toast } = useToast();
   const [admins, setAdmins] = useState<PlatformAdmin[]>(mockAdmins);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -53,23 +55,36 @@ export default function PlatformAdmins() {
   });
   const handleAddAdmin = () => {
     if (newAdmin.firstName && newAdmin.lastName && newAdmin.email) {
-      const admin: PlatformAdmin = {
-        id: Date.now().toString(),
-        firstName: newAdmin.firstName,
-        lastName: newAdmin.lastName,
-        email: newAdmin.email,
-        phone: newAdmin.phone,
-        role: "Platform Admin",
-        status: "Pending"
-      };
-      setAdmins([...admins, admin]);
-      setNewAdmin({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: ""
-      });
-      setIsAddDialogOpen(false);
+      try {
+        const admin: PlatformAdmin = {
+          id: Date.now().toString(),
+          firstName: newAdmin.firstName,
+          lastName: newAdmin.lastName,
+          email: newAdmin.email,
+          phone: newAdmin.phone,
+          role: "Platform Admin",
+          status: "Pending"
+        };
+        setAdmins([...admins, admin]);
+        setNewAdmin({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: ""
+        });
+        setIsAddDialogOpen(false);
+        
+        toast({
+          title: "Admin Added Successfully",
+          description: `${newAdmin.firstName} ${newAdmin.lastName} has been added as a Platform Admin.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Error Adding Admin",
+          description: "Failed to add the new administrator. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -86,26 +101,39 @@ export default function PlatformAdmins() {
 
   const handleUpdateAdmin = () => {
     if (currentAdmin && editAdmin.firstName && editAdmin.lastName && editAdmin.email) {
-      const updatedAdmins = admins.map(admin => 
-        admin.id === currentAdmin.id 
-          ? {
-              ...admin,
-              firstName: editAdmin.firstName,
-              lastName: editAdmin.lastName,
-              email: editAdmin.email,
-              phone: editAdmin.phone
-            }
-          : admin
-      );
-      setAdmins(updatedAdmins);
-      setIsEditDialogOpen(false);
-      setCurrentAdmin(null);
-      setEditAdmin({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: ""
-      });
+      try {
+        const updatedAdmins = admins.map(admin => 
+          admin.id === currentAdmin.id 
+            ? {
+                ...admin,
+                firstName: editAdmin.firstName,
+                lastName: editAdmin.lastName,
+                email: editAdmin.email,
+                phone: editAdmin.phone
+              }
+            : admin
+        );
+        setAdmins(updatedAdmins);
+        setIsEditDialogOpen(false);
+        setCurrentAdmin(null);
+        setEditAdmin({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: ""
+        });
+        
+        toast({
+          title: "Admin Updated Successfully",
+          description: `${editAdmin.firstName} ${editAdmin.lastName}'s information has been updated.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Error Updating Admin",
+          description: "Failed to update the administrator. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -116,10 +144,24 @@ export default function PlatformAdmins() {
 
   const handleConfirmDelete = () => {
     if (currentAdmin) {
-      const updatedAdmins = admins.filter(admin => admin.id !== currentAdmin.id);
-      setAdmins(updatedAdmins);
-      setIsDeleteDialogOpen(false);
-      setCurrentAdmin(null);
+      try {
+        const updatedAdmins = admins.filter(admin => admin.id !== currentAdmin.id);
+        setAdmins(updatedAdmins);
+        setIsDeleteDialogOpen(false);
+        
+        toast({
+          title: "Admin Deleted Successfully",
+          description: `${currentAdmin.firstName} ${currentAdmin.lastName} has been removed from the platform.`,
+        });
+        
+        setCurrentAdmin(null);
+      } catch (error) {
+        toast({
+          title: "Error Deleting Admin",
+          description: "Failed to delete the administrator. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
   const handleSelectAdmin = (adminId: string, checked: boolean) => {
@@ -317,9 +359,9 @@ export default function PlatformAdmins() {
                 </div>
                 <div>
                   <DialogTitle className="text-xl font-bold">Add Platform Admin</DialogTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <DialogDescription className="text-sm text-muted-foreground mt-1">
                     Add a new administrator to the platform.
-                  </p>
+                  </DialogDescription>
                 </div>
               </div>
               
@@ -383,9 +425,9 @@ export default function PlatformAdmins() {
                 </div>
                 <div>
                   <DialogTitle className="text-xl font-bold">Edit Platform Admin</DialogTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <DialogDescription className="text-sm text-muted-foreground mt-1">
                     Update administrator information.
-                  </p>
+                  </DialogDescription>
                 </div>
               </div>
             </div>

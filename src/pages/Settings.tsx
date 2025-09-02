@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Plus, Users, Search } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const mockAccountData = {
   id: 1,
@@ -90,6 +91,7 @@ const availableOrganizations = [
 
 export default function Settings() {
   const { id } = useParams();
+  const { toast } = useToast();
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [organizations, setOrganizations] = useState(mockOrganizations);
@@ -119,9 +121,22 @@ export default function Settings() {
   };
 
   const handleSave = () => {
-    // Here you would typically save to an API
-    console.log("Saving settings:", formData);
-    setIsEditing(false);
+    try {
+      // Here you would typically save to an API
+      console.log("Saving settings:", formData);
+      setIsEditing(false);
+      
+      toast({
+        title: "Settings Updated Successfully",
+        description: "Your changes have been saved.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error Saving Settings",
+        description: "Failed to save your changes. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -155,16 +170,29 @@ export default function Settings() {
   };
 
   const handleAddOrganization = (org: typeof availableOrganizations[0]) => {
-    const newOrg = {
-      id: parseInt(org.id.split('-')[1]),
-      name: org.name,
-      category: org.category,
-      status: "Active" as const,
-      members: org.users
-    };
-    setOrganizations([...organizations, newOrg]);
-    setIsAddOrgModalOpen(false);
-    setSearchTerm("");
+    try {
+      const newOrg = {
+        id: parseInt(org.id.split('-')[1]),
+        name: org.name,
+        category: org.category,
+        status: "Active" as const,
+        members: org.users
+      };
+      setOrganizations([...organizations, newOrg]);
+      setIsAddOrgModalOpen(false);
+      setSearchTerm("");
+      
+      toast({
+        title: "Organization Added Successfully",
+        description: `${org.name} has been added to the enterprise.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error Adding Organization",
+        description: "Failed to add the organization. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Filter available organizations based on search term

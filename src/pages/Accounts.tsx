@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -97,7 +98,8 @@ const categoryColors: Record<string, "default" | "secondary" | "destructive" | "
   "Harbor Master": "default"
 };
 
-const Accounts = () => {
+export default function Accounts() {
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -136,23 +138,37 @@ const Accounts = () => {
   };
 
   const handleSubmit = () => {
-    // Here you would typically submit to an API
-    console.log("Creating account:", formData);
-    setIsAddModalOpen(false);
-    // Reset form
-    setFormData({
-      name: "",
-      type: "",
-      category: "",
-      primaryEmail: "",
-      primaryPhone: "",
-      secondaryEmail: "",
-      secondaryPhone: "",
-      address: "",
-      city: "",
-      state: "",
-      zip: ""
-    });
+    try {
+      // Here you would typically submit to an API
+      console.log("Creating account:", formData);
+      setIsAddModalOpen(false);
+      
+      toast({
+        title: "Account Created Successfully",
+        description: `${formData.name} has been added to the platform.`,
+      });
+      
+      // Reset form
+      setFormData({
+        name: "",
+        type: "",
+        category: "",
+        primaryEmail: "",
+        primaryPhone: "",
+        secondaryEmail: "",
+        secondaryPhone: "",
+        address: "",
+        city: "",
+        state: "",
+        zip: ""
+      });
+    } catch (error) {
+      toast({
+        title: "Error Creating Account",
+        description: "Failed to create the account. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Filter and pagination logic
@@ -486,6 +502,4 @@ const Accounts = () => {
       </Dialog>
     </div>
   );
-};
-
-export default Accounts;
+}

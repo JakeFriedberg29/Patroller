@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Building2, Users, AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, Plus, Search, MapPin } from "lucide-react";
 import { MetricCard } from "@/components/ui/metric-card";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 const mockEnterprise = {
   id: "ent-001",
   name: "MegaCorp Industries",
@@ -90,6 +91,7 @@ const availableOrganizations = [{
   description: "Large event and concert medical support"
 }];
 export default function EnterpriseView() {
+  const { toast } = useToast();
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [organizations, setOrganizations] = useState(mockOrganizations);
@@ -97,14 +99,27 @@ export default function EnterpriseView() {
   // Filter available organizations based on search term
   const filteredOrganizations = availableOrganizations.filter(org => org.name.toLowerCase().includes(searchTerm.toLowerCase()) || org.location.toLowerCase().includes(searchTerm.toLowerCase()) || org.type.toLowerCase().includes(searchTerm.toLowerCase()));
   const handleAddOrganization = (org: typeof availableOrganizations[0]) => {
-    const newOrg = {
-      ...org,
-      status: "Active" as const,
-      lastActivity: "Just added"
-    };
-    setOrganizations([...organizations, newOrg]);
-    setIsAddOrgModalOpen(false);
-    setSearchTerm("");
+    try {
+      const newOrg = {
+        ...org,
+        status: "Active" as const,
+        lastActivity: "Just added"
+      };
+      setOrganizations([...organizations, newOrg]);
+      setIsAddOrgModalOpen(false);
+      setSearchTerm("");
+      
+      toast({
+        title: "Organization Added Successfully",
+        description: `${org.name} has been added to the enterprise.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error Adding Organization",
+        description: "Failed to add the organization. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   return <div className="space-y-6">
       <div className="flex items-center justify-between">

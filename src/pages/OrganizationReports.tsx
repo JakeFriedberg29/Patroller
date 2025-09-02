@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 const reportTemplates = [{
   id: 1,
   name: "Incident Report",
@@ -88,25 +89,39 @@ const mockFolders = [
 export default function OrganizationReports() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [folders, setFolders] = useState(mockFolders);
   const [selectedFolder, setSelectedFolder] = useState<typeof mockFolders[0] | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [isFolderContentOpen, setIsFolderContentOpen] = useState(false);
   const handleDownloadTemplate = (template: typeof reportTemplates[0]) => {
-    // Create a simple Word document template download
-    const content = `${template.name}\n\n${template.description}\n\n[Template fields would be here]`;
-    const blob = new Blob([content], {
-      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${template.name.replace(/\s+/g, '_')}_Template.docx`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    try {
+      // Create a simple Word document template download
+      const content = `${template.name}\n\n${template.description}\n\n[Template fields would be here]`;
+      const blob = new Blob([content], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${template.name.replace(/\s+/g, '_')}_Template.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Template Downloaded",
+        description: `${template.name} template has been downloaded.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the template. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   const handleCreateReport = (template: typeof reportTemplates[0]) => {
     navigate(`/accounts/${id}/reports/create/${template.id}`);
@@ -114,17 +129,30 @@ export default function OrganizationReports() {
 
   const handleCreateFolder = () => {
     if (newFolderName.trim()) {
-      const newFolder = {
-        id: folders.length + 1,
-        name: newFolderName.trim(),
-        artifactCount: 0,
-        dateCreated: new Date().toISOString().split('T')[0],
-        dateUpdated: new Date().toISOString().split('T')[0],
-        files: []
-      };
-      setFolders([...folders, newFolder]);
-      setNewFolderName("");
-      setIsCreateFolderOpen(false);
+      try {
+        const newFolder = {
+          id: folders.length + 1,
+          name: newFolderName.trim(),
+          artifactCount: 0,
+          dateCreated: new Date().toISOString().split('T')[0],
+          dateUpdated: new Date().toISOString().split('T')[0],
+          files: []
+        };
+        setFolders([...folders, newFolder]);
+        setNewFolderName("");
+        setIsCreateFolderOpen(false);
+        
+        toast({
+          title: "Folder Created Successfully",
+          description: `"${newFolderName.trim()}" folder has been created.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Error Creating Folder",
+          description: "Failed to create the folder. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
