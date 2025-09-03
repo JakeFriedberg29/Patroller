@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,98 +31,103 @@ import {
   MapPin
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserManagement } from "@/hooks/useUserManagement";
+import { ResendActivationButton } from "@/components/ResendActivationButton";
+import { UserStatusBadge } from "@/components/UserStatusBadge";
+import { useToast } from "@/hooks/use-toast";
 
-const mockAdmins = [
-  {
-    id: "admin-001",
-    firstName: "Sarah",
-    lastName: "Johnson",
-    email: "sarah.johnson@megacorp.com",
-    phone: "+1 (555) 123-4567",
-    role: "Enterprise Admin",
-    status: "Active",
-    department: "Operations",
-    location: "Detroit, MI",
-    lastLogin: "2024-01-15T10:30:00Z",
-    createdDate: "2023-03-15T00:00:00Z",
-    permissions: ["Full Access", "User Management", "Organization Management"],
-    avatar: ""
-  },
-  {
-    id: "admin-002", 
-    firstName: "Mike",
-    lastName: "Chen",
-    email: "mike.chen@megacorp.com",
-    phone: "+1 (555) 234-5678",
-    role: "Enterprise Admin",
-    status: "Active",
-    department: "Logistics",
-    location: "Atlanta, GA",
-    lastLogin: "2024-01-15T08:45:00Z",
-    createdDate: "2023-05-22T00:00:00Z",
-    permissions: ["Organization Management", "Reporting", "User Management"],
-    avatar: ""
-  },
-  {
-    id: "admin-003",
-    firstName: "Dr. Emily",
-    lastName: "Rodriguez",
-    email: "emily.rodriguez@megacorp.com", 
-    phone: "+1 (555) 345-6789",
-    role: "Enterprise Admin",
-    status: "Active",
-    department: "Research & Development",
-    location: "San Francisco, CA",
-    lastLogin: "2024-01-14T16:20:00Z",
-    createdDate: "2023-01-10T00:00:00Z",
-    permissions: ["Full Access", "Analytics", "System Configuration"],
-    avatar: ""
-  },
-  {
-    id: "admin-004",
-    firstName: "Robert",
-    lastName: "Davis",
-    email: "robert.davis@megacorp.com",
-    phone: "+1 (555) 456-7890",
-    role: "Enterprise Admin",
-    status: "Suspended",
-    department: "Energy Division",
-    location: "Houston, TX",
-    lastLogin: "2024-01-10T14:15:00Z",
-    createdDate: "2023-07-03T00:00:00Z",
-    permissions: ["User Management", "Reporting"],
-    avatar: ""
-  },
-  {
-    id: "admin-005",
-    firstName: "Dr. Lisa",
-    lastName: "Thompson",
-    email: "lisa.thompson@megacorp.com",
-    phone: "+1 (555) 567-8901",
-    role: "Enterprise Admin", 
-    status: "Active",
-    department: "Healthcare",
-    location: "Boston, MA",
-    lastLogin: "2024-01-15T11:10:00Z",
-    createdDate: "2023-04-18T00:00:00Z",
-    permissions: ["Organization Management", "Compliance", "Reporting"],
-    avatar: ""
-  }
-];
+interface EnterpriseAdmin {
+  id: string;
+  user_id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role: string;
+  activation_status: "pending" | "active" | "suspended";
+  department: string;
+  location: string;
+  lastLogin: string;
+  createdDate: string;
+  permissions: string[];
+  avatar: string;
+  activation_sent_at?: string;
+}
 
 export default function EnterpriseAdmins() {
+  const { toast } = useToast();
+  const { createUser, isLoading: isCreatingUser } = useUserManagement();
+  const [admins, setAdmins] = useState<EnterpriseAdmin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [rowsPerPage, setRowsPerPage] = useState("10");
 
-  const filteredAdmins = mockAdmins.filter((admin) => {
+  // Load enterprise admins from database
+  useEffect(() => {
+    loadEnterpriseAdmins();
+  }, []);
+
+  const loadEnterpriseAdmins = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'Enterprise Admin')
+        .eq('account_type', 'enterprise')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading enterprise admins:', error);
+        toast({
+          title: "Error Loading Admins",
+          description: "Failed to load enterprise administrators.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const transformedAdmins: EnterpriseAdmin[] = data.map(profile => ({
+        id: profile.id,
+        user_id: profile.user_id,
+        firstName: profile.full_name?.split(' ')[0] || '',
+        lastName: profile.full_name?.split(' ').slice(1).join(' ') || '',
+        email: profile.email,
+        phone: '', // Add to profiles if needed
+        role: profile.role || 'Enterprise Admin',
+        activation_status: (profile.activation_status as "pending" | "active" | "suspended") || 'pending',
+        department: '', // Add to profiles if needed
+        location: '', // Add to profiles if needed
+        lastLogin: profile.updated_at || '',
+        createdDate: profile.created_at || '',
+        permissions: [], // Add to profiles if needed
+        avatar: '',
+        activation_sent_at: profile.activation_sent_at
+      }));
+
+      setAdmins(transformedAdmins);
+    } catch (error) {
+      console.error('Error loading enterprise admins:', error);
+      toast({
+        title: "Error Loading Admins",
+        description: "Failed to load enterprise administrators.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredAdmins = admins.filter((admin) => {
     const matchesSearch = 
       admin.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || admin.status.toLowerCase() === statusFilter;
+    const matchesStatus = statusFilter === "all" || admin.activation_status.toLowerCase() === statusFilter;
     const matchesDepartment = departmentFilter === "all" || admin.department.toLowerCase().includes(departmentFilter);
     
     return matchesSearch && matchesStatus && matchesDepartment;
@@ -132,7 +137,7 @@ export default function EnterpriseAdmins() {
     switch (status.toLowerCase()) {
       case 'active': return 'default';
       case 'suspended': return 'destructive';
-      case 'inactive': return 'secondary';
+      case 'pending': return 'secondary';
       default: return 'secondary';
     }
   };
@@ -192,7 +197,7 @@ export default function EnterpriseAdmins() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
@@ -268,9 +273,17 @@ export default function EnterpriseAdmins() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusVariant(admin.status)}>
-                        {admin.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <UserStatusBadge status={admin.activation_status} />
+                        {admin.activation_status === 'pending' && (
+                          <ResendActivationButton
+                            userId={admin.user_id}
+                            email={admin.email}
+                            fullName={`${admin.firstName} ${admin.lastName}`}
+                            size="sm"
+                          />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
@@ -320,7 +333,7 @@ export default function EnterpriseAdmins() {
                             View Activity Log
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive">
-                            {admin.status === 'Active' ? 'Suspend' : 'Activate'}
+                            {admin.activation_status === 'active' ? 'Suspend' : 'Activate'}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Send, MoreHorizontal, X, Filter, Edit, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -12,26 +12,27 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserManagement } from "@/hooks/useUserManagement";
+import { ResendActivationButton } from "@/components/ResendActivationButton";
+import { UserStatusBadge } from "@/components/UserStatusBadge";
 interface PlatformAdmin {
   id: string;
+  user_id: string;
   firstName: string;
   lastName: string;
   email: string;
   phone?: string;
   role: string;
-  status: "Active" | "Pending" | "Inactive";
+  activation_status: "pending" | "active" | "suspended";
+  activation_sent_at?: string;
 }
-const mockAdmins: PlatformAdmin[] = [{
-  id: "1",
-  firstName: "Jake",
-  lastName: "Friedberg",
-  email: "jakefriedberg32@gmail.com",
-  role: "Platform Admin",
-  status: "Pending"
-}];
+// Remove mock data - will be loaded from database
 export default function PlatformAdmins() {
   const { toast } = useToast();
-  const [admins, setAdmins] = useState<PlatformAdmin[]>(mockAdmins);
+  const { createUser, isLoading: isCreatingUser } = useUserManagement();
+  const [admins, setAdmins] = useState<PlatformAdmin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -47,25 +48,71 @@ export default function PlatformAdmins() {
     email: "",
     phone: ""
   });
+
+  // Load platform admins from database
+  useEffect(() => {
+    loadPlatformAdmins();
+  }, []);
+
+  const loadPlatformAdmins = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'Platform Admin')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading platform admins:', error);
+        toast({
+          title: "Error Loading Admins",
+          description: "Failed to load platform administrators.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const transformedAdmins: PlatformAdmin[] = data.map(profile => ({
+        id: profile.id,
+        user_id: profile.user_id,
+        firstName: profile.full_name?.split(' ')[0] || '',
+        lastName: profile.full_name?.split(' ').slice(1).join(' ') || '',
+        email: profile.email,
+        phone: '', // Add phone to profiles table if needed
+        role: profile.role || 'Platform Admin',
+        activation_status: (profile.activation_status as "pending" | "active" | "suspended") || 'pending',
+        activation_sent_at: profile.activation_sent_at
+      }));
+
+      setAdmins(transformedAdmins);
+    } catch (error) {
+      console.error('Error loading platform admins:', error);
+      toast({
+        title: "Error Loading Admins",
+        description: "Failed to load platform administrators.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const [editAdmin, setEditAdmin] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: ""
   });
-  const handleAddAdmin = () => {
+  const handleAddAdmin = async () => {
     if (newAdmin.firstName && newAdmin.lastName && newAdmin.email) {
-      try {
-        const admin: PlatformAdmin = {
-          id: Date.now().toString(),
-          firstName: newAdmin.firstName,
-          lastName: newAdmin.lastName,
-          email: newAdmin.email,
-          phone: newAdmin.phone,
-          role: "Platform Admin",
-          status: "Pending"
-        };
-        setAdmins([...admins, admin]);
+      const result = await createUser({
+        email: newAdmin.email,
+        fullName: `${newAdmin.firstName} ${newAdmin.lastName}`,
+        role: 'Platform Admin',
+        accountType: 'platform'
+      });
+
+      if (result.success) {
         setNewAdmin({
           firstName: "",
           lastName: "",
@@ -73,17 +120,7 @@ export default function PlatformAdmins() {
           phone: ""
         });
         setIsAddDialogOpen(false);
-        
-        toast({
-          title: "Admin Added Successfully",
-          description: `${newAdmin.firstName} ${newAdmin.lastName} has been added as a Platform Admin.`,
-        });
-      } catch (error) {
-        toast({
-          title: "Error Adding Admin",
-          description: "Failed to add the new administrator. Please try again.",
-          variant: "destructive",
-        });
+        loadPlatformAdmins(); // Refresh the list
       }
     }
   };
@@ -180,13 +217,13 @@ export default function PlatformAdmins() {
   };
   const filteredAdmins = admins.filter(admin => {
     const matchesSearch = admin.firstName.toLowerCase().includes(searchQuery.toLowerCase()) || admin.lastName.toLowerCase().includes(searchQuery.toLowerCase()) || admin.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = selectedFilter === "All Status" || admin.status === selectedFilter;
+    const matchesFilter = selectedFilter === "All Status" || admin.activation_status === selectedFilter.toLowerCase();
     return matchesSearch && matchesFilter;
   });
   const totalPages = Math.ceil(filteredAdmins.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const paginatedAdmins = filteredAdmins.slice(startIndex, startIndex + rowsPerPage);
-  const statusOptions = [...new Set(admins.map(admin => admin.status))];
+  const statusOptions = [...new Set(admins.map(admin => admin.activation_status))];
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case "Active":
@@ -229,10 +266,12 @@ export default function PlatformAdmins() {
             <Filter className="h-4 w-4 mr-2" />
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All Status">All Status</SelectItem>
-            {statusOptions.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
-          </SelectContent>
+                <SelectContent>
+                  <SelectItem value="All Status">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                </SelectContent>
         </Select>
       </div>
 
@@ -274,9 +313,17 @@ export default function PlatformAdmins() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(admin.status)} className={admin.status === "Pending" ? "bg-orange-100 text-orange-800 hover:bg-orange-200" : ""}>
-                      {admin.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <UserStatusBadge status={admin.activation_status} />
+                      {admin.activation_status === 'pending' && (
+                        <ResendActivationButton
+                          userId={admin.user_id}
+                          email={admin.email}
+                          fullName={`${admin.firstName} ${admin.lastName}`}
+                          size="sm"
+                        />
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {admin.phone && <div className="text-sm">{admin.phone}</div>}
@@ -407,8 +454,8 @@ export default function PlatformAdmins() {
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddAdmin} disabled={!newAdmin.firstName || !newAdmin.lastName || !newAdmin.email}>
-              Add Admin
+            <Button onClick={handleAddAdmin} disabled={!newAdmin.firstName || !newAdmin.lastName || !newAdmin.email || isCreatingUser}>
+              {isCreatingUser ? 'Creating...' : 'Add Admin'}
             </Button>
           </div>
         </DialogContent>
@@ -528,7 +575,7 @@ export default function PlatformAdmins() {
                 <p><span className="font-medium">Name:</span> {currentAdmin.firstName} {currentAdmin.lastName}</p>
                 <p><span className="font-medium">Email:</span> {currentAdmin.email}</p>
                 <p><span className="font-medium">Role:</span> {currentAdmin.role}</p>
-                <p><span className="font-medium">Status:</span> {currentAdmin.status}</p>
+                <p><span className="font-medium">Status:</span> {currentAdmin.activation_status}</p>
               </div>
             </div>
           )}

@@ -39,6 +39,10 @@ export type Database = {
         Row: {
           account_id: string | null
           account_type: string | null
+          activated_at: string | null
+          activation_sent_at: string | null
+          activation_status: string | null
+          activation_token: string | null
           created_at: string
           email: string
           full_name: string | null
@@ -53,6 +57,10 @@ export type Database = {
         Insert: {
           account_id?: string | null
           account_type?: string | null
+          activated_at?: string | null
+          activation_sent_at?: string | null
+          activation_status?: string | null
+          activation_token?: string | null
           created_at?: string
           email: string
           full_name?: string | null
@@ -67,6 +75,10 @@ export type Database = {
         Update: {
           account_id?: string | null
           account_type?: string | null
+          activated_at?: string | null
+          activation_sent_at?: string | null
+          activation_status?: string | null
+          activation_token?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
@@ -85,6 +97,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_user_account: {
+        Args: { activation_token_param: string }
+        Returns: boolean
+      }
       add_password_to_history: {
         Args: { password_hash_param: string; user_id_param: string }
         Returns: undefined
@@ -92,6 +108,20 @@ export type Database = {
       check_password_history: {
         Args: { new_password_hash: string; user_id_param: string }
         Returns: boolean
+      }
+      create_pending_user: {
+        Args: {
+          user_account_id?: string
+          user_account_type?: string
+          user_email: string
+          user_full_name: string
+          user_role?: string
+        }
+        Returns: string
+      }
+      generate_activation_token: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       is_password_expired: {
         Args: { user_id_param: string }
