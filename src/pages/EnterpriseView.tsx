@@ -126,7 +126,7 @@ export default function EnterpriseView() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
             <Building2 className="h-8 w-8" />
-            {mockEnterprise.name}
+            Enterprise View
           </h1>
           <p className="text-muted-foreground">{mockEnterprise.description}</p>
         </div>
