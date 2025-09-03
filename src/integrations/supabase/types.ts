@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          account_id: string | null
+          account_type: string | null
+          action_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          performed_by_email: string | null
+          performed_by_user_id: string | null
+          target_user_email: string
+          target_user_id: string | null
+          target_user_name: string
+          target_user_role: string
+          user_agent: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          account_type?: string | null
+          action_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          performed_by_email?: string | null
+          performed_by_user_id?: string | null
+          target_user_email: string
+          target_user_id?: string | null
+          target_user_name: string
+          target_user_role: string
+          user_agent?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          account_type?: string | null
+          action_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          performed_by_email?: string | null
+          performed_by_user_id?: string | null
+          target_user_email?: string
+          target_user_id?: string | null
+          target_user_name?: string
+          target_user_role?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       password_history: {
         Row: {
           created_at: string
@@ -44,6 +95,9 @@ export type Database = {
           activation_status: string | null
           activation_token: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deletion_reason: string | null
           department: string | null
           email: string
           full_name: string | null
@@ -66,6 +120,9 @@ export type Database = {
           activation_status?: string | null
           activation_token?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deletion_reason?: string | null
           department?: string | null
           email: string
           full_name?: string | null
@@ -88,6 +145,9 @@ export type Database = {
           activation_status?: string | null
           activation_token?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deletion_reason?: string | null
           department?: string | null
           email?: string
           full_name?: string | null
@@ -146,6 +206,14 @@ export type Database = {
             }
         Returns: string
       }
+      delete_admin_with_audit: {
+        Args: {
+          p_admin_id: string
+          p_deletion_reason?: string
+          p_hard_delete?: boolean
+        }
+        Returns: Json
+      }
       generate_activation_token: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -153,6 +221,20 @@ export type Database = {
       is_password_expired: {
         Args: { user_id_param: string }
         Returns: boolean
+      }
+      log_admin_action: {
+        Args: {
+          p_account_id?: string
+          p_account_type?: string
+          p_action_type: string
+          p_deletion_reason?: string
+          p_details?: Json
+          p_target_user_email: string
+          p_target_user_id: string
+          p_target_user_name: string
+          p_target_user_role: string
+        }
+        Returns: string
       }
       update_password_expiration: {
         Args: { user_id_param: string }

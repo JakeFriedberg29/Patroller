@@ -87,6 +87,7 @@ export default function EnterpriseAdmins() {
         .select('*')
         .eq('role', 'Enterprise Admin')
         .eq('account_type', 'enterprise')
+        .is('deleted_at', null) // Exclude soft-deleted profiles
         .order('created_at', { ascending: false });
 
       if (error) {

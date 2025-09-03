@@ -88,6 +88,7 @@ export default function OrganizationAdmins() {
         .eq('role', 'Organization Admin')
         .eq('account_type', 'organization')
         .eq('account_id', organizationId)
+        .is('deleted_at', null) // Exclude soft-deleted profiles
         .order('created_at', { ascending: false });
 
       if (error) {
