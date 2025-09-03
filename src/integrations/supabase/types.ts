@@ -44,12 +44,16 @@ export type Database = {
           activation_status: string | null
           activation_token: string | null
           created_at: string
+          department: string | null
           email: string
           full_name: string | null
           id: string
+          location: string | null
           must_change_password: boolean | null
           password_changed_at: string | null
           password_expires_at: string | null
+          permissions: string[] | null
+          phone: string | null
           role: string | null
           updated_at: string
           user_id: string
@@ -62,12 +66,16 @@ export type Database = {
           activation_status?: string | null
           activation_token?: string | null
           created_at?: string
+          department?: string | null
           email: string
           full_name?: string | null
           id?: string
+          location?: string | null
           must_change_password?: boolean | null
           password_changed_at?: string | null
           password_expires_at?: string | null
+          permissions?: string[] | null
+          phone?: string | null
           role?: string | null
           updated_at?: string
           user_id: string
@@ -80,12 +88,16 @@ export type Database = {
           activation_status?: string | null
           activation_token?: string | null
           created_at?: string
+          department?: string | null
           email?: string
           full_name?: string | null
           id?: string
+          location?: string | null
           must_change_password?: boolean | null
           password_changed_at?: string | null
           password_expires_at?: string | null
+          permissions?: string[] | null
+          phone?: string | null
           role?: string | null
           updated_at?: string
           user_id?: string
@@ -110,13 +122,24 @@ export type Database = {
         Returns: boolean
       }
       create_pending_user: {
-        Args: {
-          user_account_id?: string
-          user_account_type?: string
-          user_email: string
-          user_full_name: string
-          user_role?: string
-        }
+        Args:
+          | {
+              user_account_id?: string
+              user_account_type?: string
+              user_department?: string
+              user_email: string
+              user_full_name: string
+              user_location?: string
+              user_phone?: string
+              user_role?: string
+            }
+          | {
+              user_account_id?: string
+              user_account_type?: string
+              user_email: string
+              user_full_name: string
+              user_role?: string
+            }
         Returns: string
       }
       generate_activation_token: {

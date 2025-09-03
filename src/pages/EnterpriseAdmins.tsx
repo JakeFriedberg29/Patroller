@@ -98,14 +98,14 @@ export default function EnterpriseAdmins() {
         firstName: profile.full_name?.split(' ')[0] || '',
         lastName: profile.full_name?.split(' ').slice(1).join(' ') || '',
         email: profile.email,
-        phone: '', // Add to profiles if needed
+        phone: profile.phone || '',
         role: profile.role || 'Enterprise Admin',
         activation_status: (profile.activation_status as "pending" | "active" | "suspended") || 'pending',
-        department: '', // Add to profiles if needed
-        location: '', // Add to profiles if needed
+        department: profile.department || '',
+        location: profile.location || '',
         lastLogin: profile.updated_at || '',
         createdDate: profile.created_at || '',
-        permissions: [], // Add to profiles if needed
+        permissions: profile.permissions || [],
         avatar: '',
         activation_sent_at: profile.activation_sent_at
       }));

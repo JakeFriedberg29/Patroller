@@ -71,6 +71,8 @@ export function AddAdminModal({
       role: roleTitle,
       accountId: accountId,
       accountType: accountType,
+      department: values.department,
+      location: values.location,
     });
 
     if (result.success) {

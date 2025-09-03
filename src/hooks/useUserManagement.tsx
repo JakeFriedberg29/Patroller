@@ -8,6 +8,9 @@ export interface CreateUserRequest {
   role?: string;
   accountId?: string;
   accountType?: string;
+  department?: string;
+  location?: string;
+  phone?: string;
 }
 
 export const useUserManagement = () => {
@@ -24,7 +27,10 @@ export const useUserManagement = () => {
           user_full_name: userData.fullName,
           user_role: userData.role || 'user',
           user_account_id: userData.accountId || null,
-          user_account_type: userData.accountType || null
+          user_account_type: userData.accountType || null,
+          user_department: userData.department || null,
+          user_location: userData.location || null,
+          user_phone: userData.phone || null
         });
 
       if (createError) {
