@@ -33,8 +33,13 @@ interface PlatformAdmin {
 }
 // Remove mock data - will be loaded from database
 export default function PlatformAdmins() {
-  const { toast } = useToast();
-  const { createUser, isLoading: isCreatingUser } = useUserManagement();
+  const {
+    toast
+  } = useToast();
+  const {
+    createUser,
+    isLoading: isCreatingUser
+  } = useUserManagement();
   const [admins, setAdmins] = useState<PlatformAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -59,27 +64,25 @@ export default function PlatformAdmins() {
   useEffect(() => {
     loadPlatformAdmins();
   }, []);
-
   const loadPlatformAdmins = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'Platform Admin')
-        .is('deleted_at', null) // Exclude soft-deleted profiles
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('profiles').select('*').eq('role', 'Platform Admin').is('deleted_at', null) // Exclude soft-deleted profiles
+      .order('created_at', {
+        ascending: false
+      });
       if (error) {
         console.error('Error loading platform admins:', error);
         toast({
           title: "Error Loading Admins",
           description: "Failed to load platform administrators.",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-
       const transformedAdmins: PlatformAdmin[] = data.map(profile => ({
         id: profile.id,
         user_id: profile.user_id,
@@ -88,17 +91,16 @@ export default function PlatformAdmins() {
         email: profile.email,
         phone: profile.phone || '',
         role: profile.role || 'Platform Admin',
-        activation_status: (profile.activation_status as "pending" | "active" | "suspended") || 'pending',
+        activation_status: profile.activation_status as "pending" | "active" | "suspended" || 'pending',
         activation_sent_at: profile.activation_sent_at
       }));
-
       setAdmins(transformedAdmins);
     } catch (error) {
       console.error('Error loading platform admins:', error);
       toast({
         title: "Error Loading Admins",
         description: "Failed to load platform administrators.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -112,7 +114,6 @@ export default function PlatformAdmins() {
         role: 'Platform Admin',
         accountType: 'platform'
       });
-
       if (result.success) {
         setNewAdmin({
           firstName: "",
@@ -125,27 +126,22 @@ export default function PlatformAdmins() {
       }
     }
   };
-
   const handleEditAdmin = (admin: PlatformAdmin) => {
     setCurrentAdmin(admin);
     setIsEditDialogOpen(true);
   };
-
   const handleEditSuccess = () => {
     loadPlatformAdmins();
     setCurrentAdmin(null);
   };
-
   const handleDeleteAdmin = (admin: PlatformAdmin) => {
     setCurrentAdmin(admin);
     setIsDeleteDialogOpen(true);
   };
-
   const handleBulkDelete = () => {
     if (selectedAdmins.length === 0) return;
     setIsBulkDeleteOpen(true);
   };
-
   const handleDeleteSuccess = () => {
     loadPlatformAdmins();
     setCurrentAdmin(null);
@@ -203,14 +199,7 @@ export default function PlatformAdmins() {
             <Plus className="h-4 w-4" />
             Add Platform Admin
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setShowAuditLog(!showAuditLog)}
-            className="gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            {showAuditLog ? 'Hide' : 'Show'} Audit Log
-          </Button>
+          
         </div>
       </div>
 
@@ -274,14 +263,7 @@ export default function PlatformAdmins() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <UserStatusBadge status={admin.activation_status} />
-                      {admin.activation_status === 'pending' && (
-                        <ResendActivationButton
-                          userId={admin.user_id}
-                          email={admin.email}
-                          fullName={`${admin.firstName} ${admin.lastName}`}
-                          size="sm"
-                        />
-                      )}
+                      {admin.activation_status === 'pending' && <ResendActivationButton userId={admin.user_id} email={admin.email} fullName={`${admin.firstName} ${admin.lastName}`} size="sm" />}
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
@@ -300,10 +282,7 @@ export default function PlatformAdmins() {
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleDeleteAdmin(admin)} 
-                          className="cursor-pointer text-destructive focus:text-destructive"
-                        >
+                        <DropdownMenuItem onClick={() => handleDeleteAdmin(admin)} className="cursor-pointer text-destructive focus:text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
@@ -331,23 +310,16 @@ export default function PlatformAdmins() {
                   <SelectItem value="50">50</SelectItem>
                 </SelectContent>
               </Select>
-              {selectedAdmins.length > 0 && (
-                <div className="flex gap-2 ml-4">
+              {selectedAdmins.length > 0 && <div className="flex gap-2 ml-4">
                   <Button variant="outline" size="sm" className="gap-2">
                     <Send className="h-4 w-4" />
                     Resend Activation Email ({selectedAdmins.length})
                   </Button>
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={handleBulkDelete}
-                    className="gap-2"
-                  >
+                  <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="gap-2">
                     <Trash2 className="h-4 w-4" />
                     Delete Selected ({selectedAdmins.length})
                   </Button>
-                </div>
-              )}
+                </div>}
             </div>
             
             <div className="flex items-center gap-2">
@@ -368,9 +340,7 @@ export default function PlatformAdmins() {
       </Card>
 
       {/* Audit Log Section */}
-      {showAuditLog && (
-        <AdminAuditLog accountType="platform" />
-      )}
+      {showAuditLog && <AdminAuditLog accountType="platform" />}
 
       {/* Add Admin Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -439,30 +409,12 @@ export default function PlatformAdmins() {
       </Dialog>
 
       {/* Edit Admin Dialog */}
-      <EditAdminModal
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        admin={currentAdmin}
-        accountType="platform"
-        onSuccess={handleEditSuccess}
-      />
+      <EditAdminModal open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} admin={currentAdmin} accountType="platform" onSuccess={handleEditSuccess} />
 
       {/* Delete Confirmation Dialog */}
-      <DeleteAdminModal
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        admin={currentAdmin}
-        accountType="platform"
-        onSuccess={handleDeleteSuccess}
-      />
+      <DeleteAdminModal open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} admin={currentAdmin} accountType="platform" onSuccess={handleDeleteSuccess} />
 
       {/* Bulk Delete Dialog */}
-      <BulkDeleteAdminModal
-        open={isBulkDeleteOpen}
-        onOpenChange={setIsBulkDeleteOpen}
-        admins={selectedAdmins.map(id => admins.find(admin => admin.id === id)!).filter(Boolean)}
-        accountType="platform"
-        onSuccess={handleDeleteSuccess}
-      />
+      <BulkDeleteAdminModal open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen} admins={selectedAdmins.map(id => admins.find(admin => admin.id === id)!).filter(Boolean)} accountType="platform" onSuccess={handleDeleteSuccess} />
     </div>;
 }
