@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      password_history: {
+        Row: {
+          created_at: string
+          id: string
+          password_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          password_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          password_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_id: string | null
@@ -22,6 +43,9 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          must_change_password: boolean | null
+          password_changed_at: string | null
+          password_expires_at: string | null
           role: string | null
           updated_at: string
           user_id: string
@@ -33,6 +57,9 @@ export type Database = {
           email: string
           full_name?: string | null
           id?: string
+          must_change_password?: boolean | null
+          password_changed_at?: string | null
+          password_expires_at?: string | null
           role?: string | null
           updated_at?: string
           user_id: string
@@ -44,6 +71,9 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          must_change_password?: boolean | null
+          password_changed_at?: string | null
+          password_expires_at?: string | null
           role?: string | null
           updated_at?: string
           user_id?: string
@@ -55,7 +85,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_password_to_history: {
+        Args: { password_hash_param: string; user_id_param: string }
+        Returns: undefined
+      }
+      check_password_history: {
+        Args: { new_password_hash: string; user_id_param: string }
+        Returns: boolean
+      }
+      is_password_expired: {
+        Args: { user_id_param: string }
+        Returns: boolean
+      }
+      update_password_expiration: {
+        Args: { user_id_param: string }
+        Returns: undefined
+      }
+      validate_password_strength: {
+        Args: { password_text: string; user_email?: string; user_name?: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
