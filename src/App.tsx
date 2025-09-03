@@ -4,6 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/Layout";
+import { AuthProvider } from "@/hooks/useAuth";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Auth from "@/pages/Auth";
 import Index from "./pages/Index";
 import Accounts from "./pages/Accounts";
 import AccountDetail from "./pages/AccountDetail";
@@ -35,8 +38,13 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
+        <AuthProvider>
           <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/organization/:id" element={<AccountDetail />} />
@@ -59,10 +67,14 @@ const App = () => (
             <Route path="/notifications" element={<PlatformNotificationCenter />} />
             <Route path="/logs" element={<Logs />} />
             <Route path="/settings" element={<UserSettings />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              </ProtectedRoute>
+            } />
           </Routes>
-        </Layout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
