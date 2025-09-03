@@ -16,6 +16,7 @@ import {
   LogOut
 } from "lucide-react";
 import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 import {
   Sidebar,
@@ -68,6 +69,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { id } = useParams();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const currentPath = location.pathname;
   
   const isCollapsed = state === "collapsed";
@@ -98,9 +100,9 @@ export function AppSidebar() {
     }
   };
 
-  const handleSignOut = () => {
-    // Add sign out logic here
-    console.log('Sign out clicked');
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
   };
 
   return (
