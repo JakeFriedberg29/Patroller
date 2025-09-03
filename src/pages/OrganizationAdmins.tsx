@@ -29,13 +29,17 @@ import {
   Phone,
   Filter,
   Calendar,
-  MapPin
+  MapPin,
+  Edit, 
+  Trash2
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
 import { AddAdminModal } from "@/components/AddAdminModal";
+import { EditAdminModal } from "@/components/EditAdminModal";
+import { DeleteAdminModal } from "@/components/DeleteAdminModal";
 import { useToast } from "@/hooks/use-toast";
 
 interface OrganizationAdmin {
@@ -64,8 +68,11 @@ export default function OrganizationAdmins() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [rowsPerPage, setRowsPerPage] = useState("10");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<OrganizationAdmin | null>(null);
+  const [rowsPerPage, setRowsPerPage] = useState("10");
 
   // Load organization admins from database
   useEffect(() => {
@@ -153,6 +160,26 @@ export default function OrganizationAdmins() {
 
   const handleAddAdminSuccess = () => {
     loadOrganizationAdmins();
+  };
+
+  const handleEditAdmin = (admin: OrganizationAdmin) => {
+    setSelectedAdmin(admin);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteAdmin = (admin: OrganizationAdmin) => {
+    setSelectedAdmin(admin);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    loadOrganizationAdmins();
+    setSelectedAdmin(null);
+  };
+
+  const handleDeleteSuccess = () => {
+    loadOrganizationAdmins();
+    setSelectedAdmin(null);
   };
 
   return (
@@ -318,23 +345,13 @@ export default function OrganizationAdmins() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem>
-                            View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditAdmin(admin)}>
+                            <Edit className="mr-2 h-4 w-4" />
                             Edit Administrator
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            Manage Permissions
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            Reset Password
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            View Activity Log
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            {admin.activation_status === 'active' ? 'Suspend' : 'Activate'}
+                          <DropdownMenuItem onClick={() => handleDeleteAdmin(admin)} className="text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Administrator
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -376,6 +393,22 @@ export default function OrganizationAdmins() {
         onOpenChange={setIsAddModalOpen}
         accountType="organization"
         onSuccess={handleAddAdminSuccess}
+      />
+
+      <EditAdminModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        admin={selectedAdmin}
+        accountType="organization"
+        onSuccess={handleEditSuccess}
+      />
+
+      <DeleteAdminModal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        admin={selectedAdmin}
+        accountType="organization"
+        onSuccess={handleDeleteSuccess}
       />
     </div>
   );

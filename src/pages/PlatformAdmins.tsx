@@ -136,9 +136,30 @@ export default function PlatformAdmins() {
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateAdmin = () => {
+  const handleUpdateAdmin = async () => {
     if (currentAdmin && editAdmin.firstName && editAdmin.lastName && editAdmin.email) {
       try {
+        // Update the profile in Supabase
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            full_name: `${editAdmin.firstName} ${editAdmin.lastName}`,
+            email: editAdmin.email,
+            phone: editAdmin.phone || null
+          })
+          .eq('id', currentAdmin.id);
+
+        if (error) {
+          console.error('Error updating admin:', error);
+          toast({
+            title: "Error Updating Admin",
+            description: "Failed to update the administrator in database.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Update local state after successful database update
         const updatedAdmins = admins.map(admin => 
           admin.id === currentAdmin.id 
             ? {
@@ -165,6 +186,7 @@ export default function PlatformAdmins() {
           description: `${editAdmin.firstName} ${editAdmin.lastName}'s information has been updated.`,
         });
       } catch (error) {
+        console.error('Error updating admin:', error);
         toast({
           title: "Error Updating Admin",
           description: "Failed to update the administrator. Please try again.",
@@ -179,9 +201,26 @@ export default function PlatformAdmins() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (currentAdmin) {
       try {
+        // Delete the profile from Supabase
+        const { error } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', currentAdmin.id);
+
+        if (error) {
+          console.error('Error deleting admin:', error);
+          toast({
+            title: "Error Deleting Admin",
+            description: "Failed to delete the administrator from database.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Update local state after successful database deletion
         const updatedAdmins = admins.filter(admin => admin.id !== currentAdmin.id);
         setAdmins(updatedAdmins);
         setIsDeleteDialogOpen(false);
@@ -193,6 +232,7 @@ export default function PlatformAdmins() {
         
         setCurrentAdmin(null);
       } catch (error) {
+        console.error('Error deleting admin:', error);
         toast({
           title: "Error Deleting Admin",
           description: "Failed to delete the administrator. Please try again.",
