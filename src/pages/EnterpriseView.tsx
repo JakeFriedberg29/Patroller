@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Building2, Users, AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, Plus, Search, MapPin } from "lucide-react";
+import { Building2, Users, AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, Plus, Search, MapPin, Monitor } from "lucide-react";
 import { MetricCard } from "@/components/ui/metric-card";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -125,7 +125,7 @@ export default function EnterpriseView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Building2 className="h-8 w-8" />
+            <Monitor className="h-8 w-8" />
             Enterprise View
           </h1>
           <p className="text-muted-foreground">{mockEnterprise.description}</p>
