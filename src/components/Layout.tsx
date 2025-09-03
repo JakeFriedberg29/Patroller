@@ -4,20 +4,19 @@ import { AccountHeader } from "@/components/AccountHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-
 interface LayoutProps {
   children: React.ReactNode;
 }
-
-export function Layout({ children }: LayoutProps) {
-  const { signOut } = useAuth();
-
+export function Layout({
+  children
+}: LayoutProps) {
+  const {
+    signOut
+  } = useAuth();
   const handleSignOut = async () => {
     await signOut();
   };
-
-  return (
-    <SidebarProvider>
+  return <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         
@@ -25,15 +24,7 @@ export function Layout({ children }: LayoutProps) {
           {/* Account Context Header */}
           <div className="flex items-center justify-between">
             <AccountHeader />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="mr-6 mt-4"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+            
           </div>
           
           {/* Main Content */}
@@ -42,6 +33,5 @@ export function Layout({ children }: LayoutProps) {
           </main>
         </div>
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 }
