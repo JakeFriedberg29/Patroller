@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  Shield, 
+  Users, 
   Search, 
   Plus, 
   MoreHorizontal,
@@ -32,13 +33,12 @@ import {
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserManagement } from "@/hooks/useUserManagement";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
 import { AddAdminModal } from "@/components/AddAdminModal";
 import { useToast } from "@/hooks/use-toast";
 
-interface EnterpriseAdmin {
+interface OrganizationAdmin {
   id: string;
   user_id: string;
   firstName: string;
@@ -56,10 +56,10 @@ interface EnterpriseAdmin {
   activation_sent_at?: string;
 }
 
-export default function EnterpriseAdmins() {
+export default function OrganizationAdmins() {
+  const { id: organizationId } = useParams();
   const { toast } = useToast();
-  const { createUser, isLoading: isCreatingUser } = useUserManagement();
-  const [admins, setAdmins] = useState<EnterpriseAdmin[]>([]);
+  const [admins, setAdmins] = useState<OrganizationAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -67,39 +67,40 @@ export default function EnterpriseAdmins() {
   const [rowsPerPage, setRowsPerPage] = useState("10");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Load enterprise admins from database
+  // Load organization admins from database
   useEffect(() => {
-    loadEnterpriseAdmins();
-  }, []);
+    loadOrganizationAdmins();
+  }, [organizationId]);
 
-  const loadEnterpriseAdmins = async () => {
+  const loadOrganizationAdmins = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'Enterprise Admin')
-        .eq('account_type', 'enterprise')
+        .eq('role', 'Organization Admin')
+        .eq('account_type', 'organization')
+        .eq('account_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading enterprise admins:', error);
+        console.error('Error loading organization admins:', error);
         toast({
           title: "Error Loading Admins",
-          description: "Failed to load enterprise administrators.",
+          description: "Failed to load organization administrators.",
           variant: "destructive",
         });
         return;
       }
 
-      const transformedAdmins: EnterpriseAdmin[] = data.map(profile => ({
+      const transformedAdmins: OrganizationAdmin[] = data.map(profile => ({
         id: profile.id,
         user_id: profile.user_id,
         firstName: profile.full_name?.split(' ')[0] || '',
         lastName: profile.full_name?.split(' ').slice(1).join(' ') || '',
         email: profile.email,
         phone: '', // Add to profiles if needed
-        role: profile.role || 'Enterprise Admin',
+        role: profile.role || 'Organization Admin',
         activation_status: (profile.activation_status as "pending" | "active" | "suspended") || 'pending',
         department: '', // Add to profiles if needed
         location: '', // Add to profiles if needed
@@ -112,10 +113,10 @@ export default function EnterpriseAdmins() {
 
       setAdmins(transformedAdmins);
     } catch (error) {
-      console.error('Error loading enterprise admins:', error);
+      console.error('Error loading organization admins:', error);
       toast({
         title: "Error Loading Admins",
-        description: "Failed to load enterprise administrators.",
+        description: "Failed to load organization administrators.",
         variant: "destructive",
       });
     } finally {
@@ -135,15 +136,6 @@ export default function EnterpriseAdmins() {
     return matchesSearch && matchesStatus && matchesDepartment;
   });
 
-  const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active': return 'default';
-      case 'suspended': return 'destructive';
-      case 'pending': return 'secondary';
-      default: return 'secondary';
-    }
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
@@ -160,7 +152,7 @@ export default function EnterpriseAdmins() {
   };
 
   const handleAddAdminSuccess = () => {
-    loadEnterpriseAdmins();
+    loadOrganizationAdmins();
   };
 
   return (
@@ -168,10 +160,10 @@ export default function EnterpriseAdmins() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Shield className="h-8 w-8" />
-            Enterprise Admins
+            <Users className="h-8 w-8" />
+            Organization Admins
           </h1>
-          <p className="text-muted-foreground">Manage administrators across your enterprise</p>
+          <p className="text-muted-foreground">Manage administrators for this organization</p>
         </div>
         <Button onClick={() => setIsAddModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
@@ -215,10 +207,10 @@ export default function EnterpriseAdmins() {
                 <SelectContent>
                   <SelectItem value="all">All Departments</SelectItem>
                   <SelectItem value="operations">Operations</SelectItem>
-                  <SelectItem value="logistics">Logistics</SelectItem>
-                  <SelectItem value="research">Research & Development</SelectItem>
-                  <SelectItem value="energy">Energy Division</SelectItem>
-                  <SelectItem value="healthcare">Healthcare</SelectItem>
+                  <SelectItem value="training">Training</SelectItem>
+                  <SelectItem value="equipment">Equipment</SelectItem>
+                  <SelectItem value="communications">Communications</SelectItem>
+                  <SelectItem value="medical">Medical</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -265,17 +257,17 @@ export default function EnterpriseAdmins() {
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Phone className="h-4 w-4" />
-                          {admin.phone}
+                          {admin.phone || 'Not provided'}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{admin.department}</Badge>
+                      <Badge variant="outline">{admin.department || 'Not assigned'}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                        {admin.location}
+                        {admin.location || 'Not assigned'}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -311,6 +303,9 @@ export default function EnterpriseAdmins() {
                           <Badge variant="secondary" className="text-xs">
                             +{admin.permissions.length - 2} more
                           </Badge>
+                        )}
+                        {admin.permissions.length === 0 && (
+                          <span className="text-xs text-muted-foreground">No permissions set</span>
                         )}
                       </div>
                     </TableCell>
@@ -379,7 +374,7 @@ export default function EnterpriseAdmins() {
       <AddAdminModal
         open={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
-        accountType="enterprise"
+        accountType="organization"
         onSuccess={handleAddAdminSuccess}
       />
     </div>
