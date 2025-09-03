@@ -117,6 +117,10 @@ export type Database = {
         Args: { password_hash_param: string; user_id_param: string }
         Returns: undefined
       }
+      check_password_common_leaks: {
+        Args: { password_text: string }
+        Returns: boolean
+      }
       check_password_history: {
         Args: { new_password_hash: string; user_id_param: string }
         Returns: boolean
