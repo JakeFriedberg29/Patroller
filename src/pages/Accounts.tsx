@@ -27,62 +27,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Building2, Mail, Phone, Users, Filter, MoreHorizontal } from "lucide-react";
+import { Plus, Search, Building2, Mail, Phone, Users, Filter, MoreHorizontal, Trash2, Edit } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { useAccounts } from "@/hooks/useAccounts";
 
-const accounts = [
-  {
-    id: 1,
-    name: "Mountain Rescue Team Alpha",
-    type: "Organization",
-    category: "Search & Rescue",
-    members: 0,
-    email: "dispatch@mrt-alpha.org",
-    phone: "(555) 123-4567",
-    created: "8/26/2025"
-  },
-  {
-    id: 2,
-    name: "Coastal Lifeguard Services",
-    type: "Enterprise",
-    category: "Lifeguard Service",
-    members: 0,
-    email: "ops@coastallifeguard.org",
-    phone: "(555) 987-6543",
-    created: "8/26/2025"
-  },
-  {
-    id: 3,
-    name: "Wilderness Adventures Inc",
-    type: "Enterprise",
-    category: "Event Medical",
-    members: 0,
-    email: "safety@wildadventures.com",
-    phone: "(555) 456-7890",
-    created: "8/26/2025"
-  },
-  {
-    id: 4,
-    name: "Coastal Lifeguard Division",
-    type: "Organization",
-    category: "Lifeguard Service",
-    members: 1,
-    email: "operations@coastallifeguard.gov",
-    phone: "(555) 987-6543",
-    created: "8/26/2025"
-  },
-  {
-    id: 5,
-    name: "Mountain Ridge SAR",
-    type: "Organization",
-    category: "Search & Rescue",
-    members: 0,
-    email: "dispatch@mountainridgesar.org",
-    phone: "(555) 123-4567",
-    created: "8/26/2025"
-  }
-];
 
 const typeColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   "Enterprise": "default",
@@ -90,17 +39,19 @@ const typeColors: Record<string, "default" | "secondary" | "destructive" | "outl
 };
 
 const categoryColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  "Search & Rescue": "destructive",
+  "Search and Rescue": "destructive",
   "Lifeguard Service": "default",
   "Park Service": "secondary",
   "Event Medical": "outline",
   "Ski Patrol": "secondary",
-  "Harbor Master": "default"
+  "Harbor Master": "default",
+  "Volunteer Emergency Services": "outline"
 };
 
 export default function Accounts() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { accounts, isLoading, createAccount, deleteAccount } = useAccounts();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("All Types");
@@ -111,22 +62,22 @@ export default function Accounts() {
     name: "",
     type: "",
     category: "",
-    primaryEmail: "",
-    primaryPhone: "",
-    secondaryEmail: "",
-    secondaryPhone: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: ""
+    location: "",
+    contact_email: ""
   });
 
-  const handleViewAccount = (accountId: number) => {
+  const handleViewAccount = (accountId: string) => {
     const account = accounts.find(acc => acc.id === accountId);
     if (account?.type === "Enterprise") {
       navigate(`/enterprises/${accountId}/enterprise-view`);
     } else {
       navigate(`/organization/${accountId}/mission-control`);
+    }
+  };
+
+  const handleDeleteAccount = async (accountId: string) => {
+    if (confirm("Are you sure you want to delete this account?")) {
+      await deleteAccount(accountId);
     }
   };
 
@@ -137,36 +88,33 @@ export default function Accounts() {
     }));
   };
 
-  const handleSubmit = () => {
-    try {
-      // Here you would typically submit to an API
-      console.log("Creating account:", formData);
-      setIsAddModalOpen(false);
-      
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.type || !formData.category) {
       toast({
-        title: "Account Created Successfully",
-        description: `${formData.name} has been added to the platform.`,
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
       });
-      
+      return;
+    }
+
+    const result = await createAccount({
+      name: formData.name,
+      type: formData.type,
+      category: formData.category,
+      location: formData.location || undefined,
+      contact_email: formData.contact_email || undefined
+    });
+
+    if (result.success) {
+      setIsAddModalOpen(false);
       // Reset form
       setFormData({
         name: "",
         type: "",
         category: "",
-        primaryEmail: "",
-        primaryPhone: "",
-        secondaryEmail: "",
-        secondaryPhone: "",
-        address: "",
-        city: "",
-        state: "",
-        zip: ""
-      });
-    } catch (error) {
-      toast({
-        title: "Error Creating Account",
-        description: "Failed to create the account. Please try again.",
-        variant: "destructive",
+        location: "",
+        contact_email: ""
       });
     }
   };
@@ -174,8 +122,8 @@ export default function Accounts() {
   // Filter and pagination logic
   const filteredAccounts = accounts.filter(account => {
     const matchesSearch = account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         account.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         account.phone.toLowerCase().includes(searchTerm.toLowerCase());
+                         (account.contact_email && account.contact_email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (account.location && account.location.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesTypeFilter = selectedTypeFilter === "All Types" || account.type === selectedTypeFilter;
     const matchesCategoryFilter = selectedCategoryFilter === "All Categories" || account.category === selectedCategoryFilter;
     return matchesSearch && matchesTypeFilter && matchesCategoryFilter;
@@ -250,7 +198,7 @@ export default function Accounts() {
                 <TableHead className="font-semibold">Name</TableHead>
                 <TableHead className="font-semibold">Type</TableHead>
                 <TableHead className="font-semibold">Category</TableHead>
-                <TableHead className="font-semibold">Team Members</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Contact</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
@@ -265,7 +213,9 @@ export default function Accounts() {
                       </div>
                       <div>
                         <div className="font-semibold">{account.name}</div>
-                        <div className="text-sm text-muted-foreground">Created {account.created}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Created {new Date(account.created_at).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
@@ -280,21 +230,24 @@ export default function Accounts() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{account.members}</span>
-                    </div>
+                    <Badge variant={account.status === 'active' ? 'default' : account.status === 'inactive' ? 'secondary' : 'destructive'}>
+                      {account.status}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        <span>{account.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone className="h-3 w-3 text-muted-foreground" />
-                        <span>{account.phone}</span>
-                      </div>
+                      {account.contact_email && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-3 w-3 text-muted-foreground" />
+                          <span>{account.contact_email}</span>
+                        </div>
+                      )}
+                      {account.location && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Building2 className="h-3 w-3 text-muted-foreground" />
+                          <span>{account.location}</span>
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -307,7 +260,12 @@ export default function Accounts() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleViewAccount(account.id)}>
+                          <Building2 className="h-4 w-4 mr-2" />
                           View Account
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDeleteAccount(account.id)} className="text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Account
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -403,89 +361,33 @@ export default function Accounts() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Search & Rescue">Search & Rescue</SelectItem>
+                  <SelectItem value="Search and Rescue">Search and Rescue</SelectItem>
                   <SelectItem value="Lifeguard Service">Lifeguard Service</SelectItem>
                   <SelectItem value="Park Service">Park Service</SelectItem>
                   <SelectItem value="Event Medical">Event Medical</SelectItem>
                   <SelectItem value="Ski Patrol">Ski Patrol</SelectItem>
                   <SelectItem value="Harbor Master">Harbor Master</SelectItem>
+                  <SelectItem value="Volunteer Emergency Services">Volunteer Emergency Services</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="primaryEmail">Primary Email *</Label>
+              <Label htmlFor="contact_email">Contact Email</Label>
               <Input
-                id="primaryEmail"
+                id="contact_email"
                 type="email"
-                value={formData.primaryEmail}
-                onChange={(e) => handleInputChange("primaryEmail", e.target.value)}
+                value={formData.contact_email}
+                onChange={(e) => handleInputChange("contact_email", e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="primaryPhone">Primary Phone *</Label>
+              <Label htmlFor="location">Location</Label>
               <Input
-                id="primaryPhone"
-                type="tel"
-                value={formData.primaryPhone}
-                onChange={(e) => handleInputChange("primaryPhone", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="secondaryEmail">Secondary Email</Label>
-              <Input
-                id="secondaryEmail"
-                type="email"
-                value={formData.secondaryEmail}
-                onChange={(e) => handleInputChange("secondaryEmail", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="secondaryPhone">Secondary Phone</Label>
-              <Input
-                id="secondaryPhone"
-                type="tel"
-                value={formData.secondaryPhone}
-                onChange={(e) => handleInputChange("secondaryPhone", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => handleInputChange("address", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => handleInputChange("city", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
-              <Input
-                id="state"
-                value={formData.state}
-                onChange={(e) => handleInputChange("state", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="zip">ZIP Code</Label>
-              <Input
-                id="zip"
-                value={formData.zip}
-                onChange={(e) => handleInputChange("zip", e.target.value)}
+                id="location"
+                value={formData.location}
+                onChange={(e) => handleInputChange("location", e.target.value)}
               />
             </div>
           </div>
@@ -494,8 +396,8 @@ export default function Accounts() {
             <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit}>
-              Create Account
+            <Button onClick={handleSubmit} disabled={isLoading}>
+              {isLoading ? "Creating..." : "Create Account"}
             </Button>
           </div>
         </DialogContent>
