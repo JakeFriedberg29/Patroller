@@ -10,7 +10,6 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
-
 const Index = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(2024, 0, 1),
@@ -21,17 +20,19 @@ const Index = () => {
   // Mock percentage changes based on selected time period
   const getChangePercent = (baseValue: number) => {
     const changes = {
-      day: Math.random() * 4 - 2, // -2% to +2%
-      week: Math.random() * 8 - 4, // -4% to +4%
-      month: Math.random() * 15 - 7.5, // -7.5% to +7.5%
-      quarter: Math.random() * 25 - 12.5, // -12.5% to +12.5%
-      year: Math.random() * 50 - 25, // -25% to +25%
+      day: Math.random() * 4 - 2,
+      // -2% to +2%
+      week: Math.random() * 8 - 4,
+      // -4% to +4%
+      month: Math.random() * 15 - 7.5,
+      // -7.5% to +7.5%
+      quarter: Math.random() * 25 - 12.5,
+      // -12.5% to +12.5%
+      year: Math.random() * 50 - 25 // -25% to +25%
     };
     return changes[timePeriod as keyof typeof changes] || 0;
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
@@ -58,30 +59,14 @@ const Index = () => {
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <CalendarIcon className="h-4 w-4" />
-                {dateRange?.from ? (
-                  dateRange.to ? (
-                    <>
+                {dateRange?.from ? dateRange.to ? <>
                       {format(dateRange.from, "LLL dd")} -{" "}
                       {format(dateRange.to, "LLL dd, y")}
-                    </>
-                  ) : (
-                    format(dateRange.from, "LLL dd, y")
-                  )
-                ) : (
-                  <span>Pick a date range</span>
-                )}
+                    </> : format(dateRange.from, "LLL dd, y") : <span>Pick a date range</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={dateRange?.from}
-                selected={dateRange}
-                onSelect={setDateRange}
-                numberOfMonths={2}
-                className={cn("p-3 pointer-events-auto")}
-              />
+              <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={2} className={cn("p-3 pointer-events-auto")} />
             </PopoverContent>
           </Popover>
           <Button variant="outline" size="sm" className="gap-2">
@@ -93,97 +78,20 @@ const Index = () => {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Total Accounts"
-          value="12"
-          description="All account types"
-          icon={Building2}
-          variant="neutral"
-          changePercent={getChangePercent(12)}
-          changePeriod={timePeriod}
-        />
-        <MetricCard
-          title="Total Organizations"
-          value="8"
-          description="Active organizations"
-          icon={Network}
-          variant="neutral"
-          changePercent={getChangePercent(8)}
-          changePeriod={timePeriod}
-        />
-        <MetricCard
-          title="Total Enterprises"
-          value="4"
-          description="Enterprise accounts"
-          icon={Building2}
-          variant="neutral"
-          changePercent={getChangePercent(4)}
-          changePeriod={timePeriod}
-        />
-        <MetricCard
-          title="Total Account Users"
-          value="156"
-          description="All account users"
-          icon={Users}
-          variant="neutral"
-          changePercent={getChangePercent(156)}
-          changePeriod={timePeriod}
-        />
-        <MetricCard
-          title="Total Organization Users"
-          value="89"
-          description="Organization members"
-          icon={UserCheck}
-          variant="neutral"
-          changePercent={getChangePercent(89)}
-          changePeriod={timePeriod}
-        />
-        <MetricCard
-          title="Total Enterprise Users"
-          value="67"
-          description="Enterprise members"
-          icon={UserCheck}
-          variant="neutral"
-          changePercent={getChangePercent(67)}
-          changePeriod={timePeriod}
-        />
-        <MetricCard
-          title="Reports Filed (Pending)"
-          value="23"
-          description="Awaiting review"
-          icon={Clock}
-          variant="warning"
-          changePercent={getChangePercent(23)}
-          changePeriod={timePeriod}
-        />
-        <MetricCard
-          title="Total Logins"
-          value="1,247"
-          description="Last 30 days"
-          icon={Shield}
-          variant="neutral"
-          changePercent={getChangePercent(1247)}
-          changePeriod={timePeriod}
-        />
+        <MetricCard title="Total Accounts" value="12" description="All account types" icon={Building2} variant="neutral" changePercent={getChangePercent(12)} changePeriod={timePeriod} />
+        <MetricCard title="Total Organizations" value="8" description="Active organizations" icon={Network} variant="neutral" changePercent={getChangePercent(8)} changePeriod={timePeriod} />
+        <MetricCard title="Total Enterprises" value="4" description="Enterprise accounts" icon={Building2} variant="neutral" changePercent={getChangePercent(4)} changePeriod={timePeriod} />
+        <MetricCard title="Total Account Users" value="156" description="All account users" icon={Users} variant="neutral" changePercent={getChangePercent(156)} changePeriod={timePeriod} />
+        <MetricCard title="Total Organization Users" value="89" description="Organization members" icon={UserCheck} variant="neutral" changePercent={getChangePercent(89)} changePeriod={timePeriod} />
+        <MetricCard title="Total Enterprise Users" value="67" description="Enterprise members" icon={UserCheck} variant="neutral" changePercent={getChangePercent(67)} changePeriod={timePeriod} />
+        <MetricCard title="Reports Filed (Pending)" value="23" description="Awaiting review" icon={Clock} variant="warning" changePercent={getChangePercent(23)} changePeriod={timePeriod} />
+        <MetricCard title="Total Logins" value="1,247" description="Last 30 days" icon={Shield} variant="neutral" changePercent={getChangePercent(1247)} changePeriod={timePeriod} />
       </div>
 
       {/* Active Operations */}
       <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-critical" />
-          <CardTitle>Active Operations (All Organizations)</CardTitle>
-        </div>
-      </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/10 mb-4">
-              <Shield className="h-10 w-10 text-success" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">All Clear</h3>
-            <p className="text-muted-foreground max-w-sm">No active incidents across all organizations</p>
-          </div>
-        </CardContent>
+      
+        
       </Card>
 
       {/* Analytics Charts */}
@@ -193,8 +101,6 @@ const Index = () => {
         <UsersOverTimeChart />
         <ReportsByTypeChart />
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
