@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Building2, Users, AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, Plus, Search, MapPin, Monitor } from "lucide-react";
+import { Building2, Users, AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, Plus, Search, MapPin } from "lucide-react";
 import { MetricCard } from "@/components/ui/metric-card";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +12,7 @@ const mockEnterprise = {
   name: "MegaCorp Industries",
   type: "Enterprise",
   status: "Active",
-  description: "Real-time operations dashboard",
+  description: "Large multi-national corporation with diverse operations",
   totalOrganizations: 12,
   totalUsers: 2847,
   activeIncidents: 3,
@@ -91,7 +91,9 @@ const availableOrganizations = [{
   description: "Large event and concert medical support"
 }];
 export default function EnterpriseView() {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [organizations, setOrganizations] = useState(mockOrganizations);
@@ -108,16 +110,15 @@ export default function EnterpriseView() {
       setOrganizations([...organizations, newOrg]);
       setIsAddOrgModalOpen(false);
       setSearchTerm("");
-      
       toast({
         title: "Organization Added Successfully",
-        description: `${org.name} has been added to the enterprise.`,
+        description: `${org.name} has been added to the enterprise.`
       });
     } catch (error) {
       toast({
         title: "Error Adding Organization",
         description: "Failed to add the organization. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -125,8 +126,8 @@ export default function EnterpriseView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Monitor className="h-8 w-8" />
-            Enterprise View
+            <Building2 className="h-8 w-8" />
+            {mockEnterprise.name}
           </h1>
           <p className="text-muted-foreground">{mockEnterprise.description}</p>
         </div>
@@ -239,36 +240,6 @@ export default function EnterpriseView() {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="flex items-center justify-center p-6">
-            <div className="text-center space-y-2">
-              <Users className="h-8 w-8 mx-auto text-primary" />
-              <h3 className="font-semibold">Manage Organizations</h3>
-              <p className="text-sm text-muted-foreground">View and manage all organizations</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="flex items-center justify-center p-6">
-            <div className="text-center space-y-2">
-              <AlertTriangle className="h-8 w-8 mx-auto text-primary" />
-              <h3 className="font-semibold">View Incidents</h3>
-              <p className="text-sm text-muted-foreground">Monitor active incidents across all orgs</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="flex items-center justify-center p-6">
-            <div className="text-center space-y-2">
-              <TrendingUp className="h-8 w-8 mx-auto text-primary" />
-              <h3 className="font-semibold">Analytics Dashboard</h3>
-              <p className="text-sm text-muted-foreground">View enterprise-wide analytics</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      
     </div>;
 }
