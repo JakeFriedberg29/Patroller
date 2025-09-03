@@ -12,7 +12,7 @@ const mockEnterprise = {
   name: "MegaCorp Industries",
   type: "Enterprise",
   status: "Active",
-  description: "Large multi-national corporation with diverse operations",
+  description: "Real-time operations dashboard",
   totalOrganizations: 12,
   totalUsers: 2847,
   activeIncidents: 3,
