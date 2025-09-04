@@ -32,25 +32,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`${isResend ? 'Resending' : 'Sending'} activation email for user:`, { userId, email });
 
-    // Generate new activation token
+    // Generate new activation token using our database function
     const { data: tokenData, error: tokenError } = await supabase
-      .rpc('generate_activation_token');
+      .rpc('generate_activation_token', { p_user_id: userId });
 
     if (tokenError) {
       console.error('Error generating activation token:', tokenError);
       throw new Error('Failed to generate activation token');
     }
 
-    const activationToken = tokenData;
+    const activationToken = tokenData.activation_token;
 
-    // Update user profile with new activation token and sent timestamp
+    // Update user profile with sent timestamp
     const { error: updateError } = await supabase
-      .from('profiles')
+      .from('users')
       .update({
-        activation_token: activationToken,
-        activation_sent_at: new Date().toISOString(),
+        profile_data: supabase.raw(`profile_data || '{"activation_sent_at": "${new Date().toISOString()}"}'::jsonb`),
+        updated_at: new Date().toISOString()
       })
-      .eq('user_id', userId);
+      .eq('id', userId);
 
     if (updateError) {
       console.error('Error updating user profile:', updateError);
@@ -83,8 +83,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     const tempPassword = generateTempPassword();
     
-    // Create the activation URL
-    const activationUrl = `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'supabase.co')}/auth/v1/verify?token=${activationToken}&type=email&redirect_to=${encodeURIComponent(`${req.headers.get('origin') || 'http://localhost:3000'}/auth?activated=true`)}`;
+    // Create the activation URL for our custom activation flow
+    const baseUrl = req.headers.get('origin') || 'http://localhost:3000';
+    const activationUrl = `${baseUrl}/activate?token=${encodeURIComponent(activationToken)}`;
 
     // Send activation email
     const emailResponse = await resend.emails.send({
