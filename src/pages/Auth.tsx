@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 
 const Auth = () => {
+  // Login-only auth page for platform admins
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
