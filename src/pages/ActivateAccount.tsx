@@ -13,6 +13,7 @@ const ActivateAccount = () => {
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const [credentials, setCredentials] = useState<{email: string, password: string} | null>(null);
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -32,7 +33,10 @@ const ActivateAccount = () => {
       
       if (result.success) {
         setStatus('success');
-        setMessage('Your account has been activated successfully! You can now sign in with your credentials.');
+        setMessage('Your account has been activated successfully! Use the credentials below to sign in.');
+        if (result.credentials) {
+          setCredentials(result.credentials);
+        }
       } else {
         setStatus('error');
         setMessage(result.error || 'Failed to activate account. The link may be invalid or expired.');
@@ -71,6 +75,32 @@ const ActivateAccount = () => {
                   {message}
                 </AlertDescription>
               </Alert>
+              
+              {credentials && (
+                <div className="w-full space-y-3">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 mb-2">Your Temporary Login Credentials:</h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="font-medium text-blue-800">Email:</span>
+                        <div className="bg-white border rounded px-2 py-1 mt-1 font-mono text-blue-900">
+                          {credentials.email}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-blue-800">Temporary Password:</span>
+                        <div className="bg-white border rounded px-2 py-1 mt-1 font-mono text-blue-900">
+                          {credentials.password}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-700 mt-2">
+                      You'll be prompted to change this password on your first login.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
               <Button onClick={handleContinue} className="w-full">
                 Continue to Sign In
               </Button>
