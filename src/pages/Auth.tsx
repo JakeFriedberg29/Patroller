@@ -45,6 +45,22 @@ const Auth = () => {
       setError(error.message);
       toast.error(error.message);
     } else {
+      // Log successful login
+      try {
+        await supabase.rpc('log_user_action', {
+          p_action: 'LOGIN',
+          p_resource_type: 'session',
+          p_resource_id: null,
+          p_metadata: {
+            email: loginEmail,
+            login_method: 'email_password',
+            timestamp: new Date().toISOString()
+          }
+        });
+      } catch (logError) {
+        console.log('Failed to log login action:', logError);
+      }
+
       toast.success("Welcome back!");
       navigate("/");
     }

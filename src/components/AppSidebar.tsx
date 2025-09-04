@@ -18,6 +18,7 @@ import {
 import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   Sidebar,
@@ -103,6 +104,21 @@ export function AppSidebar() {
   };
 
   const handleSignOut = async () => {
+    try {
+      // Log logout before signing out
+      await supabase.rpc('log_user_action', {
+        p_action: 'LOGOUT',
+        p_resource_type: 'session',
+        p_resource_id: null,
+        p_metadata: {
+          logout_method: 'manual',
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (logError) {
+      console.log('Failed to log logout action:', logError);
+    }
+
     await signOut();
     navigate('/auth');
   };
