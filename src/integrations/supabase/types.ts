@@ -816,7 +816,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_organization_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_platform_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      user_has_role: {
+        Args: { _role_type: Database["public"]["Enums"]["role_type"] }
+        Returns: boolean
+      }
     }
     Enums: {
       equipment_status:
