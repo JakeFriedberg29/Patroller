@@ -14,7 +14,803 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          resource_id: string | null
+          resource_type: string
+          tenant_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          tenant_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          tenant_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs_current: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          resource_id: string | null
+          resource_type: string
+          tenant_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          tenant_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          tenant_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      departments: {
+        Row: {
+          created_at: string
+          description: string | null
+          head_user_id: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          head_user_id?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          head_user_id?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipment: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          created_at: string
+          id: string
+          location_id: string | null
+          maintenance_schedule: Json | null
+          model: string | null
+          name: string
+          organization_id: string
+          purchase_date: string | null
+          serial_number: string | null
+          specifications: Json | null
+          status: Database["public"]["Enums"]["equipment_status"]
+          updated_at: string
+          warranty_expires: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          category: string
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          maintenance_schedule?: Json | null
+          model?: string | null
+          name: string
+          organization_id: string
+          purchase_date?: string | null
+          serial_number?: string | null
+          specifications?: Json | null
+          status?: Database["public"]["Enums"]["equipment_status"]
+          updated_at?: string
+          warranty_expires?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          maintenance_schedule?: Json | null
+          model?: string | null
+          name?: string
+          organization_id?: string
+          purchase_date?: string | null
+          serial_number?: string | null
+          specifications?: Json | null
+          status?: Database["public"]["Enums"]["equipment_status"]
+          updated_at?: string
+          warranty_expires?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          incident_type: string
+          location_id: string | null
+          metadata: Json | null
+          occurred_at: string
+          organization_id: string
+          priority: Database["public"]["Enums"]["incident_priority"]
+          reported_by: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          incident_type: string
+          location_id?: string | null
+          metadata?: Json | null
+          occurred_at: string
+          organization_id: string
+          priority?: Database["public"]["Enums"]["incident_priority"]
+          reported_by: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          incident_type?: string
+          location_id?: string | null
+          metadata?: Json | null
+          occurred_at?: string
+          organization_id?: string
+          priority?: Database["public"]["Enums"]["incident_priority"]
+          reported_by?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          address: Json | null
+          coordinates: unknown | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: Json | null
+          coordinates?: unknown | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: Json | null
+          coordinates?: unknown | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean
+          tenant_id: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean
+          tenant_id: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean
+          tenant_id?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          address: Json | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_type: Database["public"]["Enums"]["organization_type"]
+          settings: Json | null
+          slug: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: Json | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_type: Database["public"]["Enums"]["organization_type"]
+          settings?: Json | null
+          slug: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: Json | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_type?: Database["public"]["Enums"]["organization_type"]
+          settings?: Json | null
+          slug?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          template_schema: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          template_schema: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          template_schema?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_events: {
+        Row: {
+          created_at: string
+          description: string
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          tenant_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          tenant_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          tenant_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_events_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          max_organizations: number | null
+          max_users: number | null
+          name: string
+          settings: Json | null
+          slug: string
+          subscription_expires_at: string | null
+          subscription_status: string
+          subscription_tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_organizations?: number | null
+          max_users?: number | null
+          name: string
+          settings?: Json | null
+          slug: string
+          subscription_expires_at?: string | null
+          subscription_status?: string
+          subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_organizations?: number | null
+          max_users?: number | null
+          name?: string
+          settings?: Json | null
+          slug?: string
+          subscription_expires_at?: string | null
+          subscription_status?: string
+          subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          expires_at: string | null
+          granted_at: string
+          granted_by: string | null
+          id: string
+          is_active: boolean
+          organization_id: string | null
+          role_type: Database["public"]["Enums"]["role_type"]
+          user_id: string
+        }
+        Insert: {
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id?: string | null
+          role_type: Database["public"]["Enums"]["role_type"]
+          user_id: string
+        }
+        Update: {
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id?: string | null
+          role_type?: Database["public"]["Enums"]["role_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: unknown | null
+          session_token: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: unknown | null
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown | null
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string
+          department_id: string | null
+          email: string
+          email_verified: boolean
+          employee_id: string | null
+          first_name: string | null
+          full_name: string
+          id: string
+          last_login_at: string | null
+          last_name: string | null
+          organization_id: string | null
+          phone: string | null
+          preferences: Json | null
+          profile_data: Json | null
+          status: Database["public"]["Enums"]["user_status"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string
+          department_id?: string | null
+          email: string
+          email_verified?: boolean
+          employee_id?: string | null
+          first_name?: string | null
+          full_name: string
+          id?: string
+          last_login_at?: string | null
+          last_name?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          preferences?: Json | null
+          profile_data?: Json | null
+          status?: Database["public"]["Enums"]["user_status"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string
+          department_id?: string | null
+          email?: string
+          email_verified?: boolean
+          employee_id?: string | null
+          first_name?: string | null
+          full_name?: string
+          id?: string
+          last_login_at?: string | null
+          last_name?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          preferences?: Json | null
+          profile_data?: Json | null
+          status?: Database["public"]["Enums"]["user_status"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +819,40 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      equipment_status:
+        | "available"
+        | "in_use"
+        | "maintenance"
+        | "damaged"
+        | "retired"
+      incident_priority: "low" | "medium" | "high" | "critical" | "emergency"
+      organization_type:
+        | "search_and_rescue"
+        | "lifeguard_service"
+        | "park_service"
+        | "event_medical"
+        | "ski_patrol"
+        | "harbor_master"
+        | "volunteer_emergency_services"
+      role_type:
+        | "platform_admin"
+        | "enterprise_admin"
+        | "organization_admin"
+        | "supervisor"
+        | "member"
+        | "observer"
+      subscription_tier:
+        | "free"
+        | "basic"
+        | "professional"
+        | "enterprise"
+        | "custom"
+      user_status:
+        | "pending"
+        | "active"
+        | "inactive"
+        | "suspended"
+        | "deactivated"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +979,46 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      equipment_status: [
+        "available",
+        "in_use",
+        "maintenance",
+        "damaged",
+        "retired",
+      ],
+      incident_priority: ["low", "medium", "high", "critical", "emergency"],
+      organization_type: [
+        "search_and_rescue",
+        "lifeguard_service",
+        "park_service",
+        "event_medical",
+        "ski_patrol",
+        "harbor_master",
+        "volunteer_emergency_services",
+      ],
+      role_type: [
+        "platform_admin",
+        "enterprise_admin",
+        "organization_admin",
+        "supervisor",
+        "member",
+        "observer",
+      ],
+      subscription_tier: [
+        "free",
+        "basic",
+        "professional",
+        "enterprise",
+        "custom",
+      ],
+      user_status: [
+        "pending",
+        "active",
+        "inactive",
+        "suspended",
+        "deactivated",
+      ],
+    },
   },
 } as const
