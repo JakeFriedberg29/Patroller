@@ -884,6 +884,10 @@ export type Database = {
         }
         Returns: string
       }
+      generate_activation_token: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       get_current_user_organization_id: {
         Args: Record<PropertyKey, never>
         Returns: string

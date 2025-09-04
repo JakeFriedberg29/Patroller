@@ -14,10 +14,10 @@ export interface CreateUserRequest {
 }
 
 // Map UI roles to database role types
-const mapRoleToDbRole = (uiRole: string): string => {
+const mapRoleToDbRole = (uiRole: string) => {
   const roleMap: { [key: string]: string } = {
     'Platform Admin': 'platform_admin',
-    'Enterprise Admin': 'enterprise_admin',
+    'Enterprise Admin': 'enterprise_admin', 
     'Team Leader': 'team_leader',
     'Responder': 'responder',
     'Observer': 'observer'
@@ -39,19 +39,19 @@ export const useUserManagement = () => {
           p_full_name: userData.fullName,
           p_tenant_id: userData.accountId || '95d3bca1-40f0-4630-a60e-1d98dacf3e60', // Use demo tenant for now
           p_organization_id: userData.accountType === 'organization' ? userData.accountId : null,
-          p_role_type: mapRoleToDbRole(userData.role || 'responder'),
+          p_role_type: mapRoleToDbRole(userData.role || 'responder') as any,
           p_phone: userData.phone || null,
           p_department: userData.department || null,
           p_location: userData.location || null
         });
 
-      if (createError || !result?.success) {
+      if (createError || !(result as any)?.success) {
         console.error('Error creating user:', createError);
         toast.error('Failed to create user');
-        return { success: false, error: createError?.message || result?.error };
+        return { success: false, error: createError?.message || (result as any)?.error };
       }
 
-      const userId = result.user_id;
+      const userId = (result as any).user_id;
 
       // Send activation email
       const { data: emailData, error: emailError } = await supabase.functions.invoke('send-activation-email', {
@@ -100,12 +100,12 @@ export const useUserManagement = () => {
         return { success: false, error: error.message };
       }
 
-      if (data?.success) {
+      if ((data as any)?.success) {
         toast.success('Account activated successfully');
         return { success: true };
       } else {
-        toast.error(data?.error || 'Invalid or expired activation token');
-        return { success: false, error: data?.error || 'Invalid activation token' };
+        toast.error((data as any)?.error || 'Invalid or expired activation token');
+        return { success: false, error: (data as any)?.error || 'Invalid activation token' };
       }
     } catch (error: any) {
       console.error('Error activating user:', error);

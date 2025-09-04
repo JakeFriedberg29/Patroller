@@ -67,13 +67,25 @@ export default function PlatformAdmins() {
   const loadPlatformAdmins = async () => {
     setIsLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('profiles').select('*').eq('role', 'Platform Admin').is('deleted_at', null) // Exclude soft-deleted profiles
-      .order('created_at', {
-        ascending: false
-      });
+      // Load platform admins from users table with role information
+      const { data, error } = await supabase
+        .from('users')
+        .select(`
+          id,
+          email,
+          full_name,
+          first_name,
+          last_name,
+          phone,
+          status,
+          created_at,
+          profile_data,
+          user_roles!inner(role_type)
+        `)
+        .eq('user_roles.role_type', 'platform_admin')
+        .eq('user_roles.is_active', true)
+        .order('created_at', { ascending: false });
+
       if (error) {
         console.error('Error loading platform admins:', error);
         toast({
@@ -83,17 +95,19 @@ export default function PlatformAdmins() {
         });
         return;
       }
-      const transformedAdmins: PlatformAdmin[] = data.map(profile => ({
-        id: profile.id,
-        user_id: profile.user_id,
-        firstName: profile.full_name?.split(' ')[0] || '',
-        lastName: profile.full_name?.split(' ').slice(1).join(' ') || '',
-        email: profile.email,
-        phone: profile.phone || '',
-        role: profile.role || 'Platform Admin',
-        activation_status: profile.activation_status as "pending" | "active" | "suspended" || 'pending',
-        activation_sent_at: profile.activation_sent_at
+
+      const transformedAdmins: PlatformAdmin[] = data.map((user: any) => ({
+        id: user.id,
+        user_id: user.id, // In our new structure, user_id is same as id
+        firstName: user.first_name || user.full_name?.split(' ')[0] || '',
+        lastName: user.last_name || user.full_name?.split(' ').slice(1).join(' ') || '',
+        email: user.email,
+        phone: user.phone || '',
+        role: 'Platform Admin',
+        activation_status: user.status as "pending" | "active" | "suspended",
+        activation_sent_at: user.profile_data?.activation_sent_at
       }));
+
       setAdmins(transformedAdmins);
     } catch (error) {
       console.error('Error loading platform admins:', error);
@@ -112,7 +126,8 @@ export default function PlatformAdmins() {
         email: newAdmin.email,
         fullName: `${newAdmin.firstName} ${newAdmin.lastName}`,
         role: 'Platform Admin',
-        accountType: 'platform'
+        accountType: 'platform',
+        phone: newAdmin.phone
       });
       if (result.success) {
         setNewAdmin({
