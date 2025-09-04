@@ -16,10 +16,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
-import { DeleteAdminModal } from "@/components/DeleteAdminModal";
-import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
-import { EditAdminModal } from "@/components/EditAdminModal";
-import { AdminAuditLog } from "@/components/AdminAuditLog";
+// import { DeleteAdminModal } from "@/components/DeleteAdminModal";
+// import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
+// import { AdminAuditLog } from "@/components/AdminAuditLog";
 interface PlatformAdmin {
   id: string;
   user_id: string;
@@ -293,14 +292,23 @@ export default function PlatformAdmins() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEditAdmin(admin)} className="cursor-pointer">
+                        <DropdownMenuItem 
+                          onClick={() => handleEditAdmin(admin)} 
+                          className="cursor-pointer"
+                        >
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDeleteAdmin(admin)} className="cursor-pointer text-destructive focus:text-destructive">
+                        {/* Delete functionality coming soon */}
+                        {/* 
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteAdmin(admin)} 
+                          className="cursor-pointer text-destructive focus:text-destructive"
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
+                        */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -330,10 +338,13 @@ export default function PlatformAdmins() {
                     <Send className="h-4 w-4" />
                     Resend Activation Email ({selectedAdmins.length})
                   </Button>
+                  {/* Delete functionality coming soon */}
+                  {/*
                   <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="gap-2">
                     <Trash2 className="h-4 w-4" />
                     Delete Selected ({selectedAdmins.length})
                   </Button>
+                  */}
                 </div>}
             </div>
             
@@ -354,8 +365,8 @@ export default function PlatformAdmins() {
         </CardContent>
       </Card>
 
-      {/* Audit Log Section */}
-      {showAuditLog && <AdminAuditLog accountType="platform" />}
+      {/* Audit Log Section - Coming Soon */}
+      {/* showAuditLog && <AdminAuditLog accountType="platform" /> */}
 
       {/* Add Admin Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -424,12 +435,18 @@ export default function PlatformAdmins() {
       </Dialog>
 
       {/* Edit Admin Dialog */}
-      <EditAdminModal open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} admin={currentAdmin} accountType="platform" onSuccess={handleEditSuccess} />
+      {currentAdmin && (
+        <EditAdminModal
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          admin={currentAdmin}
+          accountType="platform"
+          onSuccess={handleEditSuccess}
+        />
+      )}
 
-      {/* Delete Confirmation Dialog */}
-      <DeleteAdminModal open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} admin={currentAdmin} accountType="platform" onSuccess={handleDeleteSuccess} />
-
-      {/* Bulk Delete Dialog */}
-      <BulkDeleteAdminModal open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen} admins={selectedAdmins.map(id => admins.find(admin => admin.id === id)!).filter(Boolean)} accountType="platform" onSuccess={handleDeleteSuccess} />
+      {/* Delete & Bulk Delete - Coming Soon */}
+      {/* <DeleteAdminModal /> */}
+      {/* <BulkDeleteAdminModal /> */}
     </div>;
 }
