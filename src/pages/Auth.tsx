@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { validatePassword, getPasswordStrengthColor, getPasswordStrengthText } from "@/utils/passwordValidation";
+
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ const Auth = () => {
   // Form states
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [passwordValidation, setPasswordValidation] = useState({ isValid: true, errors: [] });
+  
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -52,8 +52,6 @@ const Auth = () => {
 
   const handlePasswordChange = (password: string) => {
     setLoginPassword(password);
-    const validation = validatePassword(password, loginEmail);
-    setPasswordValidation(validation);
   };
 
   return (
@@ -96,46 +94,13 @@ const Auth = () => {
                 placeholder="Enter your password"
                 minLength={12}
               />
-              
-              {/* Password validation feedback */}
-              {loginPassword && (
-                <div className="space-y-2">
-                  <div className={`text-sm font-medium ${getPasswordStrengthColor(passwordValidation.errors)}`}>
-                    Password Strength: {getPasswordStrengthText(passwordValidation.errors)}
-                  </div>
-                  {passwordValidation.errors.length > 0 && (
-                    <div className="text-sm space-y-1">
-                      <p className="font-medium text-muted-foreground">Password Requirements:</p>
-                      <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                        <li className={passwordValidation.errors.some(e => e.includes('12 characters')) ? 'text-red-600' : 'text-green-600'}>
-                          Minimum 12 characters
-                        </li>
-                        <li className={passwordValidation.errors.some(e => e.includes('uppercase')) ? 'text-red-600' : 'text-green-600'}>
-                          At least 1 uppercase letter (A-Z)
-                        </li>
-                        <li className={passwordValidation.errors.some(e => e.includes('lowercase')) ? 'text-red-600' : 'text-green-600'}>
-                          At least 1 lowercase letter (a-z)
-                        </li>
-                        <li className={passwordValidation.errors.some(e => e.includes('number')) ? 'text-red-600' : 'text-green-600'}>
-                          At least 1 number (0-9)
-                        </li>
-                        <li className={passwordValidation.errors.some(e => e.includes('special character')) ? 'text-red-600' : 'text-green-600'}>
-                          At least 1 special character
-                        </li>
-                        <li className={passwordValidation.errors.some(e => e.includes('repeated')) ? 'text-red-600' : 'text-green-600'}>
-                          No more than 2 repeated characters in a row
-                        </li>
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
+                
             </div>
             
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={loading || !passwordValidation.isValid}
+              disabled={loading}
             >
               {loading ? "Signing in..." : "Sign In"}
             </Button>
