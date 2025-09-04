@@ -434,8 +434,8 @@ export default function PlatformAdmins() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Admin Dialog */}
-      {currentAdmin && (
+      {/* Edit Admin Dialog - Coming Soon */}
+      {/* {currentAdmin && (
         <EditAdminModal
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
@@ -443,7 +443,7 @@ export default function PlatformAdmins() {
           accountType="platform"
           onSuccess={handleEditSuccess}
         />
-      )}
+      )} */}
 
       {/* Delete & Bulk Delete - Coming Soon */}
       {/* <DeleteAdminModal /> */}

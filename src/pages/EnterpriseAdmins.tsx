@@ -83,11 +83,14 @@ export default function EnterpriseAdmins() {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'Enterprise Admin')
-        .eq('account_type', 'enterprise')
-        .is('deleted_at', null) // Exclude soft-deleted profiles
+        .from('users')
+        .select(`
+          *,
+          user_roles!inner(role_type, is_active)
+        `)
+        .eq('user_roles.role_type', 'enterprise_admin')
+        .eq('user_roles.is_active', true)
+        .neq('status', 'inactive') // Exclude soft-deleted users
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -100,23 +103,33 @@ export default function EnterpriseAdmins() {
         return;
       }
 
-      const transformedAdmins: EnterpriseAdmin[] = data.map(profile => ({
-        id: profile.id,
-        user_id: profile.user_id,
-        firstName: profile.full_name?.split(' ')[0] || '',
-        lastName: profile.full_name?.split(' ').slice(1).join(' ') || '',
-        email: profile.email,
-        phone: profile.phone || '',
-        role: profile.role || 'Enterprise Admin',
-        activation_status: (profile.activation_status as "pending" | "active" | "suspended") || 'pending',
-        department: profile.department || '',
-        location: profile.location || '',
-        lastLogin: profile.updated_at || '',
-        createdDate: profile.created_at || '',
-        permissions: profile.permissions || [],
-        avatar: '',
-        activation_sent_at: profile.activation_sent_at
-      }));
+      const transformedAdmins: EnterpriseAdmin[] = data.map(user => {
+        const profileData = user.profile_data as { 
+          department?: string; 
+          location?: string; 
+          permissions?: string[];
+          avatar?: string;
+          activation_sent_at?: string;
+        } || {};
+        
+        return {
+          id: user.id,
+          user_id: user.id,
+          firstName: user.first_name || user.full_name?.split(' ')[0] || '',
+          lastName: user.last_name || user.full_name?.split(' ').slice(1).join(' ') || '',
+          email: user.email,
+          phone: user.phone || '',
+          role: 'Enterprise Admin',
+          activation_status: user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended',
+          department: profileData.department || '',
+          location: profileData.location || '',
+          lastLogin: user.last_login_at || user.updated_at || '',
+          createdDate: user.created_at || '',
+          permissions: profileData.permissions || ['User Management', 'Organization Management'],
+          avatar: profileData.avatar || '',
+          activation_sent_at: profileData.activation_sent_at
+        };
+      });
 
       setAdmins(transformedAdmins);
     } catch (error) {
