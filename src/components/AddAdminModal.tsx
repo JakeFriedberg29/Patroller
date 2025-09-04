@@ -224,10 +224,11 @@ export function AddAdminModal({
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
               <h4 className="font-medium text-sm">Account Creation Process</h4>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>• Admin will receive a confirmation email to verify their account</p>
-                <p>• Password must meet security requirements (mixed case, numbers, symbols)</p>
-                <p>• Account confirmation link expires in 24 hours</p>
-                <p>• Admin can log in once email is confirmed</p>
+                <p>• Admin will receive an activation email with temporary login credentials</p>
+                <p>• They must click the activation link to confirm their account</p>
+                <p>• Temporary password will be shown in the activation email</p>
+                <p>• Admin can log in immediately after activation</p>
+                <p>• Account activation link expires in 24 hours</p>
               </div>
             </div>
 
