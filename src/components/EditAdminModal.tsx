@@ -5,12 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Edit, Loader2 } from "lucide-react";
+import { Edit, Loader2, Shield, ShieldX, Trash2, AlertTriangle } from "lucide-react";
 
 // Validation schema
 const formSchema = z.object({
@@ -50,6 +52,10 @@ export const EditAdminModal = ({
   onSuccess
 }: EditAdminModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuspending, setIsSuspending] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showSuspendDialog, setShowSuspendDialog] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -105,6 +111,84 @@ export const EditAdminModal = ({
       toast.error('Failed to update administrator');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSuspendToggle = async () => {
+    if (!admin) return;
+    
+    setIsSuspending(true);
+    try {
+      const newStatus = admin.activation_status === 'suspended' ? 'active' : 'suspended';
+      
+      const { error } = await supabase
+        .from('users')
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', admin.id);
+
+      if (error) {
+        console.error('Error updating admin status:', error);
+        toast.error(`Failed to ${newStatus === 'suspended' ? 'suspend' : 'unsuspend'} administrator`);
+        return;
+      }
+
+      toast.success(`Administrator ${newStatus === 'suspended' ? 'suspended' : 'unsuspended'} successfully`);
+      onSuccess?.();
+      setShowSuspendDialog(false);
+    } catch (error) {
+      console.error('Error updating admin status:', error);
+      toast.error(`Failed to ${admin.activation_status === 'suspended' ? 'unsuspend' : 'suspend'} administrator`);
+    } finally {
+      setIsSuspending(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!admin) return;
+    
+    setIsDeleting(true);
+    try {
+      // Soft delete by setting status to inactive and deactivating roles
+      const { error: userError } = await supabase
+        .from('users')
+        .update({
+          status: 'inactive',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', admin.id);
+
+      if (userError) {
+        console.error('Error deleting admin:', userError);
+        toast.error('Failed to delete administrator');
+        return;
+      }
+
+      // Deactivate all roles
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', admin.id);
+
+      if (roleError) {
+        console.error('Error deactivating admin roles:', roleError);
+        // Don't return here, user deletion was successful
+      }
+
+      toast.success('Administrator deleted successfully');
+      onSuccess?.();
+      onOpenChange(false);
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Error deleting admin:', error);
+      toast.error('Failed to delete administrator');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -262,6 +346,62 @@ export const EditAdminModal = ({
               </>
             )}
 
+            <Separator className="my-6" />
+            
+            {/* Admin Actions */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-sm">Administrator Status</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {admin.activation_status === 'suspended' 
+                      ? 'This administrator is currently suspended and cannot log in' 
+                      : 'This administrator can log in and access the platform'
+                    }
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant={admin.activation_status === 'suspended' ? "default" : "secondary"}
+                  size="sm"
+                  onClick={() => setShowSuspendDialog(true)}
+                  disabled={admin.activation_status === 'pending'}
+                >
+                  {admin.activation_status === 'suspended' ? (
+                    <>
+                      <Shield className="mr-2 h-4 w-4" />
+                      Unsuspend
+                    </>
+                  ) : (
+                    <>
+                      <ShieldX className="mr-2 h-4 w-4" />
+                      Suspend
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-sm text-destructive">Delete Administrator</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Permanently remove this administrator from the system
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+
+            <Separator className="my-6" />
+
             <div className="flex justify-between pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
@@ -280,6 +420,83 @@ export const EditAdminModal = ({
           </form>
         </Form>
       </DialogContent>
+
+      {/* Suspend/Unsuspend Confirmation Dialog */}
+      <AlertDialog open={showSuspendDialog} onOpenChange={setShowSuspendDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100 dark:bg-yellow-900/20">
+                <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <AlertDialogTitle>
+                  {admin?.activation_status === 'suspended' ? 'Unsuspend Administrator' : 'Suspend Administrator'}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {admin?.activation_status === 'suspended' 
+                    ? `Are you sure you want to unsuspend ${admin?.firstName} ${admin?.lastName}? They will be able to log in and access the platform again.`
+                    : `Are you sure you want to suspend ${admin?.firstName} ${admin?.lastName}? They will not be able to log in until unsuspended.`
+                  }
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSuspending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSuspendToggle}
+              disabled={isSuspending}
+              className={admin?.activation_status !== 'suspended' ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+            >
+              {isSuspending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {admin?.activation_status === 'suspended' ? 'Unsuspending...' : 'Suspending...'}
+                </>
+              ) : (
+                admin?.activation_status === 'suspended' ? 'Unsuspend Administrator' : 'Suspend Administrator'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10">
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </div>
+              <div>
+                <AlertDialogTitle>Delete Administrator</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete {admin?.firstName} {admin?.lastName}? This action cannot be undone and will permanently remove their access to the system.
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Administrator'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

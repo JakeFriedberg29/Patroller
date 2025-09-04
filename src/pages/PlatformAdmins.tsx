@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
+import { EditAdminModal } from "@/components/EditAdminModal";
 // import { DeleteAdminModal } from "@/components/DeleteAdminModal";
 // import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
 // import { AdminAuditLog } from "@/components/AdminAuditLog";
@@ -299,8 +300,6 @@ export default function PlatformAdmins() {
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        {/* Delete functionality coming soon */}
-                        {/* 
                         <DropdownMenuItem 
                           onClick={() => handleDeleteAdmin(admin)} 
                           className="cursor-pointer text-destructive focus:text-destructive"
@@ -308,7 +307,6 @@ export default function PlatformAdmins() {
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
-                        */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -434,8 +432,8 @@ export default function PlatformAdmins() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Admin Dialog - Coming Soon */}
-      {/* {currentAdmin && (
+      {/* Edit Admin Dialog */}
+      {currentAdmin && (
         <EditAdminModal
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
@@ -443,7 +441,7 @@ export default function PlatformAdmins() {
           accountType="platform"
           onSuccess={handleEditSuccess}
         />
-      )} */}
+      )}
 
       {/* Delete & Bulk Delete - Coming Soon */}
       {/* <DeleteAdminModal /> */}
