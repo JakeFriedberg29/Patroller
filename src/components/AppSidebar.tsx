@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 import {
   Sidebar,
@@ -70,6 +71,7 @@ export function AppSidebar() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { profile } = useUserProfile();
   const currentPath = location.pathname;
   
   const isCollapsed = state === "collapsed";
@@ -249,7 +251,7 @@ export function AppSidebar() {
                       <User className="h-4 w-4" />
                       {!isCollapsed && (
                         <>
-                          <span className="flex-1 text-left">Jake Friedberg</span>
+                          <span className="flex-1 text-left">{profile?.fullName || profile?.email || 'Loading...'}</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </>
                       )}

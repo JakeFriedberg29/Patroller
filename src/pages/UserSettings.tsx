@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,14 +20,12 @@ import {
   Bell, 
   Shield, 
   Key, 
-  Upload,
   Save,
-  Camera,
-  Trash2
+  Camera
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface UserProfile {
+interface FormProfile {
   id: string;
   firstName: string;
   lastName: string;
@@ -42,8 +40,6 @@ interface UserProfile {
   language: string;
   role: string;
   status: 'active' | 'inactive' | 'pending' | 'suspended';
-  lastLogin: string;
-  createdAt: string;
 }
 
 interface NotificationSettings {
@@ -65,10 +61,11 @@ interface SecuritySettings {
 
 export default function UserSettings() {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { profile, loading, error, refetch } = useUserProfile();
+  const [isEditing, setIsEditing] = useState(false);
   
-  const [profile, setProfile] = useState<UserProfile>({
+  // Initialize form state with profile data
+  const [formProfile, setFormProfile] = useState<FormProfile>({
     id: "",
     firstName: "",
     lastName: "",
@@ -82,90 +79,8 @@ export default function UserSettings() {
     timezone: "America/New_York",
     language: "en",
     role: "",
-    status: "active",
-    lastLogin: "",
-    createdAt: ""
+    status: "active"
   });
-
-  useEffect(() => {
-    if (user) {
-      loadUserProfile();
-    }
-  }, [user]);
-
-  const loadUserProfile = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select(`
-          *,
-          user_roles!user_roles_user_id_fkey(role_type)
-        `)
-        .eq('auth_user_id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error loading user profile:', error);
-        toast({
-          title: "Error Loading Profile",
-          description: "Failed to load your profile information.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data) {
-        // Get the primary role
-        const primaryRole = data.user_roles?.[0]?.role_type || 'member';
-        
-        // Safely parse JSON data
-        const profileData = typeof data.profile_data === 'object' && data.profile_data !== null 
-          ? data.profile_data as any 
-          : {};
-        const preferences = typeof data.preferences === 'object' && data.preferences !== null 
-          ? data.preferences as any 
-          : {};
-        
-        setProfile({
-          id: data.id,
-          firstName: data.first_name || '',
-          lastName: data.last_name || '',
-          email: data.email,
-          phone: data.phone || '',
-          title: getRoleDisplayName(primaryRole),
-          department: profileData.department || '',
-          location: profileData.location || '',
-          bio: profileData.bio || '',
-          avatar: profileData.avatar_url || '',
-          timezone: preferences.timezone || 'America/New_York',
-          language: preferences.language || 'en',
-          role: getRoleDisplayName(primaryRole),
-          status: data.status as 'active' | 'inactive' | 'pending' | 'suspended',
-          lastLogin: data.last_login_at || '',
-          createdAt: data.created_at
-        });
-      }
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getRoleDisplayName = (roleType: string): string => {
-    switch (roleType) {
-      case 'platform_admin': return 'Platform Administrator';
-      case 'enterprise_admin': return 'Enterprise Administrator';
-      case 'organization_admin': return 'Organization Administrator';
-      case 'supervisor': return 'Supervisor';
-      case 'responder': return 'Responder';
-      case 'member': return 'Member';
-      default: return roleType;
-    }
-  };
 
   const [notifications, setNotifications] = useState<NotificationSettings>({
     emailNotifications: true,
@@ -184,14 +99,86 @@ export default function UserSettings() {
     trustedDevices: 3
   });
 
-  const [isEditing, setIsEditing] = useState(false);
+  // Update form when profile loads
+  useEffect(() => {
+    if (profile) {
+      setFormProfile({
+        id: profile.id,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+        phone: profile.phone,
+        title: profile.role,
+        department: profile.profileData?.department || '',
+        location: profile.profileData?.location || '',
+        bio: profile.profileData?.bio || '',
+        avatar: profile.profileData?.avatar_url || '',
+        timezone: profile.profileData?.timezone || 'America/New_York',
+        language: profile.profileData?.language || 'en',
+        role: profile.role,
+        status: profile.status as 'active' | 'inactive' | 'pending' | 'suspended'
+      });
+    }
+  }, [profile]);
 
-  const handleProfileUpdate = () => {
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been successfully updated.",
-    });
-    setIsEditing(false);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Error loading profile: {error}</p>
+          <Button onClick={refetch}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleProfileUpdate = async () => {
+    if (!profile?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          first_name: formProfile.firstName,
+          last_name: formProfile.lastName,
+          phone: formProfile.phone,
+          profile_data: {
+            ...profile.profileData,
+            department: formProfile.department,
+            location: formProfile.location,
+            bio: formProfile.bio,
+            timezone: formProfile.timezone,
+            language: formProfile.language
+          }
+        })
+        .eq('id', profile.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been successfully updated.",
+      });
+      setIsEditing(false);
+      refetch(); // Reload the profile data
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update your profile. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleNotificationUpdate = (key: keyof NotificationSettings) => {
@@ -232,8 +219,8 @@ export default function UserSettings() {
           <h1 className="text-2xl font-bold">User Settings</h1>
           <p className="text-muted-foreground">Manage your account settings and preferences</p>
         </div>
-        <Badge variant={profile.status === 'active' ? 'default' : 'secondary'}>
-          {profile.status === 'active' ? 'Active' : profile.status === 'pending' ? 'Pending' : profile.status === 'suspended' ? 'Suspended' : 'Inactive'}
+        <Badge variant={formProfile.status === 'active' ? 'default' : 'secondary'}>
+          {formProfile.status === 'active' ? 'Active' : formProfile.status === 'pending' ? 'Pending' : formProfile.status === 'suspended' ? 'Suspended' : 'Inactive'}
         </Badge>
       </div>
 
@@ -257,9 +244,9 @@ export default function UserSettings() {
               <div className="flex items-center gap-6">
                 <div className="relative">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={profile.avatar} alt={`${profile.firstName} ${profile.lastName}`} />
+                    <AvatarImage src={formProfile.avatar} alt={`${formProfile.firstName} ${formProfile.lastName}`} />
                     <AvatarFallback className="text-lg">
-                      {profile.firstName[0]}{profile.lastName[0]}
+                      {(formProfile.firstName?.[0] || '')}{ (formProfile.lastName?.[0] || '')}
                     </AvatarFallback>
                   </Avatar>
                   <Button
@@ -271,9 +258,9 @@ export default function UserSettings() {
                   </Button>
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-lg font-semibold">{profile.firstName} {profile.lastName}</h3>
-                  <p className="text-sm text-muted-foreground">{profile.title}</p>
-                  <p className="text-sm text-muted-foreground">{profile.department}</p>
+                  <h3 className="text-lg font-semibold">{formProfile.firstName} {formProfile.lastName}</h3>
+                  <p className="text-sm text-muted-foreground">{formProfile.title}</p>
+                  <p className="text-sm text-muted-foreground">{formProfile.department}</p>
                 </div>
               </div>
 
@@ -284,18 +271,18 @@ export default function UserSettings() {
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
                     id="firstName"
-                    value={profile.firstName}
+                    value={formProfile.firstName}
                     disabled={!isEditing}
-                    onChange={(e) => setProfile(prev => ({ ...prev, firstName: e.target.value }))}
+                    onChange={(e) => setFormProfile(prev => ({ ...prev, firstName: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
                   <Input
                     id="lastName"
-                    value={profile.lastName}
+                    value={formProfile.lastName}
                     disabled={!isEditing}
-                    onChange={(e) => setProfile(prev => ({ ...prev, lastName: e.target.value }))}
+                    onChange={(e) => setFormProfile(prev => ({ ...prev, lastName: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
@@ -305,10 +292,9 @@ export default function UserSettings() {
                     <Input
                       id="email"
                       type="email"
-                      value={profile.email}
-                      disabled={!isEditing}
+                      value={formProfile.email}
+                      disabled={true} // Email should not be editable
                       className="pl-10"
-                      onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -318,10 +304,10 @@ export default function UserSettings() {
                     <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="phone"
-                      value={profile.phone}
+                      value={formProfile.phone}
                       disabled={!isEditing}
                       className="pl-10"
-                      onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
+                      onChange={(e) => setFormProfile(prev => ({ ...prev, phone: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -329,18 +315,17 @@ export default function UserSettings() {
                   <Label htmlFor="title">Job Title</Label>
                   <Input
                     id="title"
-                    value={profile.title}
-                    disabled={!isEditing}
-                    onChange={(e) => setProfile(prev => ({ ...prev, title: e.target.value }))}
+                    value={formProfile.title}
+                    disabled={true} // Job title should be based on role
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="department">Department</Label>
                   <Input
                     id="department"
-                    value={profile.department}
+                    value={formProfile.department}
                     disabled={!isEditing}
-                    onChange={(e) => setProfile(prev => ({ ...prev, department: e.target.value }))}
+                    onChange={(e) => setFormProfile(prev => ({ ...prev, department: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -349,10 +334,10 @@ export default function UserSettings() {
                     <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="location"
-                      value={profile.location}
+                      value={formProfile.location}
                       disabled={!isEditing}
                       className="pl-10"
-                      onChange={(e) => setProfile(prev => ({ ...prev, location: e.target.value }))}
+                      onChange={(e) => setFormProfile(prev => ({ ...prev, location: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -360,10 +345,10 @@ export default function UserSettings() {
                   <Label htmlFor="bio">Bio</Label>
                   <Textarea
                     id="bio"
-                    value={profile.bio}
+                    value={formProfile.bio}
                     disabled={!isEditing}
                     rows={3}
-                    onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                    onChange={(e) => setFormProfile(prev => ({ ...prev, bio: e.target.value }))}
                   />
                 </div>
               </div>
@@ -573,8 +558,8 @@ export default function UserSettings() {
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Timezone</Label>
                   <Select
-                    value={profile.timezone}
-                    onValueChange={(value) => setProfile(prev => ({ ...prev, timezone: value }))}
+                    value={formProfile.timezone}
+                    onValueChange={(value) => setFormProfile(prev => ({ ...prev, timezone: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -591,8 +576,8 @@ export default function UserSettings() {
                 <div className="space-y-2">
                   <Label htmlFor="language">Language</Label>
                   <Select
-                    value={profile.language}
-                    onValueChange={(value) => setProfile(prev => ({ ...prev, language: value }))}
+                    value={formProfile.language}
+                    onValueChange={(value) => setFormProfile(prev => ({ ...prev, language: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -614,19 +599,19 @@ export default function UserSettings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <Label className="text-muted-foreground">User ID</Label>
-                    <p className="font-mono">{profile.id}</p>
+                    <p className="font-mono">{formProfile.id}</p>
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Role</Label>
-                    <p>{profile.role}</p>
+                    <p>{formProfile.role}</p>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground">Last Login</Label>
-                    <p>{new Date(profile.lastLogin).toLocaleString()}</p>
+                    <Label className="text-muted-foreground">Account Status</Label>
+                    <p className="capitalize">{formProfile.status}</p>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground">Account Created</Label>
-                    <p>{new Date(profile.createdAt).toLocaleDateString()}</p>
+                    <Label className="text-muted-foreground">Email</Label>
+                    <p>{formProfile.email}</p>
                   </div>
                 </div>
               </div>
