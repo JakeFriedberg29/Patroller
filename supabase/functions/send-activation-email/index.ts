@@ -23,9 +23,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Use service role key for database operations to bypass RLS
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     const { userId, email, fullName, isResend = false }: SendActivationEmailRequest = await req.json();

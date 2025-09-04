@@ -54,7 +54,13 @@ export const useUserManagement = () => {
 
       const result = data as any;
       if (!result?.success || !result?.user_id) {
-        toast.error('Failed to create user');
+        // Handle duplicate user error with better message
+        if (result?.error?.includes('duplicate key value violates unique constraint')) {
+          toast.error('User already invited. Please ask them to check their email or resend the verification email.');
+          return { success: false, error: 'User already invited' };
+        }
+        
+        toast.error(result?.error || 'Failed to create user');
         return { success: false, error: result?.error || 'Failed to create user' };
       }
 
