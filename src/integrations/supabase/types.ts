@@ -823,6 +823,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_user_account: {
+        Args: { p_activation_token: string }
+        Returns: Json
+      }
       assign_equipment: {
         Args: { p_equipment_id: string; p_user_id: string }
         Returns: boolean
@@ -841,6 +845,19 @@ export type Database = {
           p_title: string
         }
         Returns: string
+      }
+      create_pending_user: {
+        Args: {
+          p_department?: string
+          p_email: string
+          p_full_name: string
+          p_location?: string
+          p_organization_id?: string
+          p_phone?: string
+          p_role_type?: Database["public"]["Enums"]["role_type"]
+          p_tenant_id: string
+        }
+        Returns: Json
       }
       create_tenant_with_organization: {
         Args: {
