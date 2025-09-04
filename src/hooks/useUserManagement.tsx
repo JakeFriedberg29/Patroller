@@ -14,11 +14,13 @@ export interface CreateUserRequest {
 }
 
 // Map UI roles to database role types
-const mapRoleToDbRole = (uiRole: string) => {
-  const roleMap: { [key: string]: string } = {
+const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' => {
+  const roleMap: { [key: string]: 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' } = {
     'Platform Admin': 'platform_admin',
     'Enterprise Admin': 'enterprise_admin', 
+    'Organization Admin': 'organization_admin',
     'Team Leader': 'team_leader',
+    'Supervisor': 'supervisor',
     'Responder': 'responder',
     'Observer': 'observer'
   };
@@ -50,15 +52,16 @@ export const useUserManagement = () => {
         return { success: false, error: error.message };
       }
 
-      if (!data?.user_id) {
+      const result = data as any;
+      if (!result?.success || !result?.user_id) {
         toast.error('Failed to create user');
-        return { success: false, error: 'Failed to create user' };
+        return { success: false, error: result?.error || 'Failed to create user' };
       }
 
       // Send activation email with temporary password
       const { data: emailData, error: emailError } = await supabase.functions.invoke('send-activation-email', {
         body: {
-          userId: data.user_id,
+          userId: result.user_id,
           email: userData.email,
           fullName: userData.fullName,
           isResend: false
@@ -77,7 +80,7 @@ export const useUserManagement = () => {
       }
 
       toast.success(`User created successfully! Activation email sent to ${userData.email}`);
-      return { success: true, userId: data.user_id };
+      return { success: true, userId: result.user_id };
     } catch (error: any) {
       console.error('Error in createUser:', error);
       toast.error('Failed to create user');

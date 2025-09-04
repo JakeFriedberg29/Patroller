@@ -32,22 +32,48 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`${isResend ? 'Resending' : 'Sending'} activation email for user:`, { userId, email });
 
-    // Generate new activation token using our database function
-    const { data: tokenData, error: tokenError } = await supabase
-      .rpc('generate_activation_token', { p_user_id: userId });
+    // Get user data including temp password and activation token from database
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('profile_data')
+      .eq('id', userId)
+      .single();
 
-    if (tokenError) {
-      console.error('Error generating activation token:', tokenError);
-      throw new Error('Failed to generate activation token');
+    if (userError || !userData) {
+      console.error('Error fetching user data:', userError);
+      throw new Error('User not found');
     }
 
-    const activationToken = tokenData.activation_token;
+    let activationToken = userData.profile_data?.activation_token;
+    let tempPassword = userData.profile_data?.temp_password;
+
+    // If activation token or temp password is missing, generate new one
+    if (!activationToken || !tempPassword) {
+      const { data: tokenData, error: tokenError } = await supabase
+        .rpc('generate_activation_token', { p_user_id: userId });
+
+      if (tokenError) {
+        console.error('Error generating activation token:', tokenError);
+        throw new Error('Failed to generate activation token');
+      }
+
+      const result = tokenData as any;
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to generate activation token');
+      }
+
+      activationToken = result.activation_token;
+      tempPassword = result.temp_password;
+    }
 
     // Update user profile with sent timestamp
     const { error: updateError } = await supabase
       .from('users')
       .update({
-        profile_data: supabase.raw(`profile_data || '{"activation_sent_at": "${new Date().toISOString()}"}'::jsonb`),
+        profile_data: {
+          ...userData.profile_data,
+          activation_sent_at: new Date().toISOString()
+        },
         updated_at: new Date().toISOString()
       })
       .eq('id', userId);
@@ -56,35 +82,9 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error updating user profile:', updateError);
       throw new Error('Failed to update user profile');
     }
-
-    // Generate temporary password (12 chars, meets requirements)
-    const generateTempPassword = (): string => {
-      const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-      const numbers = '0123456789';
-      const special = '!@#$%^&*';
-      
-      // Ensure at least one of each required character type
-      let password = '';
-      password += uppercase[Math.floor(Math.random() * uppercase.length)];
-      password += lowercase[Math.floor(Math.random() * lowercase.length)];
-      password += numbers[Math.floor(Math.random() * numbers.length)];
-      password += special[Math.floor(Math.random() * special.length)];
-      
-      // Fill remaining 8 characters
-      const allChars = uppercase + lowercase + numbers + special;
-      for (let i = 4; i < 12; i++) {
-        password += allChars[Math.floor(Math.random() * allChars.length)];
-      }
-      
-      // Shuffle the password
-      return password.split('').sort(() => Math.random() - 0.5).join('');
-    };
-
-    const tempPassword = generateTempPassword();
     
     // Create the activation URL for our custom activation flow
-    const baseUrl = req.headers.get('origin') || 'http://localhost:3000';
+    const baseUrl = req.headers.get('origin') || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.sandbox.lovable.dev';
     const activationUrl = `${baseUrl}/activate?token=${encodeURIComponent(activationToken)}`;
 
     // Send activation email
@@ -146,11 +146,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Activation email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: `Activation email ${isResend ? 'resent' : 'sent'} successfully`,
-      activationToken: activationToken
-    }), {
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: `Activation email ${isResend ? 'resent' : 'sent'} successfully`,
+        activationToken: activationToken,
+        tempPassword: tempPassword
+      }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
