@@ -147,12 +147,24 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Activation email sent successfully:", emailResponse);
 
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: `Activation email ${isResend ? 'resent' : 'sent'} successfully`,
-        activationToken: activationToken,
-        tempPassword: tempPassword
-      }), {
+    // Check if Resend returned an error (e.g., domain verification issues)
+    if (emailResponse.error) {
+      console.error("Resend API error:", emailResponse.error);
+      
+      // Check for domain verification error
+      if (emailResponse.error.message && emailResponse.error.message.includes('verify a domain')) {
+        throw new Error('Email service configuration error: Please verify your domain at resend.com/domains or contact your administrator');
+      }
+      
+      throw new Error(`Email service error: ${emailResponse.error.message || 'Failed to send email'}`);
+    }
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: `Activation email ${isResend ? 'resent' : 'sent'} successfully`,
+      activationToken: activationToken,
+      tempPassword: tempPassword
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
