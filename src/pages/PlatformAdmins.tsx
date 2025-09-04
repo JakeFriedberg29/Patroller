@@ -79,7 +79,7 @@ export default function PlatformAdmins() {
           status,
           created_at,
           profile_data,
-          user_roles!inner(role_type)
+          user_roles!user_roles_user_id_fkey!inner(role_type)
         `)
         .eq('user_roles.role_type', 'platform_admin')
         .eq('user_roles.is_active', true)

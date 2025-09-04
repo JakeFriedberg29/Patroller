@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +41,7 @@ interface UserProfile {
   timezone: string;
   language: string;
   role: string;
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | 'pending' | 'suspended';
   lastLogin: string;
   createdAt: string;
 }
@@ -63,25 +65,107 @@ interface SecuritySettings {
 
 export default function UserSettings() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   
   const [profile, setProfile] = useState<UserProfile>({
-    id: "user-123",
-    firstName: "Jake",
-    lastName: "Friedberg",
-    email: "jake.friedberg@missionlog.com",
-    phone: "+1 (555) 123-4567",
-    title: "Platform Administrator",
-    department: "Operations",
-    location: "New York, NY",
-    bio: "Experienced platform administrator with 8+ years in emergency response systems.",
+    id: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    title: "",
+    department: "",
+    location: "",
+    bio: "",
     avatar: "",
     timezone: "America/New_York",
     language: "en",
-    role: "Platform Admin",
+    role: "",
     status: "active",
-    lastLogin: "2024-01-15T10:30:00Z",
-    createdAt: "2023-06-01T00:00:00Z"
+    lastLogin: "",
+    createdAt: ""
   });
+
+  useEffect(() => {
+    if (user) {
+      loadUserProfile();
+    }
+  }, [user]);
+
+  const loadUserProfile = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select(`
+          *,
+          user_roles!user_roles_user_id_fkey(role_type)
+        `)
+        .eq('auth_user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading user profile:', error);
+        toast({
+          title: "Error Loading Profile",
+          description: "Failed to load your profile information.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data) {
+        // Get the primary role
+        const primaryRole = data.user_roles?.[0]?.role_type || 'member';
+        
+        // Safely parse JSON data
+        const profileData = typeof data.profile_data === 'object' && data.profile_data !== null 
+          ? data.profile_data as any 
+          : {};
+        const preferences = typeof data.preferences === 'object' && data.preferences !== null 
+          ? data.preferences as any 
+          : {};
+        
+        setProfile({
+          id: data.id,
+          firstName: data.first_name || '',
+          lastName: data.last_name || '',
+          email: data.email,
+          phone: data.phone || '',
+          title: getRoleDisplayName(primaryRole),
+          department: profileData.department || '',
+          location: profileData.location || '',
+          bio: profileData.bio || '',
+          avatar: profileData.avatar_url || '',
+          timezone: preferences.timezone || 'America/New_York',
+          language: preferences.language || 'en',
+          role: getRoleDisplayName(primaryRole),
+          status: data.status as 'active' | 'inactive' | 'pending' | 'suspended',
+          lastLogin: data.last_login_at || '',
+          createdAt: data.created_at
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRoleDisplayName = (roleType: string): string => {
+    switch (roleType) {
+      case 'platform_admin': return 'Platform Administrator';
+      case 'enterprise_admin': return 'Enterprise Administrator';
+      case 'organization_admin': return 'Organization Administrator';
+      case 'supervisor': return 'Supervisor';
+      case 'responder': return 'Responder';
+      case 'member': return 'Member';
+      default: return roleType;
+    }
+  };
 
   const [notifications, setNotifications] = useState<NotificationSettings>({
     emailNotifications: true,
@@ -149,7 +233,7 @@ export default function UserSettings() {
           <p className="text-muted-foreground">Manage your account settings and preferences</p>
         </div>
         <Badge variant={profile.status === 'active' ? 'default' : 'secondary'}>
-          {profile.status === 'active' ? 'Active' : 'Inactive'}
+          {profile.status === 'active' ? 'Active' : profile.status === 'pending' ? 'Pending' : profile.status === 'suspended' ? 'Suspended' : 'Inactive'}
         </Badge>
       </div>
 

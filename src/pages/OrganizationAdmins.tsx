@@ -86,7 +86,7 @@ export default function OrganizationAdmins() {
         .from('users')
         .select(`
           *,
-          user_roles!inner(role_type, is_active)
+          user_roles!user_roles_user_id_fkey!inner(role_type, is_active)
         `)
         .eq('user_roles.role_type', 'organization_admin')
         .eq('user_roles.is_active', true)
