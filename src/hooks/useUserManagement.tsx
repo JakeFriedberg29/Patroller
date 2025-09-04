@@ -6,8 +6,8 @@ export interface CreateUserRequest {
   email: string;
   fullName: string;
   role?: string;
-  accountId?: string;
-  accountType?: string;
+  tenantId?: string;
+  organizationId?: string;
   department?: string;
   location?: string;
   phone?: string;
@@ -32,50 +32,40 @@ export const useUserManagement = () => {
     setIsLoading(true);
     
     try {
-      // Create pending user in database
-      const { data: result, error: createError } = await supabase
-        .rpc('create_pending_user', {
-          p_email: userData.email,
-          p_full_name: userData.fullName,
-          p_tenant_id: userData.accountId || '95d3bca1-40f0-4630-a60e-1d98dacf3e60', // Use demo tenant for now
-          p_organization_id: userData.accountType === 'organization' ? userData.accountId : null,
-          p_role_type: mapRoleToDbRole(userData.role || 'responder') as any,
-          p_phone: userData.phone || null,
-          p_department: userData.department || null,
-          p_location: userData.location || null
-        });
-
-      if (createError || !(result as any)?.success) {
-        console.error('Error creating user:', createError);
-        toast.error('Failed to create user');
-        return { success: false, error: createError?.message || (result as any)?.error };
-      }
-
-      const userId = (result as any).user_id;
-
-      // Send activation email
-      const { data: emailData, error: emailError } = await supabase.functions.invoke('send-activation-email', {
-        body: {
-          userId,
-          email: userData.email,
-          fullName: userData.fullName,
-          isResend: false
+      // Generate a temporary password for the user
+      const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
+      
+      // Create user with Supabase auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: tempPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`,
+          data: {
+            full_name: userData.fullName,
+            tenant_id: userData.tenantId || '95d3bca1-40f0-4630-a60e-1d98dacf3e60',
+            organization_id: userData.organizationId,
+            phone: userData.phone,
+            department: userData.department,
+            location: userData.location,
+            role_type: mapRoleToDbRole(userData.role || 'responder')
+          }
         }
       });
 
-      if (emailError) {
-        console.error('Error sending activation email:', emailError);
-        toast.error('User created but failed to send activation email');
-        return { success: false, error: emailError.message };
+      if (authError) {
+        console.error('Error creating user:', authError);
+        toast.error('Failed to create user: ' + authError.message);
+        return { success: false, error: authError.message };
       }
 
-      if (emailData?.success) {
-        toast.success('User created and activation email sent successfully');
-        return { success: true, userId };
-      } else {
-        toast.error(emailData?.error || 'Failed to send activation email');
-        return { success: false, error: emailData?.error };
+      if (!authData.user) {
+        toast.error('Failed to create user');
+        return { success: false, error: 'Failed to create user' };
       }
+
+      toast.success(`User created successfully! They will receive a confirmation email at ${userData.email}`);
+      return { success: true, userId: authData.user.id };
     } catch (error: any) {
       console.error('Error in createUser:', error);
       toast.error('Failed to create user');

@@ -69,8 +69,8 @@ export function AddAdminModal({
       email: values.email,
       fullName: values.fullName,
       role: roleTitle,
-      accountId: accountId,
-      accountType: accountType,
+      tenantId: accountId,
+      organizationId: accountType === "organization" ? accountId : undefined,
       department: values.department,
       location: values.location,
     });
@@ -222,12 +222,12 @@ export function AddAdminModal({
             />
 
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-              <h4 className="font-medium text-sm">Account Activation Process</h4>
+              <h4 className="font-medium text-sm">Account Creation Process</h4>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>• Admin will receive an activation email with secure signup link</p>
-                <p>• Password must meet security requirements (12+ chars, mixed case, numbers, symbols)</p>
-                <p>• Account activation link expires in 24 hours</p>
-                <p>• Admin must change password every 12 months</p>
+                <p>• Admin will receive a confirmation email to verify their account</p>
+                <p>• Password must meet security requirements (mixed case, numbers, symbols)</p>
+                <p>• Account confirmation link expires in 24 hours</p>
+                <p>• Admin can log in once email is confirmed</p>
               </div>
             </div>
 

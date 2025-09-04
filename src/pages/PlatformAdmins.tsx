@@ -125,7 +125,7 @@ export default function PlatformAdmins() {
         email: newAdmin.email,
         fullName: `${newAdmin.firstName} ${newAdmin.lastName}`,
         role: 'Platform Admin',
-        accountType: 'platform',
+        tenantId: '95d3bca1-40f0-4630-a60e-1d98dacf3e60', // Demo tenant
         phone: newAdmin.phone
       });
       if (result.success) {
