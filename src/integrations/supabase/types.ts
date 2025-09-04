@@ -816,6 +816,50 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_equipment: {
+        Args: { p_equipment_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      create_audit_log_partition: {
+        Args: { p_month: number; p_year: number }
+        Returns: string
+      }
+      create_incident: {
+        Args: {
+          p_description: string
+          p_incident_type: string
+          p_location_id?: string
+          p_occurred_at?: string
+          p_priority: Database["public"]["Enums"]["incident_priority"]
+          p_title: string
+        }
+        Returns: string
+      }
+      create_tenant_with_organization: {
+        Args: {
+          p_admin_email: string
+          p_admin_name: string
+          p_org_name: string
+          p_org_slug: string
+          p_org_type: Database["public"]["Enums"]["organization_type"]
+          p_subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
+          p_tenant_name: string
+          p_tenant_slug: string
+        }
+        Returns: Json
+      }
+      create_user: {
+        Args: {
+          p_email: string
+          p_employee_id?: string
+          p_full_name: string
+          p_organization_id?: string
+          p_phone?: string
+          p_role_type?: Database["public"]["Enums"]["role_type"]
+          p_tenant_id: string
+        }
+        Returns: string
+      }
       get_current_user_organization_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -824,9 +868,34 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      global_search: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: Json
+      }
       is_platform_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      log_user_action: {
+        Args: {
+          p_action: string
+          p_metadata?: Json
+          p_new_values?: Json
+          p_old_values?: Json
+          p_resource_id: string
+          p_resource_type: string
+        }
+        Returns: undefined
+      }
+      send_notification: {
+        Args: {
+          p_expires_at?: string
+          p_message: string
+          p_title: string
+          p_type?: string
+          p_user_ids: string[]
+        }
+        Returns: number
       }
       user_has_role: {
         Args: { _role_type: Database["public"]["Enums"]["role_type"] }
