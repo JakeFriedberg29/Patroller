@@ -44,7 +44,7 @@ export const useUserProfile = () => {
           user_roles!user_roles_user_id_fkey(role_type, is_active)
         `)
         .eq('auth_user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (queryError) {
         console.error('Error loading user profile:', queryError);

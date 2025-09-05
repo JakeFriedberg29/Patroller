@@ -9,10 +9,10 @@ export const useAuthRedirect = () => {
   const { profile } = useUserProfile();
 
   useEffect(() => {
-    if (!user || !profile) return;
+    if (!user || !profile || !profile.roleType) return;
 
     // Get the user's primary role from profile data
-    const primaryRole = profile.role;
+    const primaryRole = profile.roleType;
     const organizationId = (profile as any).organizationId || (profile as any).organization_id;
 
     switch (primaryRole) {

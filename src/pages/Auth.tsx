@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 
 
@@ -19,6 +20,8 @@ const Auth = () => {
   // Form states
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  
+  const { user } = useAuth();
   
   useAuthRedirect();
 
