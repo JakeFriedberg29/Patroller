@@ -102,9 +102,9 @@ export const useEquipment = () => {
     }
 
     try {
-      // Get current user's organization if not provided
+      // Get current user's organization if not provided or if it's "undefined" string
       let orgId = equipmentData.organization_id;
-      if (!orgId) {
+      if (!orgId || orgId === "undefined") {
         const { data: userData } = await supabase
           .from('users')
           .select('organization_id')
@@ -116,8 +116,13 @@ export const useEquipment = () => {
         }
       }
 
-      if (!orgId) {
-        throw new Error('Organization ID is required');
+      if (!orgId || orgId === "undefined") {
+        toast({
+          title: "Error",
+          description: "No organization assigned. Please contact your administrator.",
+          variant: "destructive"
+        });
+        return false;
       }
 
       const { error } = await supabase
