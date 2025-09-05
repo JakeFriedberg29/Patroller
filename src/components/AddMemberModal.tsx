@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useParams } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -50,8 +52,10 @@ interface AddMemberModalProps {
 }
 
 export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
+  const { id } = useParams(); // Organization ID from route
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createTeamMember } = useTeamMembers();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,18 +72,22 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log("New member data:", values);
-      
-      toast({
-        title: "Member Added",
-        description: `${values.firstName} ${values.lastName} has been added to the team.`,
+      const success = await createTeamMember({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        phone: values.phone,
+        role: values.role,
+        radioCallSign: values.radioCallSign,
+        specialization: values.specialization,
+        certifications: values.certifications,
+        organization_id: id || '' // Use organization ID from route params
       });
       
-      form.reset();
-      onOpenChange(false);
+      if (success) {
+        form.reset();
+        onOpenChange(false);
+      }
     } catch (error) {
       toast({
         title: "Error",
