@@ -96,27 +96,18 @@ export function AddAdminModal({
     });
 
     if (result.success) {
-      // Log successful admin creation with detailed information
+      // Log successful admin creation
       try {
         await supabase.rpc('log_user_action', {
           p_action: 'CREATE',
-          p_resource_type: 'user',
+          p_resource_type: accountType + '_admin',
           p_resource_id: result.userId || null,
-          p_new_values: {
-            email: values.email,
-            full_name: values.fullName,
-            role_type: roleTitle,
-            department: values.department,
-            location: values.location,
-            status: 'pending'
-          },
           p_metadata: {
-            target_admin_name: values.fullName,
-            target_admin_email: values.email,
-            target_admin_role: roleTitle,
-            account_type: accountType,
-            setup_method: 'admin_invitation',
-            action_description: `Created new admin '${values.fullName} (${values.email})' with role '${roleTitle}'`
+            admin_email: values.email,
+            admin_name: values.fullName,
+            admin_department: values.department,
+            admin_location: values.location,
+            admin_role: roleTitle
           }
         });
       } catch (logError) {

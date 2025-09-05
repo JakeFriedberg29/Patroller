@@ -55,12 +55,9 @@ export const useAuditLogs = ({
           new_values,
           old_values,
           ip_address,
-          user_id,
-          users (
+          users!audit_logs_user_id_fkey (
             full_name,
-            email,
-            first_name,
-            last_name
+            email
           )
         `)
         .order('created_at', { ascending: false })

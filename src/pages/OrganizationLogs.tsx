@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,85 +11,90 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BarChart3, Search, Filter, Download, RefreshCw, Calendar, Activity } from "lucide-react";
-import { LogEntry } from "@/components/LogEntry";
-import { useAuditLogs } from "@/hooks/useAuditLogs";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { BarChart3, Search, Filter, Download, Calendar } from "lucide-react";
 
-const actionOptions = [
-  { value: "ALL", label: "All Actions" },
-  { value: "CREATE", label: "Create" },
-  { value: "UPDATE", label: "Update" },
-  { value: "DELETE", label: "Delete" },
-  { value: "ASSIGN", label: "Assign" },
-  { value: "LOGIN", label: "Login" },
-  { value: "LOGOUT", label: "Logout" }
-];
-
-const resourceOptions = [
-  { value: "ALL", label: "All Resources" },
-  { value: "user", label: "Team Members" },
-  { value: "equipment", label: "Equipment" },
-  { value: "incident", label: "Incidents" },
-  { value: "report", label: "Reports" },
-  { value: "location", label: "Locations" }
+const mockLogs = [
+  {
+    id: 1,
+    timestamp: "2024-08-31 14:32:15",
+    level: "INFO",
+    category: "Operation",
+    message: "Search and rescue operation initiated at Grid Reference 34.052235, -118.243685",
+    user: "Sarah Johnson"
+  },
+  {
+    id: 2,
+    timestamp: "2024-08-31 14:15:42",
+    level: "WARNING", 
+    category: "Equipment",
+    message: "Rescue Boat Alpha fuel level below 25%",
+    user: "System"
+  },
+  {
+    id: 3,
+    timestamp: "2024-08-31 13:45:18",
+    level: "INFO",
+    category: "Personnel",
+    message: "Mike Chen checked in for duty shift",
+    user: "Mike Chen"
+  },
+  {
+    id: 4,
+    timestamp: "2024-08-31 12:22:03",
+    level: "ERROR",
+    category: "Communication",
+    message: "Radio communication failure on Channel 3",
+    user: "Emily Rodriguez"
+  },
+  {
+    id: 5,
+    timestamp: "2024-08-31 11:30:17",
+    level: "INFO",
+    category: "Training",
+    message: "Weekly training session completed - Water rescue protocols",
+    user: "Sarah Johnson"
+  }
 ];
 
 export default function OrganizationLogs() {
   const { id } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
-  const [actionFilter, setActionFilter] = useState("ALL");
-  const [resourceFilter, setResourceFilter] = useState("ALL");
-  const [rowsPerPage, setRowsPerPage] = useState(50);
-  const { toast } = useToast();
+  const [selectedFilter, setSelectedFilter] = useState("All Levels");
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { logs, loading, error, refetch } = useAuditLogs({
-    searchTerm,
-    actionFilter,
-    resourceFilter,
-    limit: rowsPerPage
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case "INFO": return "default";
+      case "WARNING": return "secondary";
+      case "ERROR": return "destructive";
+      case "DEBUG": return "outline";
+      default: return "outline";
+    }
+  };
+
+  // Filter and pagination logic
+  const filteredLogs = mockLogs.filter(log => {
+    const matchesSearch = log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.user.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = selectedFilter === "All Levels" || log.level === selectedFilter;
+    return matchesSearch && matchesFilter;
   });
 
-  const handleExportLogs = () => {
-    if (logs.length === 0) {
-      toast({
-        title: "No Data",
-        description: "No logs available to export.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const totalPages = Math.ceil(filteredLogs.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedLogs = filteredLogs.slice(startIndex, startIndex + rowsPerPage);
 
-    const csvData = logs.map(log => ({
-      Timestamp: new Date(log.created_at).toISOString(),
-      Action: log.action,
-      Resource: log.resource_type,
-      User: log.user_name || log.user_email || 'System',
-      Description: log.metadata?.action_description || `${log.action} ${log.resource_type}`,
-      'Target Name': log.metadata?.target_admin_name || log.new_values?.name || 'N/A',
-      'IP Address': log.ip_address || 'N/A'
-    }));
-
-    const csvContent = [
-      Object.keys(csvData[0]).join(','),
-      ...csvData.map(row => Object.values(row).map(val => `"${val}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `organization-logs-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Export Complete",
-      description: "Organization logs exported successfully.",
-    });
-  };
+  const logLevels = [...new Set(mockLogs.map(log => log.level))];
 
   return (
     <div className="space-y-6">
@@ -97,128 +102,47 @@ export default function OrganizationLogs() {
         <div className="flex items-center gap-3">
           <BarChart3 className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold">Organization Activity Logs</h1>
-            <p className="text-muted-foreground">Monitor organization activity and operational events</p>
+            <h1 className="text-3xl font-bold">Activity Logs</h1>
+            <p className="text-muted-foreground">Monitor organization activity and events</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={refetch}
-            disabled={loading}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleExportLogs}
-            disabled={loading || logs.length === 0}
-            className="gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Export Logs
-          </Button>
-        </div>
+        <Button variant="outline" className="gap-2">
+          <Download className="h-4 w-4" />
+          Export Logs
+        </Button>
       </div>
 
       {/* Search and Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters & Search
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search logs by action, user, equipment, or details..." 
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <Select value={actionFilter} onValueChange={setActionFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by action" />
-              </SelectTrigger>
-              <SelectContent>
-                {actionOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={resourceFilter} onValueChange={setResourceFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by resource" />
-              </SelectTrigger>
-              <SelectContent>
-                {resourceOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={rowsPerPage.toString()} onValueChange={(value) => setRowsPerPage(Number(value))}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="25">25 rows</SelectItem>
-                <SelectItem value="50">50 rows</SelectItem>
-                <SelectItem value="100">100 rows</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Active Filters */}
-          {(actionFilter !== "ALL" || resourceFilter !== "ALL" || searchTerm) && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {actionFilter !== "ALL" && (
-                <Badge variant="secondary" className="gap-1">
-                  Action: {actionOptions.find(o => o.value === actionFilter)?.label}
-                  <button onClick={() => setActionFilter("ALL")} className="ml-1 hover:bg-background rounded-full">
-                    ×
-                  </button>
-                </Badge>
-              )}
-              {resourceFilter !== "ALL" && (
-                <Badge variant="secondary" className="gap-1">
-                  Resource: {resourceOptions.find(o => o.value === resourceFilter)?.label}
-                  <button onClick={() => setResourceFilter("ALL")} className="ml-1 hover:bg-background rounded-full">
-                    ×
-                  </button>
-                </Badge>
-              )}
-              {searchTerm && (
-                <Badge variant="secondary" className="gap-1">
-                  Search: "{searchTerm}"
-                  <button onClick={() => setSearchTerm("")} className="ml-1 hover:bg-background rounded-full">
-                    ×
-                  </button>
-                </Badge>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search logs..." 
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+          <SelectTrigger className="w-[180px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All Levels">All Levels</SelectItem>
+            {logLevels.map(level => (
+              <SelectItem key={level} value={level}>{level}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Log Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold">{logs.length}</div>
+              <div className="text-2xl font-bold">156</div>
               <div className="text-sm text-muted-foreground">Total Today</div>
             </div>
           </CardContent>
@@ -226,85 +150,109 @@ export default function OrganizationLogs() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold">
-                {logs.filter(log => log.action === 'CREATE').length}
-              </div>
-              <div className="text-sm text-muted-foreground">Created</div>
+              <div className="text-2xl font-bold text-red-600">3</div>
+              <div className="text-sm text-muted-foreground">Errors</div>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold">
-                {logs.filter(log => log.action === 'UPDATE').length}
-              </div>
-              <div className="text-sm text-muted-foreground">Updated</div>
+              <div className="text-2xl font-bold text-yellow-600">12</div>
+              <div className="text-sm text-muted-foreground">Warnings</div>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold">
-                {new Set(logs.map(log => log.user_email)).size}
-              </div>
-              <div className="text-sm text-muted-foreground">Active Users</div>
+              <div className="text-2xl font-bold text-green-600">98.1%</div>
+              <div className="text-sm text-muted-foreground">System Health</div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Activity Logs */}
+      {/* Log Entries Table */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Organization Activity Trail
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="text-muted-foreground mt-4">Loading organization logs...</p>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-destructive mb-4">Error: {error}</p>
-              <Button onClick={refetch} variant="outline">
-                Try Again
-              </Button>
-            </div>
-          ) : logs.length === 0 ? (
-            <div className="text-center py-12">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                {searchTerm || actionFilter !== "ALL" || resourceFilter !== "ALL" 
-                  ? "No logs found matching your criteria."
-                  : "No organization logs available yet. Activity will appear here as team members interact with the system."
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-0">
-              {logs.map((log) => (
-                <LogEntry
-                  key={log.id}
-                  id={log.id}
-                  action={log.action}
-                  resourceType={log.resource_type}
-                  createdAt={log.created_at}
-                  userName={log.user_name}
-                  userEmail={log.user_email}
-                  metadata={log.metadata}
-                  newValues={log.new_values}
-                  oldValues={log.old_values}
-                  ipAddress={log.ip_address}
-                />
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-semibold">Level</TableHead>
+                <TableHead className="font-semibold">Category</TableHead>
+                <TableHead className="font-semibold">Message</TableHead>
+                <TableHead className="font-semibold">User</TableHead>
+                <TableHead className="font-semibold">Timestamp</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedLogs.map((log) => (
+                <TableRow key={log.id} className="hover:bg-muted/50">
+                  <TableCell>
+                    <Badge variant={getLevelColor(log.level) as any}>
+                      {log.level}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-medium">{log.category}</TableCell>
+                  <TableCell className="text-muted-foreground max-w-md">
+                    <div className="truncate">{log.message}</div>
+                  </TableCell>
+                  <TableCell>{log.user}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>{log.timestamp}</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ))}
+            </TableBody>
+          </Table>
+          
+          {/* Pagination */}
+          <div className="flex items-center justify-between p-4 border-t">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows per page:</span>
+              <Select value={rowsPerPage.toString()} onValueChange={(value) => {
+                setRowsPerPage(Number(value));
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-16">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {startIndex + 1}-{Math.min(startIndex + rowsPerPage, filteredLogs.length)} of {filteredLogs.length}
+              </span>
+              <div className="flex gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
