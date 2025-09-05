@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -29,16 +29,51 @@ const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' 
 
 export const useUserManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [currentUserTenantId, setCurrentUserTenantId] = useState<string | null>(null);
+
+  // Get current user's tenant ID
+  useEffect(() => {
+    const getCurrentUserTenant = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('tenant_id')
+            .eq('auth_user_id', user.id)
+            .single();
+          
+          if (userData?.tenant_id) {
+            setCurrentUserTenantId(userData.tenant_id);
+          }
+        }
+      } catch (error) {
+        console.error('Error getting current user tenant:', error);
+      }
+    };
+
+    getCurrentUserTenant();
+  }, []);
 
   const createUser = async (userData: CreateUserRequest) => {
     setIsLoading(true);
     
     try {
+      // Use passed tenantId or current user's tenant ID
+      const tenantId = userData.tenantId || currentUserTenantId;
+      
+      if (!tenantId) {
+        toast.error('Unable to determine tenant. Please refresh and try again.');
+        return { success: false, error: 'No tenant ID available' };
+      }
+
+      console.log('Creating user with tenant ID:', tenantId);
+      
       // Create user in the database first (without email confirmation)
       const { data, error } = await supabase.rpc('create_user_with_activation', {
         p_email: userData.email,
         p_full_name: userData.fullName,
-        p_tenant_id: userData.tenantId || '95d3bca1-40f0-4630-a60e-1d98dacf3e60',
+        p_tenant_id: tenantId,
         p_organization_id: userData.organizationId || null,
         p_phone: userData.phone || null,
         p_department: userData.department || null,
@@ -64,6 +99,8 @@ export const useUserManagement = () => {
         return { success: false, error: result?.error || 'Failed to create user' };
       }
 
+      console.log('User created successfully, sending activation email for userId:', result.user_id);
+      
       // Send activation email with temporary password
       const { data: emailData, error: emailError } = await supabase.functions.invoke('send-activation-email', {
         body: {
