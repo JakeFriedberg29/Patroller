@@ -642,6 +642,7 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          email: string | null
           expires_at: string | null
           granted_at: string
           granted_by: string | null
@@ -652,6 +653,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          email?: string | null
           expires_at?: string | null
           granted_at?: string
           granted_by?: string | null
@@ -662,6 +664,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          email?: string | null
           expires_at?: string | null
           granted_at?: string
           granted_by?: string | null
