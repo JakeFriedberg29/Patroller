@@ -72,35 +72,6 @@ export const BulkDeleteAdminModal = ({
         console.error('Error deactivating roles:', roleError);
       }
 
-      // Log each deletion individually with detailed information
-      for (const admin of admins) {
-        try {
-          await supabase.rpc('log_user_action', {
-            p_action: 'DELETE',
-            p_resource_type: 'user',
-            p_resource_id: admin.id,
-            p_old_values: {
-              full_name: `${admin.firstName} ${admin.lastName}`,
-              email: admin.email,
-              status: 'active',
-              role: admin.role
-            },
-            p_new_values: { status: 'inactive' },
-            p_metadata: {
-              target_admin_name: `${admin.firstName} ${admin.lastName}`,
-              target_admin_email: admin.email,
-              target_admin_role: admin.role,
-              account_type: accountType,
-              deletion_method: 'bulk_delete',
-              bulk_operation_count: admins.length,
-              action_description: `Bulk deleted admin '${admin.firstName} ${admin.lastName} (${admin.email})' with role '${admin.role}'`
-            }
-          });
-        } catch (logError) {
-          console.warn(`Failed to log bulk deletion for admin ${admin.email}:`, logError);
-        }
-      }
-
       toast.success(`Successfully deleted ${admins.length} admin${admins.length > 1 ? 's' : ''}`);
       onSuccess?.();
       onOpenChange(false);

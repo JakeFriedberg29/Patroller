@@ -86,26 +86,17 @@ export const DeleteAdminModal = ({
         console.error('Error deactivating roles:', roleError);
       }
 
-      // Log successful admin deletion with detailed information
+      // Log successful admin deletion
       try {
         await supabase.rpc('log_user_action', {
           p_action: 'DELETE',
-          p_resource_type: 'user',
+          p_resource_type: accountType + '_admin',
           p_resource_id: admin.id,
-          p_old_values: {
-            full_name: `${admin.firstName} ${admin.lastName}`,
-            email: admin.email,
-            status: 'active',
-            role: admin.role
-          },
-          p_new_values: { status: 'inactive' },
           p_metadata: {
-            target_admin_name: `${admin.firstName} ${admin.lastName}`,
-            target_admin_email: admin.email,
-            target_admin_role: admin.role,
-            account_type: accountType,
-            deletion_method: 'delete_modal',
-            action_description: `Deleted admin '${admin.firstName} ${admin.lastName} (${admin.email})' with role '${admin.role}'`
+            admin_email: admin.email,
+            admin_name: `${admin.firstName} ${admin.lastName}`,
+            admin_role: admin.role,
+            deletion_timestamp: new Date().toISOString()
           }
         });
       } catch (logError) {
