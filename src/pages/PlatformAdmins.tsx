@@ -16,8 +16,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
+import { AddAdminModal } from "@/components/AddAdminModal";
 import { EditAdminModal } from "@/components/EditAdminModal";
-// import { DeleteAdminModal } from "@/components/DeleteAdminModal";
+import { DeleteAdminModal } from "@/components/DeleteAdminModal";
 // import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
 // import { AdminAuditLog } from "@/components/AdminAuditLog";
 interface PlatformAdmin {
@@ -42,7 +43,7 @@ export default function PlatformAdmins() {
   } = useUserManagement();
   const [admins, setAdmins] = useState<PlatformAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
@@ -84,6 +85,7 @@ export default function PlatformAdmins() {
         `)
         .eq('user_roles.role_type', 'platform_admin')
         .eq('user_roles.is_active', true)
+        .neq('status', 'inactive')  // Exclude soft-deleted users
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -122,6 +124,22 @@ export default function PlatformAdmins() {
   };
   const handleAddAdmin = async () => {
     if (newAdmin.firstName && newAdmin.lastName && newAdmin.email) {
+      // Log admin creation attempt
+      try {
+        await supabase.rpc('log_user_action', {
+          p_action: 'CREATE_ATTEMPT',
+          p_resource_type: 'platform_admin',
+          p_resource_id: null,
+          p_metadata: {
+            target_email: newAdmin.email,
+            target_name: `${newAdmin.firstName} ${newAdmin.lastName}`,
+            action_context: 'platform_admin_creation'
+          }
+        });
+      } catch (logError) {
+        console.warn('Failed to log admin creation attempt:', logError);
+      }
+
       const result = await createUser({
         email: newAdmin.email,
         fullName: `${newAdmin.firstName} ${newAdmin.lastName}`,
@@ -129,14 +147,31 @@ export default function PlatformAdmins() {
         tenantId: '95d3bca1-40f0-4630-a60e-1d98dacf3e60', // Demo tenant
         phone: newAdmin.phone
       });
+      
       if (result.success) {
+        // Log successful admin creation
+        try {
+          await supabase.rpc('log_user_action', {
+            p_action: 'CREATE',
+            p_resource_type: 'platform_admin',
+            p_resource_id: result.userId,
+            p_metadata: {
+              admin_email: newAdmin.email,
+              admin_name: `${newAdmin.firstName} ${newAdmin.lastName}`,
+              admin_phone: newAdmin.phone || null
+            }
+          });
+        } catch (logError) {
+          console.warn('Failed to log successful admin creation:', logError);
+        }
+
         setNewAdmin({
           firstName: "",
           lastName: "",
           email: "",
           phone: ""
         });
-        setIsAddDialogOpen(false);
+        setIsAddModalOpen(false);
         loadPlatformAdmins(); // Refresh the list
       }
     }
@@ -146,6 +181,7 @@ export default function PlatformAdmins() {
     setIsEditDialogOpen(true);
   };
   const handleEditSuccess = () => {
+    // Log will be handled by EditAdminModal
     loadPlatformAdmins();
     setCurrentAdmin(null);
   };
@@ -158,6 +194,7 @@ export default function PlatformAdmins() {
     setIsBulkDeleteOpen(true);
   };
   const handleDeleteSuccess = () => {
+    // Log will be handled by DeleteAdminModal
     loadPlatformAdmins();
     setCurrentAdmin(null);
     setSelectedAdmins([]);
@@ -210,10 +247,10 @@ export default function PlatformAdmins() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Platform Admin
-          </Button>
+        <Button onClick={() => setIsAddModalOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Platform Admin
+        </Button>
           
         </div>
       </div>
@@ -336,13 +373,10 @@ export default function PlatformAdmins() {
                     <Send className="h-4 w-4" />
                     Resend Activation Email ({selectedAdmins.length})
                   </Button>
-                  {/* Delete functionality coming soon */}
-                  {/*
                   <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="gap-2">
                     <Trash2 className="h-4 w-4" />
                     Delete Selected ({selectedAdmins.length})
                   </Button>
-                  */}
                 </div>}
             </div>
             
@@ -366,71 +400,15 @@ export default function PlatformAdmins() {
       {/* Audit Log Section - Coming Soon */}
       {/* showAuditLog && <AdminAuditLog accountType="platform" /> */}
 
-      {/* Add Admin Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                  <Plus className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <DialogTitle className="text-xl font-bold">Add Platform Admin</DialogTitle>
-                  <DialogDescription className="text-sm text-muted-foreground mt-1">
-                    Add a new administrator to the platform.
-                  </DialogDescription>
-                </div>
-              </div>
-              
-            </div>
-          </DialogHeader>
-
-          <div className="space-y-4 mt-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input id="firstName" value={newAdmin.firstName} onChange={e => setNewAdmin({
-                ...newAdmin,
-                firstName: e.target.value
-              })} placeholder="John" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input id="lastName" value={newAdmin.lastName} onChange={e => setNewAdmin({
-                ...newAdmin,
-                lastName: e.target.value
-              })} placeholder="Doe" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
-              <Input id="email" type="email" value={newAdmin.email} onChange={e => setNewAdmin({
-              ...newAdmin,
-              email: e.target.value
-            })} placeholder="responder@organization.org" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" type="tel" value={newAdmin.phone} onChange={e => setNewAdmin({
-              ...newAdmin,
-              phone: e.target.value
-            })} placeholder="(555) 123-4567" />
-            </div>
-          </div>
-
-          <div className="flex justify-between mt-6">
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddAdmin} disabled={!newAdmin.firstName || !newAdmin.lastName || !newAdmin.email || isCreatingUser}>
-              {isCreatingUser ? 'Creating...' : 'Add Admin'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AddAdminModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        accountType="platform"
+        onSuccess={() => {
+          loadPlatformAdmins();
+          setIsAddModalOpen(false);
+        }}
+      />
 
       {/* Edit Admin Dialog */}
       {currentAdmin && (
@@ -443,8 +421,13 @@ export default function PlatformAdmins() {
         />
       )}
 
-      {/* Delete & Bulk Delete - Coming Soon */}
-      {/* <DeleteAdminModal /> */}
-      {/* <BulkDeleteAdminModal /> */}
+      {/* Delete Admin Modal */}
+      <DeleteAdminModal
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        admin={currentAdmin}
+        accountType="platform"
+        onSuccess={handleDeleteSuccess}
+      />
     </div>;
 }

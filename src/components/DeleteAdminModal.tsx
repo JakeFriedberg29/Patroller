@@ -44,6 +44,23 @@ export const DeleteAdminModal = ({
 
     setIsDeleting(true);
     try {
+      // Log admin deletion attempt
+      try {
+        await supabase.rpc('log_user_action', {
+          p_action: 'DELETE_ATTEMPT',
+          p_resource_type: accountType + '_admin',
+          p_resource_id: admin.id,
+          p_metadata: {
+            admin_email: admin.email,
+            admin_name: `${admin.firstName} ${admin.lastName}`,
+            admin_role: admin.role,
+            deletion_method: 'soft_delete'
+          }
+        });
+      } catch (logError) {
+        console.warn('Failed to log admin deletion attempt:', logError);
+      }
+
       // Soft delete by updating status to inactive
       const { error: updateError } = await supabase
         .from('users')
@@ -67,6 +84,23 @@ export const DeleteAdminModal = ({
 
       if (roleError) {
         console.error('Error deactivating roles:', roleError);
+      }
+
+      // Log successful admin deletion
+      try {
+        await supabase.rpc('log_user_action', {
+          p_action: 'DELETE',
+          p_resource_type: accountType + '_admin',
+          p_resource_id: admin.id,
+          p_metadata: {
+            admin_email: admin.email,
+            admin_name: `${admin.firstName} ${admin.lastName}`,
+            admin_role: admin.role,
+            deletion_timestamp: new Date().toISOString()
+          }
+        });
+      } catch (logError) {
+        console.warn('Failed to log successful admin deletion:', logError);
       }
 
       toast.success(`${admin.firstName} ${admin.lastName} has been deleted successfully`);
