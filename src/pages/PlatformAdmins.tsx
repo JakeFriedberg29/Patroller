@@ -17,6 +17,7 @@ import { useUserManagement } from "@/hooks/useUserManagement";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
 import { EditAdminModal } from "@/components/EditAdminModal";
+import { useSeedData } from "@/hooks/useSeedData";
 // import { DeleteAdminModal } from "@/components/DeleteAdminModal";
 // import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
 // import { AdminAuditLog } from "@/components/AdminAuditLog";
@@ -40,6 +41,7 @@ export default function PlatformAdmins() {
     createUser,
     isLoading: isCreatingUser
   } = useUserManagement();
+  const { createAuthUsers, isLoading: isCreatingAuthUsers } = useSeedData();
   const [admins, setAdmins] = useState<PlatformAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -210,11 +212,19 @@ export default function PlatformAdmins() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button 
+            onClick={createAuthUsers} 
+            disabled={isCreatingAuthUsers}
+            variant="outline" 
+            className="gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            {isCreatingAuthUsers ? 'Creating...' : 'Create Auth Users for Seed Data'}
+          </Button>
           <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
             Add Platform Admin
           </Button>
-          
         </div>
       </div>
 
