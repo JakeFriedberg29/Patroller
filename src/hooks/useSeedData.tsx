@@ -14,9 +14,13 @@ export function useSeedData() {
       const result = await createSeedAuthUsers();
       
       if (result.success) {
+        const message = result.data?.skipped > 0 && result.data?.successful === 0 
+          ? `No new authentication accounts needed. All ${result.data.skipped} seed users already have auth accounts.`
+          : `Successfully created ${result.data?.successful || 0} new authentication accounts!`;
+          
         toast({
-          title: "Seed Users Created Successfully!",
-          description: `Created ${result.data?.successful || 0} authentication users. You can now log in with their email addresses as passwords.`,
+          title: result.data?.successful > 0 ? "Auth Users Created!" : "All Set!",
+          description: message,
         });
         console.log('Seed auth users creation completed:', result.data);
       } else {

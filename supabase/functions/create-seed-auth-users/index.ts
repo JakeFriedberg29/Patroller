@@ -24,7 +24,7 @@ serve(async (req) => {
       }
     })
 
-    console.log('Creating seed authentication users...')
+    console.log('Checking for existing users and creating seed authentication users...')
 
     // Define users to create with email as password
     const usersToCreate = [
@@ -77,9 +77,46 @@ serve(async (req) => {
       }
     ]
 
+    // First, check which users already have auth accounts
+    const { data: existingUsers, error: queryError } = await supabaseAdmin
+      .from('users')
+      .select('id, email, auth_user_id')
+      .in('id', usersToCreate.map(u => u.user_id))
+
+    if (queryError) {
+      console.error('Error querying existing users:', queryError)
+      throw new Error('Failed to check existing users')
+    }
+
+    // Filter out users that already have auth_user_id
+    const usersNeedingAuth = usersToCreate.filter(userData => {
+      const existingUser = existingUsers?.find(u => u.id === userData.user_id)
+      return existingUser && !existingUser.auth_user_id
+    })
+
+    if (usersNeedingAuth.length === 0) {
+      console.log('No new users need auth accounts - all seed users already have authentication')
+      return new Response(
+        JSON.stringify({ 
+          message: 'No new seed users to create',
+          details: 'All seed/mock users already have authentication accounts. No new auth users needed.',
+          results: [],
+          total_processed: 0,
+          successful: 0,
+          failed: 0,
+          skipped: usersToCreate.length
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
+    }
+
+    console.log(`Creating auth accounts for ${usersNeedingAuth.length} users...`)
     const results = []
 
-    for (const userData of usersToCreate) {
+    for (const userData of usersNeedingAuth) {
       try {
         console.log(`Creating auth user for: ${userData.email}`)
         
@@ -146,11 +183,12 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        message: 'Seed auth user creation completed',
+        message: `Successfully created ${results.filter(r => r.success).length} new authentication accounts`,
         results: results,
         total_processed: results.length,
         successful: results.filter(r => r.success).length,
-        failed: results.filter(r => !r.success).length
+        failed: results.filter(r => !r.success).length,
+        skipped: usersToCreate.length - usersNeedingAuth.length
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
