@@ -95,26 +95,90 @@ export const LogEntry: React.FC<LogEntryProps> = ({
 
   const generateDescription = () => {
     const performer = userName || userEmail || 'System';
-    const target = newValues?.email || newValues?.name || newValues?.title || 'item';
     
+    // Use detailed description from metadata if available
+    if (metadata?.action_description) {
+      return metadata.action_description;
+    }
+
+    // Generate detailed descriptions based on action and metadata
+    const targetName = metadata?.target_admin_name || newValues?.full_name || newValues?.name || newValues?.email;
+    const targetEmail = metadata?.target_admin_email || newValues?.email;
+    const targetRole = metadata?.target_admin_role || newValues?.role_type || newValues?.role;
+
     switch (`${action.toLowerCase()}_${resourceType.toLowerCase()}`) {
       case 'create_user':
-        return `${performer} created user account for ${target}`;
+        if (targetName && targetEmail && targetRole) {
+          return `${performer} created admin '${targetName} (${targetEmail})' with role '${targetRole}'`;
+        }
+        return `${performer} created user account${targetName ? ` for ${targetName}` : ''}`;
+        
       case 'update_user':
-        return `${performer} updated user ${target}`;
+        if (targetName && targetEmail) {
+          const changes = [];
+          if (oldValues && newValues) {
+            if (oldValues.full_name !== newValues.full_name) changes.push('name');
+            if (oldValues.email !== newValues.email) changes.push('email');
+            if (oldValues.phone !== newValues.phone) changes.push('phone');
+            if (oldValues.status !== newValues.status) changes.push('status');
+          }
+          const changeText = changes.length > 0 ? ` (updated: ${changes.join(', ')})` : '';
+          return `${performer} updated admin '${targetName} (${targetEmail})'${changeText}`;
+        }
+        return `${performer} updated user ${targetName || 'profile'}`;
+        
       case 'delete_user':
-        return `${performer} deleted user ${target}`;
+        if (targetName && targetEmail && targetRole) {
+          return `${performer} deleted admin '${targetName} (${targetEmail})' with role '${targetRole}'`;
+        }
+        return `${performer} deleted user ${targetName || 'account'}`;
+        
+      case 'suspend_user':
+        if (targetName && targetEmail) {
+          return `${performer} suspended admin '${targetName} (${targetEmail})'`;
+        }
+        return `${performer} suspended user account`;
+        
+      case 'unsuspend_user':
+        if (targetName && targetEmail) {
+          return `${performer} unsuspended admin '${targetName} (${targetEmail})'`;
+        }
+        return `${performer} unsuspended user account`;
+        
       case 'activate_user':
-        return `${performer} activated user account for ${target}`;
+        if (targetName && targetEmail) {
+          return `${performer} activated admin account for '${targetName} (${targetEmail})'`;
+        }
+        return `${performer} activated user account${targetName ? ` for ${targetName}` : ''}`;
+        
       case 'login_session':
-        return `${performer} signed in`;
+        return `${performer} signed in to the platform`;
+        
       case 'logout_session':
-        return `${performer} signed out`;
+        return `${performer} signed out of the platform`;
+        
       case 'create_organization':
-        return `${performer} created organization ${target}`;
+        const orgName = newValues?.name || metadata?.organization_name;
+        return `${performer} created organization${orgName ? ` '${orgName}'` : ''}`;
+        
       case 'update_organization':
-        return `${performer} updated organization ${target}`;
+        const updatedOrgName = newValues?.name || metadata?.organization_name;
+        return `${performer} updated organization${updatedOrgName ? ` '${updatedOrgName}'` : ''}`;
+        
+      case 'assign_equipment':
+        const equipmentName = metadata?.equipment_name || newValues?.name;
+        const assignedTo = metadata?.assigned_to_name || newValues?.assigned_to;
+        return `${performer} assigned equipment${equipmentName ? ` '${equipmentName}'` : ''} ${assignedTo ? `to ${assignedTo}` : ''}`;
+        
+      case 'create_incident':
+        const incidentTitle = newValues?.title || metadata?.incident_title;
+        return `${performer} created incident${incidentTitle ? ` '${incidentTitle}'` : ''}`;
+        
       default:
+        // Fallback for any other action types
+        if (targetName) {
+          return `${performer} performed ${action.toLowerCase()} on ${resourceType} '${targetName}'`;
+        }
         return `${performer} performed ${action.toLowerCase()} on ${resourceType}`;
     }
   };
@@ -130,18 +194,66 @@ export const LogEntry: React.FC<LogEntryProps> = ({
   const getDetails = () => {
     const details = [];
     
-    if (newValues?.role_type) {
-      details.push(`Role: ${newValues.role_type}`);
+    // Role information
+    if (newValues?.role_type || newValues?.role) {
+      details.push(`Role: ${newValues.role_type || newValues.role}`);
     }
     
-    if (newValues?.status) {
+    // Status changes
+    if (oldValues?.status && newValues?.status && oldValues.status !== newValues.status) {
+      details.push(`Status: ${oldValues.status} → ${newValues.status}`);
+    } else if (newValues?.status) {
       details.push(`Status: ${newValues.status}`);
     }
     
-    if (metadata?.setup_method) {
-      details.push(`Setup: ${metadata.setup_method}`);
+    // Account type for admin operations
+    if (metadata?.account_type) {
+      details.push(`Type: ${metadata.account_type}`);
     }
     
+    // Bulk operation count
+    if (metadata?.bulk_operation_count) {
+      details.push(`Bulk operation: ${metadata.bulk_operation_count} items`);
+    }
+    
+    // Setup method for user creation
+    if (metadata?.setup_method) {
+      details.push(`Method: ${metadata.setup_method.replace('_', ' ')}`);
+    }
+    
+    // Department and location for admin profiles
+    if (newValues?.department || metadata?.target_department) {
+      details.push(`Dept: ${newValues?.department || metadata?.target_department || 'N/A'}`);
+    }
+    
+    if (newValues?.location || metadata?.target_location) {
+      details.push(`Location: ${newValues?.location || metadata?.target_location || 'N/A'}`);
+    }
+    
+    // Equipment-specific details
+    if (resourceType === 'equipment') {
+      if (metadata?.equipment_name) {
+        details.push(`Equipment: ${metadata.equipment_name}`);
+      }
+      if (newValues?.category) {
+        details.push(`Category: ${newValues.category}`);
+      }
+      if (newValues?.assigned_to || metadata?.assigned_to_name) {
+        details.push(`Assigned to: ${metadata.assigned_to_name || newValues.assigned_to}`);
+      }
+    }
+    
+    // Incident-specific details
+    if (resourceType === 'incident') {
+      if (newValues?.priority) {
+        details.push(`Priority: ${newValues.priority}`);
+      }
+      if (newValues?.incident_type) {
+        details.push(`Type: ${newValues.incident_type}`);
+      }
+    }
+    
+    // IP address (always show if available)
     if (ipAddress) {
       details.push(`IP: ${ipAddress}`);
     }

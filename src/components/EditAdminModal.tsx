@@ -20,8 +20,7 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
   department: z.string().optional(),
-  location: z.string().optional(),
-  role: z.string().optional()
+  location: z.string().optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -65,8 +64,7 @@ export const EditAdminModal = ({
       email: admin?.email || '',
       phone: admin?.phone || '',
       department: '',
-      location: '',
-      role: admin?.role || ''
+      location: ''
     }
   });
 
@@ -77,56 +75,28 @@ export const EditAdminModal = ({
         email: admin.email,
         phone: admin.phone || '',
         department: '',
-        location: '',
-        role: admin.role || ''
+        location: ''
       });
     }
   }, [admin, form]);
-
-  const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' => {
-    const roleMap: { [key: string]: 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' } = {
-      'Platform Admin': 'platform_admin',
-      'Enterprise Admin': 'enterprise_admin', 
-      'Organization Admin': 'organization_admin',
-      'Team Leader': 'team_leader',
-      'Supervisor': 'supervisor',
-      'Responder': 'responder',
-      'Observer': 'observer',
-      'Member': 'member'
-    };
-    return roleMap[uiRole] || 'responder';
-  };
 
   const onSubmit = async (values: FormValues) => {
     if (!admin) return;
     
     setIsLoading(true);
     try {
-      // Check if role changed and needs updating
-      const roleChanged = values.role && values.role !== admin.role;
-      
-      // Log admin edit attempt
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: 'UPDATE_ATTEMPT',
-          p_resource_type: accountType + '_admin',
-          p_resource_id: admin.id,
-          p_metadata: {
-            admin_email: admin.email,
-            admin_name: `${admin.firstName} ${admin.lastName}`,
-            changes: {
-              full_name: values.fullName !== `${admin.firstName} ${admin.lastName}` ? values.fullName : null,
-              email: values.email !== admin.email ? values.email : null,
-              phone: values.phone !== admin.phone ? values.phone : null,
-              role: roleChanged ? values.role : null
-            }
-          }
-        });
-      } catch (logError) {
-        console.warn('Failed to log admin edit attempt:', logError);
-      }
+      const oldValues = {
+        full_name: `${admin.firstName} ${admin.lastName}`,
+        email: admin.email,
+        phone: admin.phone || null
+      };
 
-      // Update user info
+      const newValues = {
+        full_name: values.fullName,
+        email: values.email,
+        phone: values.phone || null
+      };
+
       const { error } = await supabase
         .from('users')
         .update({
@@ -145,50 +115,24 @@ export const EditAdminModal = ({
         return;
       }
 
-      // Update role if changed
-      if (roleChanged) {
-        const newDbRole = mapRoleToDbRole(values.role!);
-        
-        // Deactivate old roles
-        await supabase
-          .from('user_roles')
-          .update({ is_active: false })
-          .eq('user_id', admin.id);
-
-        // Add new role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: admin.id,
-            role_type: newDbRole,
-            organization_id: accountType !== 'platform' ? admin.id : null,
-            is_active: true
-          });
-
-        if (roleError) {
-          console.error('Error updating role:', roleError);
-          toast.error('Failed to update role');
-          return;
-        }
-      }
-
-      // Log successful admin edit
+      // Log successful admin edit with detailed information
       try {
         await supabase.rpc('log_user_action', {
           p_action: 'UPDATE',
-          p_resource_type: accountType + '_admin',
+          p_resource_type: 'user',
           p_resource_id: admin.id,
+          p_old_values: oldValues,
+          p_new_values: newValues,
           p_metadata: {
-            admin_email: values.email,
-            admin_name: values.fullName,
-            admin_phone: values.phone || null,
-            role_updated: roleChanged ? values.role : null,
-            previous_values: {
-              full_name: `${admin.firstName} ${admin.lastName}`,
-              email: admin.email,
-              phone: admin.phone,
-              role: admin.role
-            }
+            target_admin_name: `${admin.firstName} ${admin.lastName}`,
+            target_admin_email: admin.email,
+            target_admin_role: admin.role,
+            account_type: accountType,
+            updated_fields: Object.keys(values).filter(key => 
+              JSON.stringify(oldValues[key as keyof typeof oldValues]) !== 
+              JSON.stringify(newValues[key as keyof typeof newValues])
+            ),
+            action_description: `Updated admin '${admin.firstName} ${admin.lastName} (${admin.email})' details`
           }
         });
       } catch (logError) {
@@ -212,22 +156,7 @@ export const EditAdminModal = ({
     setIsSuspending(true);
     try {
       const newStatus = admin.activation_status === 'suspended' ? 'active' : 'suspended';
-      
-      // Log suspend/unsuspend attempt
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: newStatus === 'suspended' ? 'SUSPEND_ATTEMPT' : 'UNSUSPEND_ATTEMPT',
-          p_resource_type: accountType + '_admin',
-          p_resource_id: admin.id,
-          p_metadata: {
-            admin_email: admin.email,
-            admin_name: `${admin.firstName} ${admin.lastName}`,
-            status_change: `${admin.activation_status} -> ${newStatus}`
-          }
-        });
-      } catch (logError) {
-        console.warn('Failed to log admin suspend/unsuspend attempt:', logError);
-      }
+      const action = newStatus === 'suspended' ? 'SUSPEND' : 'UNSUSPEND';
       
       const { error } = await supabase
         .from('users')
@@ -243,17 +172,22 @@ export const EditAdminModal = ({
         return;
       }
 
-      // Log successful suspend/unsuspend
+      // Log successful suspend/unsuspend with detailed information
       try {
         await supabase.rpc('log_user_action', {
-          p_action: newStatus === 'suspended' ? 'SUSPEND' : 'UNSUSPEND',
-          p_resource_type: accountType + '_admin',
+          p_action: action,
+          p_resource_type: 'user',
           p_resource_id: admin.id,
+          p_old_values: { status: admin.activation_status },
+          p_new_values: { status: newStatus },
           p_metadata: {
-            admin_email: admin.email,
-            admin_name: `${admin.firstName} ${admin.lastName}`,
-            new_status: newStatus,
-            previous_status: admin.activation_status
+            target_admin_name: `${admin.firstName} ${admin.lastName}`,
+            target_admin_email: admin.email,
+            target_admin_role: admin.role,
+            account_type: accountType,
+            status_change_from: admin.activation_status,
+            status_change_to: newStatus,
+            action_description: `${action.toLowerCase() === 'suspend' ? 'Suspended' : 'Unsuspended'} admin '${admin.firstName} ${admin.lastName} (${admin.email})'`
           }
         });
       } catch (logError) {
@@ -276,22 +210,12 @@ export const EditAdminModal = ({
     
     setIsDeleting(true);
     try {
-      // Log admin deletion attempt
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: 'DELETE_ATTEMPT',
-          p_resource_type: accountType + '_admin',
-          p_resource_id: admin.id,
-          p_metadata: {
-            admin_email: admin.email,
-            admin_name: `${admin.firstName} ${admin.lastName}`,
-            admin_role: admin.role,
-            deletion_method: 'soft_delete'
-          }
-        });
-      } catch (logError) {
-        console.warn('Failed to log admin deletion attempt:', logError);
-      }
+      const oldValues = {
+        full_name: `${admin.firstName} ${admin.lastName}`,
+        email: admin.email,
+        status: admin.activation_status,
+        role: admin.role
+      };
 
       // Soft delete by setting status to inactive and deactivating roles
       const { error: userError } = await supabase
@@ -322,17 +246,21 @@ export const EditAdminModal = ({
         // Don't return here, user deletion was successful
       }
 
-      // Log successful admin deletion
+      // Log successful admin deletion with detailed information
       try {
         await supabase.rpc('log_user_action', {
           p_action: 'DELETE',
-          p_resource_type: accountType + '_admin',
+          p_resource_type: 'user',
           p_resource_id: admin.id,
+          p_old_values: oldValues,
+          p_new_values: { status: 'inactive' },
           p_metadata: {
-            admin_email: admin.email,
-            admin_name: `${admin.firstName} ${admin.lastName}`,
-            admin_role: admin.role,
-            deletion_timestamp: new Date().toISOString()
+            target_admin_name: `${admin.firstName} ${admin.lastName}`,
+            target_admin_email: admin.email,
+            target_admin_role: admin.role,
+            account_type: accountType,
+            deletion_method: 'edit_modal',
+            action_description: `Deleted admin '${admin.firstName} ${admin.lastName} (${admin.email})' with role '${admin.role}'`
           }
         });
       } catch (logError) {
@@ -361,19 +289,6 @@ export const EditAdminModal = ({
         return "Edit Organization Admin";
       default:
         return "Edit Admin";
-    }
-  };
-
-  const getRoleOptions = () => {
-    switch (accountType) {
-      case "platform":
-        return ["Platform Admin"];
-      case "enterprise":
-        return ["Enterprise Admin", "Organization Admin"];
-      case "organization":
-        return ["Organization Admin", "Team Leader", "Supervisor", "Responder", "Observer"];
-      default:
-        return [];
     }
   };
 
@@ -463,29 +378,6 @@ export const EditAdminModal = ({
                   <FormControl>
                     <Input type="tel" placeholder="(555) 123-4567" {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {getRoleOptions().map((role) => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
