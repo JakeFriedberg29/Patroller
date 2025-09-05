@@ -150,9 +150,9 @@ export default function OrganizationAdmins() {
       admin.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      admin.department.toLowerCase().includes(searchTerm.toLowerCase());
+      (admin.department || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || admin.activation_status.toLowerCase() === statusFilter;
-    const matchesDepartment = departmentFilter === "all" || admin.department.toLowerCase().includes(departmentFilter);
+    const matchesDepartment = departmentFilter === "all" || (admin.department || '').toLowerCase().includes(departmentFilter);
     
     return matchesSearch && matchesStatus && matchesDepartment;
   });
