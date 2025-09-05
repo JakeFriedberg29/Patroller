@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { userId, email, fullName, isResend = false }: SendActivationEmailRequest = await req.json();
 
-    console.log(`${isResend ? 'Resending' : 'Sending'} invitation via Supabase Auth for user:`, { userId, email });
+    console.log(`${isResend ? 'Resending' : 'Sending'} activation link for user:`, { userId, email });
 
     // Get user data from database to include metadata in invitation
     const { data: userData, error: userError } = await supabase
@@ -49,35 +49,17 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     try {
-      // Use Supabase Auth to invite user by email
-      const baseUrl = req.headers.get('origin') || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.sandbox.lovable.dev';
+      // Generate activation token for the user (already exists in profile_data)
+      const activationToken = userData.profile_data?.activation_token;
       
-      const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-        email,
-        {
-          data: {
-            full_name: fullName,
-            tenant_id: userData.tenant_id,
-            organization_id: userData.organization_id,
-            user_id: userId,
-            invited_by_admin: true
-          },
-          redirectTo: `${baseUrl}/`
-        }
-      );
-
-      if (inviteError) {
-        console.error('Supabase invite error:', inviteError);
-        
-        // Handle user already exists case
-        if (inviteError.message?.includes('already registered') || inviteError.message?.includes('already signed up')) {
-          throw new Error('User is already registered. They can log in directly or reset their password if needed.');
-        }
-        
-        throw new Error(`Failed to send invitation: ${inviteError.message}`);
+      if (!activationToken) {
+        throw new Error('No activation token found for user');
       }
 
-      console.log('Invitation sent successfully via Supabase Auth:', inviteData);
+      const baseUrl = req.headers.get('origin') || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.sandbox.lovable.dev';
+      const activationLink = `${baseUrl}/activate?token=${activationToken}`;
+      
+      console.log('Generated activation link for user:', { userId, email, activationLink });
 
       // Update user profile with sent timestamp
       const { error: updateError } = await supabase
@@ -86,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
           profile_data: {
             ...userData.profile_data,
             [`${isResend ? 'resent' : 'sent'}_at`]: new Date().toISOString(),
-            supabase_invite_sent: true
+            activation_link_generated: true
           },
           updated_at: new Date().toISOString()
         })
@@ -94,13 +76,15 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (updateError) {
         console.error('Error updating user profile:', updateError);
-        // Don't throw here as the invitation was sent successfully
+        // Don't throw here as the link was generated successfully
       }
 
       return new Response(JSON.stringify({ 
         success: true, 
-        message: `Invitation ${isResend ? 'resent' : 'sent'} successfully via Supabase Auth`,
-        inviteData: inviteData
+        message: `Activation link generated successfully. Please share this link with the user.`,
+        activationLink: activationLink,
+        userEmail: email,
+        userName: fullName
       }), {
         status: 200,
         headers: {
@@ -111,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     } catch (authError: any) {
       console.error('Auth invitation error:', authError);
-      throw new Error(authError.message || 'Failed to send invitation email');
+      throw new Error(authError.message || 'Failed to generate activation link');
     }
 
   } catch (error: any) {

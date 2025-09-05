@@ -38,18 +38,28 @@ export const ResendActivationButton = ({
 
       if (error) {
         console.error('Error resending activation email:', error);
-        toast.error('Failed to resend activation email');
+        toast.error('Failed to generate activation link');
         return;
       }
 
       if (data?.success) {
-        toast.success('Activation email resent successfully');
+        if (data.activationLink) {
+          toast.success(
+            `Activation link generated: ${data.activationLink}`,
+            {
+              duration: 10000,
+              description: `Share this link with ${email} to activate their account.`
+            }
+          );
+        } else {
+          toast.success('Activation link generated successfully');
+        }
       } else {
-        toast.error(data?.error || 'Failed to resend activation email');
+        toast.error(data?.error || 'Failed to generate activation link');
       }
     } catch (error) {
-      console.error('Error resending activation email:', error);
-      toast.error('Failed to resend activation email');
+      console.error('Error generating activation link:', error);
+      toast.error('Failed to generate activation link');
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +78,7 @@ export const ResendActivationButton = ({
       ) : (
         <Mail className="h-4 w-4" />
       )}
-      {isLoading ? 'Resending...' : 'Resend Activation'}
+      {isLoading ? 'Generating...' : 'Generate Activation Link'}
     </Button>
   );
 };

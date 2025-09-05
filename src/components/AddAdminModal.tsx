@@ -88,7 +88,7 @@ export function AddAdminModal({
 
   const getDescription = () => {
     const type = accountType === "enterprise" ? "enterprise" : "organization";
-    return `Add a new administrator to your ${type}. They will receive an activation email with password setup instructions.`;
+    return `Add a new administrator to your ${type}. You will receive an activation link to share with them for account setup.`;
   };
 
   const getDepartmentOptions = () => {
@@ -224,9 +224,10 @@ export function AddAdminModal({
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
               <h4 className="font-medium text-sm">Account Creation Process</h4>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>• Admin will receive an activation email with temporary login credentials</p>
-                <p>• They must click the activation link to confirm their account</p>
-                <p>• Temporary password will be shown in the activation email</p>
+                <p>• Admin account will be created with temporary login credentials</p>
+                <p>• You will receive an activation link to share with the new admin</p>
+                <p>• The admin must click the activation link to confirm their account</p>
+                <p>• Temporary password will be shown after clicking the activation link</p>
                 <p>• Admin can log in immediately after activation</p>
                 <p>• Account activation link expires in 24 hours</p>
               </div>
