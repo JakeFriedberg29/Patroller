@@ -820,7 +820,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_roles_with_details: {
+        Row: {
+          email: string | null
+          expires_at: string | null
+          full_name: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string | null
+          is_active: boolean | null
+          organization_id: string | null
+          organization_name: string | null
+          role_type: Database["public"]["Enums"]["role_type"] | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       activate_user_account: {
