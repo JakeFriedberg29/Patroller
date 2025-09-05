@@ -43,6 +43,7 @@ const mainItems = [
 const adminItems = [
   { title: "Accounts", url: "/accounts", icon: Building2 },
   { title: "Platform Admins", url: "/admins", icon: Shield },
+  { title: "User Roles", url: "/user-roles", icon: Users },
   { title: "Notification Center", url: "/notifications", icon: Bell },
   { title: "Logs", url: "/logs", icon: BarChart3 },
 ];
