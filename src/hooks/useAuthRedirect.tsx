@@ -14,28 +14,32 @@ export const useAuthRedirect = () => {
     // Get the user's primary role from profile data
     const primaryRole = profile.roleType;
     const organizationId = (profile as any).organizationId || (profile as any).organization_id;
+    const tenantId = (profile as any).profileData?.tenant_id || (profile as any).tenant_id;
 
     switch (primaryRole) {
       case 'platform_admin':
         navigate('/', { replace: true });
         break;
       case 'enterprise_admin':
-        // For enterprise admin, try to find their tenant's first organization
-        // For now, redirect to platform view
-        navigate('/', { replace: true });
+        // Navigate to enterprise dashboard using tenant_id
+        if (tenantId) {
+          navigate(`/enterprises/${tenantId}/enterprise-view`, { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
         break;
       case 'organization_admin':
-        // Navigate to organization view if we have org info
+        // Navigate to organization mission control dashboard
         if (organizationId) {
-          navigate(`/organization/${organizationId}`, { replace: true });
+          navigate(`/organization/${organizationId}/mission-control`, { replace: true });
         } else {
           navigate('/', { replace: true });
         }
         break;
       default:
-        // Regular users (responder, supervisor, member) go to organization dashboard
+        // Regular users (responder, supervisor, member) go to organization mission control dashboard
         if (organizationId) {
-          navigate(`/organization/${organizationId}`, { replace: true });
+          navigate(`/organization/${organizationId}/mission-control`, { replace: true });
         } else {
           navigate('/', { replace: true });
         }

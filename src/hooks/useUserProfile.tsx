@@ -72,7 +72,11 @@ export const useUserProfile = () => {
           role: getRoleDisplayName(primaryRole),
           roleType: primaryRole,
           status: data.status,
-          profileData: profileData
+          profileData: {
+            ...profileData,
+            tenant_id: data.tenant_id,
+            organization_id: data.organization_id
+          }
         });
       }
     } catch (error) {
