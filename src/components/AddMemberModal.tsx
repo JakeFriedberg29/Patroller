@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -68,10 +69,40 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log("New member data:", values);
+      // Get current user's organization info for database insert
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('organization_id, tenant_id')
+        .eq('auth_user_id', user.id)
+        .single();
+
+      if (!currentUser?.organization_id) {
+        throw new Error('No organization found');
+      }
+
+      const { error } = await supabase
+        .from('users')
+        .insert({
+          email: values.email,
+          full_name: `${values.firstName} ${values.lastName}`,
+          first_name: values.firstName,
+          last_name: values.lastName,
+          phone: values.phone,
+          organization_id: currentUser.organization_id,
+          tenant_id: currentUser.tenant_id,
+          status: 'active',
+          profile_data: {
+            role: values.role,
+            specialization: values.specialization,
+            certifications: values.certifications,
+            radio_call_sign: values.radioCallSign,
+          }
+        });
+
+      if (error) throw error;
       
       toast({
         title: "Member Added",
@@ -81,6 +112,7 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
       form.reset();
       onOpenChange(false);
     } catch (error) {
+      console.error('Error adding team member:', error);
       toast({
         title: "Error",
         description: "Failed to add team member. Please try again.",

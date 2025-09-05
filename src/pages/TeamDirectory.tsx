@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import {
   Select,
   SelectContent,
@@ -32,39 +33,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AddMemberModal } from "@/components/AddMemberModal";
 import { useToast } from "@/hooks/use-toast";
 
-const mockTeamMembers = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    role: "Team Lead",
-    status: "Available",
-    phone: "(555) 123-4567",
-    email: "sarah.johnson@example.com",
-    certification: "EMT-P",
-    department: "Emergency Services"
-  },
-  {
-    id: 2,
-    name: "Mike Chen",
-    role: "Rescue Specialist", 
-    status: "On Mission",
-    phone: "(555) 234-5678",
-    email: "mike.chen@example.com",
-    certification: "Technical Rescue",
-    department: "Operations"
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    role: "Communications",
-    status: "Available",
-    phone: "(555) 345-6789", 
-    email: "emily.rodriguez@example.com",
-    certification: "Radio Operator",
-    department: "Communications"
-  }
-];
-
 export default function TeamDirectory() {
   const { id } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
@@ -73,24 +41,29 @@ export default function TeamDirectory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<typeof mockTeamMembers[0] | null>(null);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
   const { toast } = useToast();
+  const { teamMembers, loading, updateTeamMember } = useTeamMembers();
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Available": return "default";
-      case "On Mission": return "destructive"; 
-      case "Off Duty": return "secondary";
+      case "active": return "default";
+      case "inactive": return "destructive"; 
+      case "pending": return "secondary";
       default: return "outline";
     }
   };
 
+  const formatStatus = (status: string) => {
+    return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   // Filter and pagination logic
-  const filteredMembers = mockTeamMembers.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredMembers = teamMembers.filter(member => {
+    const matchesSearch = member.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (member.profile_data?.role || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = selectedFilter === "All Status" || member.status === selectedFilter;
+    const matchesFilter = selectedFilter === "All Status" || formatStatus(member.status) === selectedFilter;
     return matchesSearch && matchesFilter;
   });
 
@@ -98,7 +71,7 @@ export default function TeamDirectory() {
   const startIndex = (currentPage - 1) * rowsPerPage;
   const paginatedMembers = filteredMembers.slice(startIndex, startIndex + rowsPerPage);
 
-  const statusOptions = [...new Set(mockTeamMembers.map(member => member.status))];
+  const statusOptions = [...new Set(teamMembers.map(member => formatStatus(member.status)))];
 
   return (
     <div className="space-y-6">
@@ -144,83 +117,91 @@ export default function TeamDirectory() {
       {/* Team Members Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-semibold">Name</TableHead>
-                <TableHead className="font-semibold">Role</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="font-semibold">Contact</TableHead>
-                <TableHead className="font-semibold">Certification</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedMembers.map((member) => (
-                <TableRow key={member.id} className="hover:bg-muted/50">
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                        <Users className="h-4 w-4 text-primary" />
-                      </div>
-                      <span className="font-semibold">{member.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{member.role}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusColor(member.status) as any}>
-                      {member.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone className="h-3 w-3 text-muted-foreground" />
-                        <span>{member.phone}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        <span>{member.email}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{member.certification}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
-                          onClick={() => {
-                            setSelectedMember(member);
-                            setIsEditModalOpen(true);
-                          }}
-                        >
-                          Edit Member
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            toast({
-                              title: "View Profile",
-                              description: `Viewing profile for ${member.name}`,
-                            });
-                          }}
-                        >
-                          View Profile
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {loading ? (
+            <div className="p-8 text-center">Loading team members...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-semibold">Name</TableHead>
+                  <TableHead className="font-semibold">Role</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="font-semibold">Contact</TableHead>
+                  <TableHead className="font-semibold">Specialization</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedMembers.map((member) => (
+                  <TableRow key={member.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                          <Users className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="font-semibold">{member.full_name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {member.profile_data?.role || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusColor(member.status) as any}>
+                        {formatStatus(member.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="h-3 w-3 text-muted-foreground" />
+                          <span>{member.phone || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-3 w-3 text-muted-foreground" />
+                          <span>{member.email}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {member.profile_data?.specialization || 'N/A'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setSelectedMember(member);
+                              setIsEditModalOpen(true);
+                            }}
+                          >
+                            Edit Member
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              toast({
+                                title: "View Profile",
+                                description: `Viewing profile for ${member.full_name}`,
+                              });
+                            }}
+                          >
+                            View Profile
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
           
           {/* Pagination */}
           <div className="flex items-center justify-between p-4 border-t">
@@ -285,7 +266,7 @@ export default function TeamDirectory() {
                 <Label htmlFor="edit-name">Name</Label>
                 <Input
                   id="edit-name"
-                  defaultValue={selectedMember.name}
+                  defaultValue={selectedMember.full_name}
                 />
               </div>
               <div className="space-y-2">
@@ -300,20 +281,19 @@ export default function TeamDirectory() {
                 <Label htmlFor="edit-phone">Phone</Label>
                 <Input
                   id="edit-phone"
-                  defaultValue={selectedMember.phone}
+                  defaultValue={selectedMember.phone || ''}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-department">Department</Label>
-                <Select defaultValue={selectedMember.department}>
+                <Label htmlFor="edit-role">Role</Label>
+                <Select defaultValue={selectedMember.profile_data?.role || ''}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Emergency Services">Emergency Services</SelectItem>
-                    <SelectItem value="Medical">Medical</SelectItem>
-                    <SelectItem value="Operations">Operations</SelectItem>
-                    <SelectItem value="Administration">Administration</SelectItem>
+                    <SelectItem value="Team Lead">Team Lead</SelectItem>
+                    <SelectItem value="Responder">Responder</SelectItem>
+                    <SelectItem value="Observer">Observer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -324,9 +304,9 @@ export default function TeamDirectory() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                    <SelectItem value="On Leave">On Leave</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -336,11 +316,14 @@ export default function TeamDirectory() {
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => {
-              toast({
-                title: "Member Updated",
-                description: `${selectedMember?.name} has been updated successfully.`,
-              });
+            <Button onClick={async () => {
+              if (selectedMember) {
+                await updateTeamMember(selectedMember.id, {
+                  full_name: (document.getElementById('edit-name') as HTMLInputElement)?.value || selectedMember.full_name,
+                  email: (document.getElementById('edit-email') as HTMLInputElement)?.value || selectedMember.email,
+                  phone: (document.getElementById('edit-phone') as HTMLInputElement)?.value || selectedMember.phone,
+                });
+              }
               setIsEditModalOpen(false);
               setSelectedMember(null);
             }}>

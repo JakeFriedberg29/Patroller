@@ -32,10 +32,8 @@ export const useEquipment = () => {
       setLoading(true);
       let query = supabase.from('equipment').select('*');
       
-      // Platform admins can see all equipment, others see only their organization's
-      if (!isPlatformAdmin) {
-        query = query.eq('organization_id', 'current_user_org'); // This will be handled by RLS
-      }
+      // RLS policies will handle filtering automatically based on user permissions
+      // Platform admins can see all, others see only their organization's equipment
       
       const { data, error } = await query.order('created_at', { ascending: false });
       
