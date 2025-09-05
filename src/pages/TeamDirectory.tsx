@@ -31,7 +31,6 @@ import { Users, Plus, Search, Phone, Mail, Filter, MoreHorizontal } from "lucide
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AddMemberModal } from "@/components/AddMemberModal";
 import { useToast } from "@/hooks/use-toast";
-import { useTeamMembers } from "@/hooks/useTeamMembers";
 
 const mockTeamMembers = [
   {
@@ -74,43 +73,24 @@ export default function TeamDirectory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [selectedMember, setSelectedMember] = useState<typeof mockTeamMembers[0] | null>(null);
   const { toast } = useToast();
-  const { teamMembers, loading, updateTeamMember, canManageUsers } = useTeamMembers();
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active": return "default";
-      case "inactive": return "secondary"; 
-      case "pending": return "destructive";
+    switch (status) {
+      case "Available": return "default";
+      case "On Mission": return "destructive"; 
+      case "Off Duty": return "secondary";
       default: return "outline";
     }
   };
 
-  const formatStatus = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
-  };
-
-  const getRoleFromUserRoles = (userRoles: any[]) => {
-    if (!userRoles || userRoles.length === 0) return 'Member';
-    const activeRole = userRoles.find(role => role.is_active);
-    if (!activeRole) return 'Member';
-    
-    switch (activeRole.role_type) {
-      case 'platform_admin': return 'Platform Admin';
-      case 'enterprise_admin': return 'Enterprise Admin';
-      case 'organization_admin': return 'Organization Admin';
-      case 'supervisor': return 'Team Lead';
-      case 'responder': return 'Responder';
-      default: return 'Member';
-    }
-  };
-
-  // Use database team members instead of mock data
-  const filteredMembers = teamMembers.filter(member => {
-    const matchesSearch = member.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  // Filter and pagination logic
+  const filteredMembers = mockTeamMembers.filter(member => {
+    const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         member.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = selectedFilter === "All Status" || member.status === selectedFilter.toLowerCase();
+    const matchesFilter = selectedFilter === "All Status" || member.status === selectedFilter;
     return matchesSearch && matchesFilter;
   });
 
@@ -130,12 +110,10 @@ export default function TeamDirectory() {
             <p className="text-muted-foreground">Manage team members and contacts</p>
           </div>
         </div>
-        {canManageUsers && (
-          <Button className="gap-2" onClick={() => setIsAddModalOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Add Member
-          </Button>
-        )}
+        <Button className="gap-2" onClick={() => setIsAddModalOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Add Member
+        </Button>
       </div>
 
       {/* Search and Filters */}
@@ -181,62 +159,63 @@ export default function TeamDirectory() {
               {paginatedMembers.map((member) => (
                 <TableRow key={member.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">
-                    <div className="space-y-1">
-                      <div className="font-medium">{member.full_name}</div>
-                      <div className="text-sm text-muted-foreground">{getRoleFromUserRoles(member.user_roles)}</div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                        <Users className="h-4 w-4 text-primary" />
+                      </div>
+                      <span className="font-semibold">{member.name}</span>
                     </div>
                   </TableCell>
+                  <TableCell className="text-muted-foreground">{member.role}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusColor(member.status) as any}>
-                      {formatStatus(member.status)}
+                      {member.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{member.phone || 'N/A'}</span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
+                        <span>{member.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        <span>{member.email}</span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{member.email}</span>
-                    </div>
+                    <Badge variant="outline">{member.certification}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{member.profile_data?.specialization || 'General'}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {canManageUsers && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem 
-                            onClick={() => {
-                              setSelectedMember(member);
-                              setIsEditModalOpen(true);
-                            }}
-                          >
-                            Edit Member
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              toast({
-                                title: "View Profile",
-                                description: `Viewing profile for ${member.full_name}`,
-                              });
-                            }}
-                          >
-                            View Profile
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem 
+                          onClick={() => {
+                            setSelectedMember(member);
+                            setIsEditModalOpen(true);
+                          }}
+                        >
+                          Edit Member
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            toast({
+                              title: "View Profile",
+                              description: `Viewing profile for ${member.name}`,
+                            });
+                          }}
+                        >
+                          View Profile
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -306,7 +285,7 @@ export default function TeamDirectory() {
                 <Label htmlFor="edit-name">Name</Label>
                 <Input
                   id="edit-name"
-                  defaultValue={selectedMember.full_name}
+                  defaultValue={selectedMember.name}
                 />
               </div>
               <div className="space-y-2">
@@ -321,8 +300,22 @@ export default function TeamDirectory() {
                 <Label htmlFor="edit-phone">Phone</Label>
                 <Input
                   id="edit-phone"
-                  defaultValue={selectedMember.phone || ''}
+                  defaultValue={selectedMember.phone}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-department">Department</Label>
+                <Select defaultValue={selectedMember.department}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Emergency Services">Emergency Services</SelectItem>
+                    <SelectItem value="Medical">Medical</SelectItem>
+                    <SelectItem value="Operations">Operations</SelectItem>
+                    <SelectItem value="Administration">Administration</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-status">Status</Label>
@@ -331,9 +324,9 @@ export default function TeamDirectory() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="On Leave">On Leave</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -344,19 +337,12 @@ export default function TeamDirectory() {
               Cancel
             </Button>
             <Button onClick={() => {
-              const updatedData = {
-                full_name: (document.getElementById('edit-name') as HTMLInputElement)?.value,
-                email: (document.getElementById('edit-email') as HTMLInputElement)?.value,
-                phone: (document.getElementById('edit-phone') as HTMLInputElement)?.value,
-                status: selectedMember?.status // Get from select component if needed
-              };
-              
-              updateTeamMember(selectedMember?.id, updatedData).then((success) => {
-                if (success) {
-                  setIsEditModalOpen(false);
-                  setSelectedMember(null);
-                }
+              toast({
+                title: "Member Updated",
+                description: `${selectedMember?.name} has been updated successfully.`,
               });
+              setIsEditModalOpen(false);
+              setSelectedMember(null);
             }}>
               Save Changes
             </Button>

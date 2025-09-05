@@ -34,16 +34,7 @@ export const useEquipment = () => {
       
       // Platform admins can see all equipment, others see only their organization's
       if (!isPlatformAdmin) {
-        // Get the current user's organization ID from their profile
-        const { data: userData } = await supabase
-          .from('users')
-          .select('organization_id')
-          .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
-          .single();
-        
-        if (userData?.organization_id) {
-          query = query.eq('organization_id', userData.organization_id);
-        }
+        query = query.eq('organization_id', 'current_user_org'); // This will be handled by RLS
       }
       
       const { data, error } = await query.order('created_at', { ascending: false });
