@@ -20,7 +20,8 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
   department: z.string().optional(),
-  location: z.string().optional()
+  location: z.string().optional(),
+  role: z.string().optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -64,7 +65,8 @@ export const EditAdminModal = ({
       email: admin?.email || '',
       phone: admin?.phone || '',
       department: '',
-      location: ''
+      location: '',
+      role: admin?.role || ''
     }
   });
 
@@ -75,16 +77,34 @@ export const EditAdminModal = ({
         email: admin.email,
         phone: admin.phone || '',
         department: '',
-        location: ''
+        location: '',
+        role: admin.role || ''
       });
     }
   }, [admin, form]);
+
+  const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' => {
+    const roleMap: { [key: string]: 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' } = {
+      'Platform Admin': 'platform_admin',
+      'Enterprise Admin': 'enterprise_admin', 
+      'Organization Admin': 'organization_admin',
+      'Team Leader': 'team_leader',
+      'Supervisor': 'supervisor',
+      'Responder': 'responder',
+      'Observer': 'observer',
+      'Member': 'member'
+    };
+    return roleMap[uiRole] || 'responder';
+  };
 
   const onSubmit = async (values: FormValues) => {
     if (!admin) return;
     
     setIsLoading(true);
     try {
+      // Check if role changed and needs updating
+      const roleChanged = values.role && values.role !== admin.role;
+      
       // Log admin edit attempt
       try {
         await supabase.rpc('log_user_action', {
@@ -97,7 +117,8 @@ export const EditAdminModal = ({
             changes: {
               full_name: values.fullName !== `${admin.firstName} ${admin.lastName}` ? values.fullName : null,
               email: values.email !== admin.email ? values.email : null,
-              phone: values.phone !== admin.phone ? values.phone : null
+              phone: values.phone !== admin.phone ? values.phone : null,
+              role: roleChanged ? values.role : null
             }
           }
         });
@@ -105,6 +126,7 @@ export const EditAdminModal = ({
         console.warn('Failed to log admin edit attempt:', logError);
       }
 
+      // Update user info
       const { error } = await supabase
         .from('users')
         .update({
@@ -123,6 +145,33 @@ export const EditAdminModal = ({
         return;
       }
 
+      // Update role if changed
+      if (roleChanged) {
+        const newDbRole = mapRoleToDbRole(values.role!);
+        
+        // Deactivate old roles
+        await supabase
+          .from('user_roles')
+          .update({ is_active: false })
+          .eq('user_id', admin.id);
+
+        // Add new role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: admin.id,
+            role_type: newDbRole,
+            organization_id: accountType !== 'platform' ? admin.id : null,
+            is_active: true
+          });
+
+        if (roleError) {
+          console.error('Error updating role:', roleError);
+          toast.error('Failed to update role');
+          return;
+        }
+      }
+
       // Log successful admin edit
       try {
         await supabase.rpc('log_user_action', {
@@ -133,10 +182,12 @@ export const EditAdminModal = ({
             admin_email: values.email,
             admin_name: values.fullName,
             admin_phone: values.phone || null,
+            role_updated: roleChanged ? values.role : null,
             previous_values: {
               full_name: `${admin.firstName} ${admin.lastName}`,
               email: admin.email,
-              phone: admin.phone
+              phone: admin.phone,
+              role: admin.role
             }
           }
         });
@@ -313,6 +364,19 @@ export const EditAdminModal = ({
     }
   };
 
+  const getRoleOptions = () => {
+    switch (accountType) {
+      case "platform":
+        return ["Platform Admin"];
+      case "enterprise":
+        return ["Enterprise Admin", "Organization Admin"];
+      case "organization":
+        return ["Organization Admin", "Team Leader", "Supervisor", "Responder", "Observer"];
+      default:
+        return [];
+    }
+  };
+
   const getDepartmentOptions = () => {
     if (accountType === "organization") {
       return [
@@ -399,6 +463,29 @@ export const EditAdminModal = ({
                   <FormControl>
                     <Input type="tel" placeholder="(555) 123-4567" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {getRoleOptions().map((role) => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
