@@ -20,7 +20,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Use service role key for admin auth functions
+    // Use service role key for database operations and admin auth functions
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -34,9 +34,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { userId, email, fullName, isResend = false }: SendActivationEmailRequest = await req.json();
 
-    console.log(`${isResend ? 'Resending' : 'Sending'} invitation email for user:`, { userId, email });
+    console.log(`${isResend ? 'Resending' : 'Sending'} activation link for user:`, { userId, email });
 
-    // Get user data from database 
+    // Get user data from database to include metadata in invitation
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('tenant_id, organization_id, profile_data')
@@ -49,30 +49,17 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     try {
-      // Get temp password from profile data
-      const tempPassword = userData.profile_data?.temp_password;
+      // Generate activation token for the user (already exists in profile_data)
+      const activationToken = userData.profile_data?.activation_token;
       
-      if (!tempPassword) {
-        throw new Error('No temporary password found for user');
+      if (!activationToken) {
+        throw new Error('No activation token found for user');
       }
 
-      // Use Supabase Auth to send invitation email
-      const { data: authData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
-        data: {
-          full_name: fullName,
-          tenant_id: userData.tenant_id,
-          organization_id: userData.organization_id,
-          temp_password: tempPassword
-        },
-        redirectTo: `${req.headers.get('origin') || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.sandbox.lovable.dev'}/auth`
-      });
-
-      if (inviteError) {
-        console.error('Error sending invitation:', inviteError);
-        throw new Error(inviteError.message || 'Failed to send invitation email');
-      }
-
-      console.log('Invitation email sent successfully:', { userId, email, authData });
+      const baseUrl = req.headers.get('origin') || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.sandbox.lovable.dev';
+      const activationLink = `${baseUrl}/activate?token=${activationToken}`;
+      
+      console.log('Generated activation link for user:', { userId, email, activationLink });
 
       // Update user profile with sent timestamp
       const { error: updateError } = await supabase
@@ -81,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
           profile_data: {
             ...userData.profile_data,
             [`${isResend ? 'resent' : 'sent'}_at`]: new Date().toISOString(),
-            invitation_sent: true
+            activation_link_generated: true
           },
           updated_at: new Date().toISOString()
         })
@@ -89,12 +76,13 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (updateError) {
         console.error('Error updating user profile:', updateError);
-        // Don't throw here as the email was sent successfully
+        // Don't throw here as the link was generated successfully
       }
 
       return new Response(JSON.stringify({ 
         success: true, 
-        message: `Invitation email sent successfully to ${email}`,
+        message: `Activation link generated successfully. Please share this link with the user.`,
+        activationLink: activationLink,
         userEmail: email,
         userName: fullName
       }), {
@@ -107,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     } catch (authError: any) {
       console.error('Auth invitation error:', authError);
-      throw new Error(authError.message || 'Failed to send invitation email');
+      throw new Error(authError.message || 'Failed to generate activation link');
     }
 
   } catch (error: any) {
