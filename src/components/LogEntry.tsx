@@ -223,11 +223,11 @@ export const LogEntry: React.FC<LogEntryProps> = ({
     
     // Department and location for admin profiles
     if (newValues?.department || metadata?.target_department) {
-      details.push(`Dept: ${newValues?.department || metadata?.target_department || 'N/A'}`);
+      details.push(`Dept: ${newValues.department || metadata.target_department}`);
     }
     
     if (newValues?.location || metadata?.target_location) {
-      details.push(`Location: ${newValues?.location || metadata?.target_location || 'N/A'}`);
+      details.push(`Location: ${newValues.location || metadata.target_location}`);
     }
     
     // Equipment-specific details
