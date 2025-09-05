@@ -26,21 +26,20 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useParams } from "react-router-dom";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  department: z.string().optional(),
-  location: z.string().optional(),
+  department: z.string().min(1, "Department is required"),
+  location: z.string().min(1, "Location is required"),
 });
 
 interface AddAdminModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  accountType: "platform" | "enterprise" | "organization";
+  accountType: "enterprise" | "organization";
   onSuccess?: () => void;
 }
 
@@ -64,27 +63,8 @@ export function AddAdminModal({
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const roleTitle = accountType === "platform" ? "Platform Admin" : 
-                     accountType === "enterprise" ? "Enterprise Admin" : "Organization Admin";
+    const roleTitle = accountType === "enterprise" ? "Enterprise Admin" : "Organization Admin";
     
-    // Log admin creation attempt
-    try {
-      await supabase.rpc('log_user_action', {
-        p_action: 'CREATE_ATTEMPT',
-        p_resource_type: accountType + '_admin',
-        p_resource_id: null,
-        p_metadata: {
-          target_email: values.email,
-          target_name: values.fullName,
-          target_department: values.department,
-          target_location: values.location,
-          action_context: accountType + '_admin_creation'
-        }
-      });
-    } catch (logError) {
-      console.warn('Failed to log admin creation attempt:', logError);
-    }
-
     const result = await createUser({
       email: values.email,
       fullName: values.fullName,
@@ -96,24 +76,6 @@ export function AddAdminModal({
     });
 
     if (result.success) {
-      // Log successful admin creation
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: 'CREATE',
-          p_resource_type: accountType + '_admin',
-          p_resource_id: result.userId || null,
-          p_metadata: {
-            admin_email: values.email,
-            admin_name: values.fullName,
-            admin_department: values.department,
-            admin_location: values.location,
-            admin_role: roleTitle
-          }
-        });
-      } catch (logError) {
-        console.warn('Failed to log successful admin creation:', logError);
-      }
-
       form.reset();
       onOpenChange(false);
       onSuccess?.();
@@ -121,67 +83,39 @@ export function AddAdminModal({
   };
 
   const getTitle = () => {
-    switch (accountType) {
-      case "platform":
-        return "Add Platform Admin";
-      case "enterprise":
-        return "Add Enterprise Admin";
-      case "organization":
-        return "Add Organization Admin";
-      default:
-        return "Add Admin";
-    }
+    return accountType === "enterprise" ? "Add Enterprise Admin" : "Add Organization Admin";
   };
 
   const getDescription = () => {
-    switch (accountType) {
-      case "platform":
-        return "Add a new platform administrator with system-wide access. They will receive an activation email with password setup instructions.";
-      case "enterprise":
-        return "Add a new administrator to your enterprise. They will receive an activation email with password setup instructions.";
-      case "organization":
-        return "Add a new administrator to your organization. They will receive an activation email with password setup instructions.";
-      default:
-        return "Add a new administrator. They will receive an activation email with password setup instructions.";
-    }
+    const type = accountType === "enterprise" ? "enterprise" : "organization";
+    return `Add a new administrator to your ${type}. They will receive an activation email with password setup instructions.`;
   };
 
   const getDepartmentOptions = () => {
-    switch (accountType) {
-      case "platform":
-        return [
-          "Platform Operations",
-          "System Administration", 
-          "Security & Compliance",
-          "Technical Support",
-          "Business Development",
-          "Legal & Compliance"
-        ];
-      case "enterprise":
-        return [
-          "Operations",
-          "Logistics", 
-          "Research & Development",
-          "Energy Division",
-          "Healthcare",
-          "Finance",
-          "Human Resources",
-          "Legal",
-          "Information Technology"
-        ];
-      case "organization":
-        return [
-          "Operations",
-          "Training",
-          "Equipment",
-          "Communications", 
-          "Medical",
-          "Search & Rescue",
-          "Emergency Services",
-          "Administration"
-        ];
-      default:
-        return ["Operations", "Administration"];
+    if (accountType === "enterprise") {
+      return [
+        "Operations",
+        "Logistics", 
+        "Research & Development",
+        "Energy Division",
+        "Healthcare",
+        "Finance",
+        "Human Resources",
+        "Legal",
+        "Information Technology"
+      ];
+    } else {
+      // Organization departments vary by organization type
+      return [
+        "Operations",
+        "Training",
+        "Equipment",
+        "Communications", 
+        "Medical",
+        "Search & Rescue",
+        "Emergency Services",
+        "Administration"
+      ];
     }
   };
 
@@ -242,7 +176,7 @@ export function AddAdminModal({
               name="department"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Department {accountType !== "platform" && "*"}</FormLabel>
+                  <FormLabel>Department *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -267,7 +201,7 @@ export function AddAdminModal({
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location {accountType !== "platform" && "*"}</FormLabel>
+                  <FormLabel>Location *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -308,10 +242,7 @@ export function AddAdminModal({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : `Add ${
-                  accountType === "platform" ? "Platform" : 
-                  accountType === "enterprise" ? "Enterprise" : "Organization"
-                } Admin`}
+                {isLoading ? "Creating..." : `Add ${accountType === "enterprise" ? "Enterprise" : "Organization"} Admin`}
               </Button>
             </div>
           </form>

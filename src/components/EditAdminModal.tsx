@@ -85,26 +85,6 @@ export const EditAdminModal = ({
     
     setIsLoading(true);
     try {
-      // Log admin edit attempt
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: 'UPDATE_ATTEMPT',
-          p_resource_type: accountType + '_admin',
-          p_resource_id: admin.id,
-          p_metadata: {
-            admin_email: admin.email,
-            admin_name: `${admin.firstName} ${admin.lastName}`,
-            changes: {
-              full_name: values.fullName !== `${admin.firstName} ${admin.lastName}` ? values.fullName : null,
-              email: values.email !== admin.email ? values.email : null,
-              phone: values.phone !== admin.phone ? values.phone : null
-            }
-          }
-        });
-      } catch (logError) {
-        console.warn('Failed to log admin edit attempt:', logError);
-      }
-
       const { error } = await supabase
         .from('users')
         .update({
@@ -121,27 +101,6 @@ export const EditAdminModal = ({
         console.error('Error updating admin:', error);
         toast.error('Failed to update administrator');
         return;
-      }
-
-      // Log successful admin edit
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: 'UPDATE',
-          p_resource_type: accountType + '_admin',
-          p_resource_id: admin.id,
-          p_metadata: {
-            admin_email: values.email,
-            admin_name: values.fullName,
-            admin_phone: values.phone || null,
-            previous_values: {
-              full_name: `${admin.firstName} ${admin.lastName}`,
-              email: admin.email,
-              phone: admin.phone
-            }
-          }
-        });
-      } catch (logError) {
-        console.warn('Failed to log successful admin edit:', logError);
       }
 
       toast.success('Administrator updated successfully');
@@ -162,22 +121,6 @@ export const EditAdminModal = ({
     try {
       const newStatus = admin.activation_status === 'suspended' ? 'active' : 'suspended';
       
-      // Log suspend/unsuspend attempt
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: newStatus === 'suspended' ? 'SUSPEND_ATTEMPT' : 'UNSUSPEND_ATTEMPT',
-          p_resource_type: accountType + '_admin',
-          p_resource_id: admin.id,
-          p_metadata: {
-            admin_email: admin.email,
-            admin_name: `${admin.firstName} ${admin.lastName}`,
-            status_change: `${admin.activation_status} -> ${newStatus}`
-          }
-        });
-      } catch (logError) {
-        console.warn('Failed to log admin suspend/unsuspend attempt:', logError);
-      }
-      
       const { error } = await supabase
         .from('users')
         .update({
@@ -190,23 +133,6 @@ export const EditAdminModal = ({
         console.error('Error updating admin status:', error);
         toast.error(`Failed to ${newStatus === 'suspended' ? 'suspend' : 'unsuspend'} administrator`);
         return;
-      }
-
-      // Log successful suspend/unsuspend
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: newStatus === 'suspended' ? 'SUSPEND' : 'UNSUSPEND',
-          p_resource_type: accountType + '_admin',
-          p_resource_id: admin.id,
-          p_metadata: {
-            admin_email: admin.email,
-            admin_name: `${admin.firstName} ${admin.lastName}`,
-            new_status: newStatus,
-            previous_status: admin.activation_status
-          }
-        });
-      } catch (logError) {
-        console.warn('Failed to log successful admin suspend/unsuspend:', logError);
       }
 
       toast.success(`Administrator ${newStatus === 'suspended' ? 'suspended' : 'unsuspended'} successfully`);
@@ -225,23 +151,6 @@ export const EditAdminModal = ({
     
     setIsDeleting(true);
     try {
-      // Log admin deletion attempt
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: 'DELETE_ATTEMPT',
-          p_resource_type: accountType + '_admin',
-          p_resource_id: admin.id,
-          p_metadata: {
-            admin_email: admin.email,
-            admin_name: `${admin.firstName} ${admin.lastName}`,
-            admin_role: admin.role,
-            deletion_method: 'soft_delete'
-          }
-        });
-      } catch (logError) {
-        console.warn('Failed to log admin deletion attempt:', logError);
-      }
-
       // Soft delete by setting status to inactive and deactivating roles
       const { error: userError } = await supabase
         .from('users')
@@ -269,23 +178,6 @@ export const EditAdminModal = ({
       if (roleError) {
         console.error('Error deactivating admin roles:', roleError);
         // Don't return here, user deletion was successful
-      }
-
-      // Log successful admin deletion
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: 'DELETE',
-          p_resource_type: accountType + '_admin',
-          p_resource_id: admin.id,
-          p_metadata: {
-            admin_email: admin.email,
-            admin_name: `${admin.firstName} ${admin.lastName}`,
-            admin_role: admin.role,
-            deletion_timestamp: new Date().toISOString()
-          }
-        });
-      } catch (logError) {
-        console.warn('Failed to log successful admin deletion:', logError);
       }
 
       toast.success('Administrator deleted successfully');
