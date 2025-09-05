@@ -172,11 +172,14 @@ export type Database = {
           assigned_to: string | null
           category: string
           created_at: string
+          description: string | null
           id: string
+          last_maintenance: string | null
           location_id: string | null
           maintenance_schedule: Json | null
           model: string | null
           name: string
+          next_maintenance: string | null
           organization_id: string
           purchase_date: string | null
           serial_number: string | null
@@ -189,11 +192,14 @@ export type Database = {
           assigned_to?: string | null
           category: string
           created_at?: string
+          description?: string | null
           id?: string
+          last_maintenance?: string | null
           location_id?: string | null
           maintenance_schedule?: Json | null
           model?: string | null
           name: string
+          next_maintenance?: string | null
           organization_id: string
           purchase_date?: string | null
           serial_number?: string | null
@@ -206,11 +212,14 @@ export type Database = {
           assigned_to?: string | null
           category?: string
           created_at?: string
+          description?: string | null
           id?: string
+          last_maintenance?: string | null
           location_id?: string | null
           maintenance_schedule?: Json | null
           model?: string | null
           name?: string
+          next_maintenance?: string | null
           organization_id?: string
           purchase_date?: string | null
           serial_number?: string | null
