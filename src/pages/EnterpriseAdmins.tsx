@@ -149,9 +149,9 @@ export default function EnterpriseAdmins() {
       admin.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (admin.department || '').toLowerCase().includes(searchTerm.toLowerCase());
+      admin.department.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || admin.activation_status.toLowerCase() === statusFilter;
-    const matchesDepartment = departmentFilter === "all" || (admin.department || '').toLowerCase().includes(departmentFilter);
+    const matchesDepartment = departmentFilter === "all" || admin.department.toLowerCase().includes(departmentFilter);
     
     return matchesSearch && matchesStatus && matchesDepartment;
   });
@@ -311,7 +311,7 @@ export default function EnterpriseAdmins() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{admin.department || 'Not assigned'}</Badge>
+                      <Badge variant="outline">{admin.department}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
