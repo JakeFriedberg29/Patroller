@@ -122,23 +122,17 @@ export const useUserManagement = () => {
         return { success: false, error: emailData?.error || 'Failed to generate activation link' };
       }
 
-      // Show success with activation link
-      if (emailData.activationLink) {
-        toast.success(
-          `User created successfully! Activation Link: ${emailData.activationLink}`,
-          {
-            duration: 10000, // Show for 10 seconds
-            description: `Share this link with ${userData.email} to activate their account.`
-          }
-        );
-      } else {
-        toast.success(`User created successfully!`);
-      }
+      // Show success message
+      toast.success(
+        `User created and invitation sent to ${userData.email}!`,
+        {
+          description: `They will receive an email with instructions to activate their account.`
+        }
+      );
       
       return { 
         success: true, 
         userId: result.user_id,
-        activationLink: emailData.activationLink,
         userEmail: emailData.userEmail,
         userName: emailData.userName
       };
