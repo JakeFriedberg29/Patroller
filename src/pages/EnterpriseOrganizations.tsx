@@ -266,16 +266,36 @@ export default function EnterpriseOrganizations() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              // Navigate to organization dashboard
+                              window.location.href = `/organization/${org.id}/mission-control`;
+                            }}
+                          >
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              // Navigate to organization settings
+                              window.location.href = `/organization/${org.id}/settings`;
+                            }}
+                          >
                             Edit Organization
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              // Navigate to team directory
+                              window.location.href = `/organization/${org.id}/team-directory`;
+                            }}
+                          >
                             Manage Users
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              // Navigate to organization logs
+                              window.location.href = `/organization/${org.id}/logs`;
+                            }}
+                          >
                             View Logs
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive">

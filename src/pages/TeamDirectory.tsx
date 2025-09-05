@@ -181,8 +181,22 @@ export default function TeamDirectory() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit Member</DropdownMenuItem>
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => {
+                            // TODO: Implement edit member functionality
+                            console.log('Edit member:', member.id);
+                          }}
+                        >
+                          Edit Member
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            // TODO: Implement view profile functionality
+                            console.log('View profile:', member.id);
+                          }}
+                        >
+                          View Profile
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

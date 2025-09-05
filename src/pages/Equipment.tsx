@@ -244,8 +244,22 @@ export default function Equipment() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit Equipment</DropdownMenuItem>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            // TODO: Implement edit equipment functionality
+                            console.log('Edit equipment:', item.id);
+                          }}
+                        >
+                          Edit Equipment
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            // TODO: Implement view details functionality
+                            console.log('View details:', item.id);
+                          }}
+                        >
+                          View Details
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
