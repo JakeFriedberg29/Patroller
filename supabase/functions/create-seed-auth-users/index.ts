@@ -77,7 +77,7 @@ serve(async (req) => {
       }
     ]
 
-    // First, check which users already have auth accounts
+    // First, check which users already have auth accounts linked
     const { data: existingUsers, error: queryError } = await supabaseAdmin
       .from('users')
       .select('id, email, auth_user_id')
@@ -88,86 +88,140 @@ serve(async (req) => {
       throw new Error('Failed to check existing users')
     }
 
-    // Filter out users that already have auth_user_id
-    const usersNeedingAuth = usersToCreate.filter(userData => {
-      const existingUser = existingUsers?.find(u => u.id === userData.user_id)
-      return existingUser && !existingUser.auth_user_id
-    })
+    console.log('Existing users in database:', existingUsers)
 
-    if (usersNeedingAuth.length === 0) {
-      console.log('No new users need auth accounts - all seed users already have authentication')
-      return new Response(
-        JSON.stringify({ 
-          message: 'No new seed users to create',
-          details: 'All seed/mock users already have authentication accounts. No new auth users needed.',
-          results: [],
-          total_processed: 0,
-          successful: 0,
-          failed: 0,
-          skipped: usersToCreate.length
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        },
-      )
-    }
-
-    console.log(`Creating auth accounts for ${usersNeedingAuth.length} users...`)
     const results = []
+    let processedCount = 0
 
-    for (const userData of usersNeedingAuth) {
+    for (const userData of usersToCreate) {
       try {
-        console.log(`Creating auth user for: ${userData.email}`)
+        const existingUser = existingUsers?.find(u => u.id === userData.user_id)
         
-        // Create auth user with email as password
-        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email: userData.email,
-          password: userData.email, // Using email as password as requested
-          email_confirm: true, // Skip email confirmation
-          user_metadata: {
-            full_name: userData.full_name
+        if (!existingUser) {
+          console.log(`User ${userData.email} not found in database, skipping...`)
+          results.push({ 
+            email: userData.email, 
+            success: false, 
+            error: 'User not found in database' 
+          })
+          continue
+        }
+
+        if (existingUser.auth_user_id) {
+          console.log(`User ${userData.email} already has auth account linked`)
+          results.push({ 
+            email: userData.email, 
+            success: true, 
+            message: 'Already linked to auth account',
+            auth_user_id: existingUser.auth_user_id 
+          })
+          continue
+        }
+
+        console.log(`Processing ${userData.email}...`)
+        processedCount++
+
+        // Check if auth user already exists
+        const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000
+        })
+
+        if (listError) {
+          console.error(`Error listing auth users:`, listError)
+          results.push({ 
+            email: userData.email, 
+            success: false, 
+            error: `Failed to check existing auth users: ${listError.message}` 
+          })
+          continue
+        }
+
+        const existingAuthUser = authUsers.users.find(u => u.email === userData.email)
+
+        if (existingAuthUser) {
+          console.log(`Auth user already exists for ${userData.email}, linking to database record...`)
+          
+          // Link existing auth user to database record
+          const { error: updateError } = await supabaseAdmin
+            .from('users')
+            .update({ 
+              auth_user_id: existingAuthUser.id,
+              status: 'active',
+              email_verified: true
+            })
+            .eq('id', userData.user_id)
+
+          if (updateError) {
+            console.error(`Error linking existing auth user for ${userData.email}:`, updateError)
+            results.push({ 
+              email: userData.email, 
+              success: false, 
+              error: `Failed to link existing auth user: ${updateError.message}` 
+            })
+            continue
           }
-        })
 
-        if (authError) {
-          console.error(`Error creating auth user for ${userData.email}:`, authError)
+          console.log(`Successfully linked existing auth user for: ${userData.email}`)
           results.push({ 
             email: userData.email, 
-            success: false, 
-            error: authError.message 
+            success: true, 
+            message: 'Linked existing auth user',
+            auth_user_id: existingAuthUser.id 
           })
-          continue
-        }
-
-        console.log(`Auth user created for ${userData.email}, updating database record...`)
-
-        // Update the corresponding user record with auth_user_id
-        const { error: updateError } = await supabaseAdmin
-          .from('users')
-          .update({ 
-            auth_user_id: authUser.user.id,
-            status: 'active',
-            email_verified: true
+        } else {
+          console.log(`Creating new auth user for: ${userData.email}`)
+          
+          // Create new auth user
+          const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+            email: userData.email,
+            password: userData.email, // Using email as password as requested
+            email_confirm: true, // Skip email confirmation
+            user_metadata: {
+              full_name: userData.full_name
+            }
           })
-          .eq('id', userData.user_id)
 
-        if (updateError) {
-          console.error(`Error updating user record for ${userData.email}:`, updateError)
+          if (authError) {
+            console.error(`Error creating auth user for ${userData.email}:`, authError)
+            results.push({ 
+              email: userData.email, 
+              success: false, 
+              error: authError.message 
+            })
+            continue
+          }
+
+          console.log(`Auth user created for ${userData.email}, updating database record...`)
+
+          // Update the corresponding user record with auth_user_id
+          const { error: updateError } = await supabaseAdmin
+            .from('users')
+            .update({ 
+              auth_user_id: authUser.user.id,
+              status: 'active',
+              email_verified: true
+            })
+            .eq('id', userData.user_id)
+
+          if (updateError) {
+            console.error(`Error updating user record for ${userData.email}:`, updateError)
+            results.push({ 
+              email: userData.email, 
+              success: false, 
+              error: `Auth user created but failed to link: ${updateError.message}` 
+            })
+            continue
+          }
+
+          console.log(`Successfully created and linked new auth user for: ${userData.email}`)
           results.push({ 
             email: userData.email, 
-            success: false, 
-            error: updateError.message 
+            success: true, 
+            message: 'Created new auth user',
+            auth_user_id: authUser.user.id 
           })
-          continue
         }
-
-        console.log(`Successfully created and linked auth user for: ${userData.email}`)
-        results.push({ 
-          email: userData.email, 
-          success: true, 
-          auth_user_id: authUser.user.id 
-        })
 
       } catch (error) {
         console.error(`Unexpected error for ${userData.email}:`, error)
@@ -179,16 +233,26 @@ serve(async (req) => {
       }
     }
 
-    console.log('Auth user creation complete. Results:', results)
+    const successfulResults = results.filter(r => r.success)
+    const failedResults = results.filter(r => !r.success)
+
+    console.log('Auth user processing complete. Results:', results)
+
+    const message = successfulResults.length > 0 
+      ? `Successfully processed ${successfulResults.length} authentication accounts`
+      : processedCount === 0
+        ? 'No new seed users to create - all seed/mock users already have authentication accounts linked'
+        : 'No authentication accounts could be processed'
 
     return new Response(
       JSON.stringify({ 
-        message: `Successfully created ${results.filter(r => r.success).length} new authentication accounts`,
+        message: message,
+        details: processedCount === 0 ? 'All seed/mock users already have authentication accounts. No new auth users needed.' : undefined,
         results: results,
         total_processed: results.length,
-        successful: results.filter(r => r.success).length,
-        failed: results.filter(r => !r.success).length,
-        skipped: usersToCreate.length - usersNeedingAuth.length
+        successful: successfulResults.length,
+        failed: failedResults.length,
+        skipped: 0
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
