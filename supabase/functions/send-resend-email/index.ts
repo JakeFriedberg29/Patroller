@@ -1,0 +1,250 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+import { Resend } from "npm:resend@2.0.0";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface SendEmailRequest {
+  userId: string;
+  email: string;
+  fullName: string;
+  isResend?: boolean;
+  organizationName?: string;
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    if (!resendApiKey) {
+      throw new Error('RESEND_API_KEY environment variable is not set');
+    }
+
+    const resend = new Resend(resendApiKey);
+
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    const { userId, email, fullName, isResend = false, organizationName }: SendEmailRequest = await req.json();
+
+    console.log(`${isResend ? 'Resending' : 'Sending'} invitation email via Resend for user:`, { userId, email });
+
+    // Get user data from database
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('tenant_id, organization_id, profile_data')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !userData) {
+      console.error('Error fetching user data:', userError);
+      throw new Error('User not found');
+    }
+
+    // Generate activation token and update user
+    const { data: tokenData, error: tokenError } = await supabase
+      .rpc('generate_activation_token', { p_user_id: userId });
+
+    if (tokenError || !tokenData?.success) {
+      console.error('Error generating activation token:', tokenError);
+      throw new Error('Failed to generate activation token');
+    }
+
+    // Create activation URL
+    const baseUrl = req.headers.get('origin') || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.sandbox.lovable.dev';
+    const activationUrl = `${baseUrl}/activate?token=${tokenData.activation_token}`;
+
+    // Prepare email content
+    const firstName = fullName.split(' ')[0];
+    const orgName = organizationName || 'the organization';
+
+    // Professional email template
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Welcome to ${orgName}</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f4f4f4;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #333333; margin-bottom: 10px;">Welcome to ${orgName}!</h1>
+              <p style="color: #666666; font-size: 16px;">You've been invited to join our platform</p>
+            </div>
+            
+            <div style="background-color: #f8f9fa; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
+              <p style="color: #333333; font-size: 16px; margin-bottom: 20px;">Hello ${firstName},</p>
+              
+              <p style="color: #333333; font-size: 16px; margin-bottom: 20px;">
+                You've been invited to join <strong>${orgName}</strong> on our emergency management platform. 
+                To get started, please activate your account by clicking the button below.
+              </p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${activationUrl}" 
+                   style="background-color: #007bff; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                  Activate Account
+                </a>
+              </div>
+              
+              <p style="color: #666666; font-size: 14px; margin-top: 20px;">
+                If the button doesn't work, you can copy and paste this link into your browser:
+                <br>
+                <a href="${activationUrl}" style="color: #007bff; word-break: break-all;">${activationUrl}</a>
+              </p>
+            </div>
+            
+            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 5px; margin-bottom: 30px;">
+              <h3 style="color: #856404; margin-top: 0;">Important Security Information</h3>
+              <ul style="color: #856404; font-size: 14px; margin: 0; padding-left: 20px;">
+                <li>This invitation link will expire in 7 days</li>
+                <li>If you didn't expect this invitation, please contact your administrator</li>
+                <li>Never share your login credentials with anyone</li>
+              </ul>
+            </div>
+            
+            <div style="border-top: 1px solid #e9ecef; padding-top: 20px; text-align: center;">
+              <p style="color: #666666; font-size: 14px; margin: 0;">
+                Need help? Contact your system administrator or reply to this email.
+              </p>
+              <p style="color: #999999; font-size: 12px; margin-top: 20px;">
+                © ${new Date().getFullYear()} ${orgName}. All rights reserved.
+              </p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const emailText = `
+Welcome to ${orgName}!
+
+Hello ${firstName},
+
+You've been invited to join ${orgName} on our emergency management platform.
+
+To get started, please activate your account by visiting this link:
+${activationUrl}
+
+Important Security Information:
+- This invitation link will expire in 7 days
+- If you didn't expect this invitation, please contact your administrator
+- Never share your login credentials with anyone
+
+Need help? Contact your system administrator.
+
+© ${new Date().getFullYear()} ${orgName}. All rights reserved.
+    `;
+
+    try {
+      // Send email using Resend
+      // NOTE: Change the 'from' address to your verified domain once you set it up
+      // Example: 'Platform Admin <admin@yourcompany.com>'
+      const emailResponse = await resend.emails.send({
+        from: 'Platform Admin <onboarding@resend.dev>', // CHANGE THIS to your verified domain
+        to: [email],
+        subject: `${isResend ? 'Reminder: ' : ''}Welcome to ${orgName} - Account Activation Required`,
+        html: emailHtml,
+        text: emailText,
+        headers: {
+          'X-Entity-Ref-ID': userId,
+        },
+        tags: [
+          {
+            name: 'category',
+            value: 'user_invitation'
+          },
+          {
+            name: 'user_id',
+            value: userId
+          }
+        ]
+      });
+
+      console.log('Activation email sent successfully:', emailResponse);
+
+      // Update user profile with sent timestamp
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          profile_data: {
+            ...userData.profile_data,
+            [`${isResend ? 'resent' : 'sent'}_at`]: new Date().toISOString(),
+            resend_email_sent: true,
+            email_id: emailResponse.data?.id
+          },
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Error updating user profile:', updateError);
+        // Don't throw here as the email was sent successfully
+      }
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: `Invitation ${isResend ? 'resent' : 'sent'} successfully via Resend`,
+        emailId: emailResponse.data?.id,
+        activationUrl: activationUrl // Remove this in production for security
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
+
+    } catch (emailError: any) {
+      console.error('Resend email error:', emailError);
+      
+      // Enhanced error handling for common Resend issues
+      if (emailError.message?.includes('You can only send testing emails')) {
+        throw new Error('Domain verification required. Please verify your domain at resend.com/domains and update the "from" address in the email function.');
+      }
+      
+      if (emailError.message?.includes('Invalid from address')) {
+        throw new Error('Invalid from address. Please use an email address from your verified domain.');
+      }
+      
+      throw new Error(`Failed to send email: ${emailError.message}`);
+    }
+
+  } catch (error: any) {
+    console.error("Error in send-resend-email function:", error);
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        code: error.code || 'UNKNOWN_ERROR'
+      }),
+      {
+        status: 500,
+        headers: { 
+          "Content-Type": "application/json", 
+          ...corsHeaders 
+        },
+      }
+    );
+  }
+};
+
+serve(handler);

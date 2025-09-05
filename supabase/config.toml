@@ -1,1 +1,7 @@
 project_id = "hrkptgopdvwpquhffrew"
+
+[functions.send-activation-email]
+verify_jwt = false
+
+[functions.send-resend-email]
+verify_jwt = false

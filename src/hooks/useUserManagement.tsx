@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useEmailService } from "./useEmailService";
 
 export interface CreateUserRequest {
   email: string;
@@ -30,6 +31,7 @@ const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' 
 export const useUserManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserTenantId, setCurrentUserTenantId] = useState<string | null>(null);
+  const { sendActivationEmail } = useEmailService();
 
   // Get current user's tenant ID
   useEffect(() => {
@@ -101,28 +103,22 @@ export const useUserManagement = () => {
 
       console.log('User created successfully, sending activation email for userId:', result.user_id);
       
-      // Send activation email with temporary password
-      const { data: emailData, error: emailError } = await supabase.functions.invoke('send-activation-email', {
-        body: {
-          userId: result.user_id,
-          email: userData.email,
-          fullName: userData.fullName,
-          isResend: false
-        }
+      // Send activation email using the configured email service
+      const emailResult = await sendActivationEmail({
+        userId: result.user_id,
+        email: userData.email,
+        fullName: userData.fullName,
+        isResend: false,
+        organizationName: 'Emergency Management Platform' // You can make this dynamic
       });
 
-      if (emailError) {
-        console.error('Error sending activation email:', emailError);
+      if (!emailResult.success) {
+        console.error('Error sending activation email:', emailResult.error);
         toast.error('User created but failed to send activation email');
         return { success: false, error: 'Failed to send activation email' };
       }
 
-      if (!emailData?.success) {
-        toast.error(emailData?.error || 'Failed to send activation email');
-        return { success: false, error: emailData?.error || 'Failed to send activation email' };
-      }
-
-      toast.success(`User created successfully! Activation email sent to ${userData.email}`);
+      toast.success(`User created successfully! Activation email sent via ${emailResult.provider}`);
       return { success: true, userId: result.user_id };
     } catch (error: any) {
       console.error('Error in createUser:', error);
