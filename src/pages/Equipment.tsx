@@ -77,6 +77,8 @@ export default function Equipment() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState<typeof mockEquipment[0] | null>(null);
   const { toast } = useToast();
 
   const [newEquipment, setNewEquipment] = useState({
@@ -246,16 +248,18 @@ export default function Equipment() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() => {
-                            // TODO: Implement edit equipment functionality
-                            console.log('Edit equipment:', item.id);
+                            setSelectedEquipment(item);
+                            setIsEditModalOpen(true);
                           }}
                         >
                           Edit Equipment
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
-                            // TODO: Implement view details functionality
-                            console.log('View details:', item.id);
+                            toast({
+                              title: "Equipment Details",
+                              description: `Viewing details for ${item.name}`,
+                            });
                           }}
                         >
                           View Details

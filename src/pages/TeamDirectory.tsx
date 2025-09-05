@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -19,9 +20,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Users, Plus, Search, Phone, Mail, Filter, MoreHorizontal } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AddMemberModal } from "@/components/AddMemberModal";
+import { useToast } from "@/hooks/use-toast";
 
 const mockTeamMembers = [
   {
@@ -31,7 +40,8 @@ const mockTeamMembers = [
     status: "Available",
     phone: "(555) 123-4567",
     email: "sarah.johnson@example.com",
-    certification: "EMT-P"
+    certification: "EMT-P",
+    department: "Emergency Services"
   },
   {
     id: 2,
@@ -40,7 +50,8 @@ const mockTeamMembers = [
     status: "On Mission",
     phone: "(555) 234-5678",
     email: "mike.chen@example.com",
-    certification: "Technical Rescue"
+    certification: "Technical Rescue",
+    department: "Operations"
   },
   {
     id: 3,
@@ -49,7 +60,8 @@ const mockTeamMembers = [
     status: "Available",
     phone: "(555) 345-6789", 
     email: "emily.rodriguez@example.com",
-    certification: "Radio Operator"
+    certification: "Radio Operator",
+    department: "Communications"
   }
 ];
 
@@ -60,6 +72,9 @@ export default function TeamDirectory() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<typeof mockTeamMembers[0] | null>(null);
+  const { toast } = useToast();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -183,16 +198,18 @@ export default function TeamDirectory() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem 
                           onClick={() => {
-                            // TODO: Implement edit member functionality
-                            console.log('Edit member:', member.id);
+                            setSelectedMember(member);
+                            setIsEditModalOpen(true);
                           }}
                         >
                           Edit Member
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
-                            // TODO: Implement view profile functionality
-                            console.log('View profile:', member.id);
+                            toast({
+                              title: "View Profile",
+                              description: `Viewing profile for ${member.name}`,
+                            });
                           }}
                         >
                           View Profile
@@ -255,6 +272,83 @@ export default function TeamDirectory() {
         open={isAddModalOpen} 
         onOpenChange={setIsAddModalOpen} 
       />
+
+      {/* Edit Member Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Team Member</DialogTitle>
+          </DialogHeader>
+          {selectedMember && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  defaultValue={selectedMember.name}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  defaultValue={selectedMember.email}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  defaultValue={selectedMember.phone}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-department">Department</Label>
+                <Select defaultValue={selectedMember.department}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Emergency Services">Emergency Services</SelectItem>
+                    <SelectItem value="Medical">Medical</SelectItem>
+                    <SelectItem value="Operations">Operations</SelectItem>
+                    <SelectItem value="Administration">Administration</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select defaultValue={selectedMember.status}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="On Leave">On Leave</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              toast({
+                title: "Member Updated",
+                description: `${selectedMember?.name} has been updated successfully.`,
+              });
+              setIsEditModalOpen(false);
+              setSelectedMember(null);
+            }}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
