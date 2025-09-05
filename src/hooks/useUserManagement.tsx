@@ -113,35 +113,17 @@ export const useUserManagement = () => {
 
       if (emailError) {
         console.error('Error sending activation email:', emailError);
-        toast.error('User created but failed to generate activation link');
-        return { success: false, error: 'Failed to generate activation link' };
+        toast.error('User created but failed to send activation email');
+        return { success: false, error: 'Failed to send activation email' };
       }
 
       if (!emailData?.success) {
-        toast.error(emailData?.error || 'Failed to generate activation link');
-        return { success: false, error: emailData?.error || 'Failed to generate activation link' };
+        toast.error(emailData?.error || 'Failed to send activation email');
+        return { success: false, error: emailData?.error || 'Failed to send activation email' };
       }
 
-      // Show success with activation link
-      if (emailData.activationLink) {
-        toast.success(
-          `User created successfully! Activation Link: ${emailData.activationLink}`,
-          {
-            duration: 10000, // Show for 10 seconds
-            description: `Share this link with ${userData.email} to activate their account.`
-          }
-        );
-      } else {
-        toast.success(`User created successfully!`);
-      }
-      
-      return { 
-        success: true, 
-        userId: result.user_id,
-        activationLink: emailData.activationLink,
-        userEmail: emailData.userEmail,
-        userName: emailData.userName
-      };
+      toast.success(`User created successfully! Activation email sent to ${userData.email}`);
+      return { success: true, userId: result.user_id };
     } catch (error: any) {
       console.error('Error in createUser:', error);
       toast.error('Failed to create user');
