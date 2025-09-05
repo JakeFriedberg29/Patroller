@@ -42,6 +42,18 @@ export default function Equipment() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<any>(null);
+  const [editEquipment, setEditEquipment] = useState({
+    name: "",
+    category: "",
+    status: "available" as const,
+    model: "",
+    serial_number: "",
+    location_id: "",
+    description: "",
+    purchase_date: "",
+    last_maintenance: "",
+    next_maintenance: "",
+  });
   const { toast } = useToast();
   const { equipment, loading, updateEquipment, createEquipment, canManageEquipment } = useEquipment();
   const { isPlatformAdmin } = usePermissions();
@@ -470,58 +482,122 @@ export default function Equipment() {
 
       {/* Edit Equipment Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Equipment</DialogTitle>
           </DialogHeader>
           {selectedEquipment && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Equipment Name</Label>
-                <Input
-                  id="edit-name"
-                  defaultValue={selectedEquipment.name}
-                />
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-4">Basic Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-name">Equipment Name</Label>
+                    <Input
+                      id="edit-name"
+                      value={editEquipment.name}
+                      onChange={(e) => setEditEquipment(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-category">Category</Label>
+                    <Select value={editEquipment.category} onValueChange={(value) => setEditEquipment(prev => ({ ...prev, category: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {equipmentTypes.map((type) => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-status">Status</Label>
+                    <Select value={editEquipment.status} onValueChange={(value) => setEditEquipment(prev => ({ ...prev, status: value as any }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusTypes.map((status) => (
+                          <SelectItem key={status} value={status}>{formatStatus(status)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-location">Location</Label>
+                    <Select value={editEquipment.location_id} onValueChange={(value) => setEditEquipment(prev => ({ ...prev, location_id: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map((location) => (
+                          <SelectItem key={location.id} value={location.id}>{location.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-model">Model</Label>
+                    <Input
+                      id="edit-model"
+                      value={editEquipment.model}
+                      onChange={(e) => setEditEquipment(prev => ({ ...prev, model: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-serial">Serial Number</Label>
+                    <Input
+                      id="edit-serial"
+                      value={editEquipment.serial_number}
+                      onChange={(e) => setEditEquipment(prev => ({ ...prev, serial_number: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2 mt-4">
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editEquipment.description}
+                    onChange={(e) => setEditEquipment(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-category">Category</Label>
-                <Select defaultValue={selectedEquipment.category}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {equipmentTypes.map((type) => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-status">Status</Label>
-                <Select defaultValue={selectedEquipment.status}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusTypes.map((status) => (
-                      <SelectItem key={status} value={status}>{formatStatus(status)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-model">Model</Label>
-                <Input
-                  id="edit-model"
-                  defaultValue={selectedEquipment.model || ''}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-serial">Serial Number</Label>
-                <Input
-                  id="edit-serial"
-                  defaultValue={selectedEquipment.serial_number || ''}
-                />
+
+              <div>
+                <h3 className="text-lg font-medium mb-4">Important Dates</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Purchase Date</Label>
+                    <Input
+                      type="date"
+                      value={editEquipment.purchase_date}
+                      onChange={(e) => setEditEquipment(prev => ({ ...prev, purchase_date: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Last Maintenance</Label>
+                    <Input
+                      type="date"
+                      value={editEquipment.last_maintenance}
+                      onChange={(e) => setEditEquipment(prev => ({ ...prev, last_maintenance: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Next Maintenance</Label>
+                    <Input
+                      type="date"
+                      value={editEquipment.next_maintenance}
+                      onChange={(e) => setEditEquipment(prev => ({ ...prev, next_maintenance: e.target.value }))}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}
