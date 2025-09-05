@@ -1,51 +1,39 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { createSeedAuthUsers } from "@/utils/seedAuthUsers";
 
-export const useSeedData = () => {
+export function useSeedData() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const createAuthUsers = async () => {
     setIsLoading(true);
+    
     try {
-      const { data, error } = await supabase.functions.invoke('create-seed-auth-users', {});
-
-      if (error) {
-        console.error('Error creating auth users:', error);
-        toast({
-          title: "Error Creating Auth Users",
-          description: error.message || "Failed to create authentication users",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      console.log('Auth users creation result:', data);
+      console.log('Starting seed auth users creation...');
+      const result = await createSeedAuthUsers();
       
-      if (data?.success) {
+      if (result.success) {
         toast({
-          title: "Auth Users Created Successfully",
-          description: data.message || "All authentication users have been created",
+          title: "Seed Users Created Successfully!",
+          description: `Created ${result.data?.successful || 0} authentication users. You can now log in with their email addresses as passwords.`,
         });
-        return true;
+        console.log('Seed auth users creation completed:', result.data);
       } else {
         toast({
-          title: "Error Creating Auth Users",
-          description: data?.error || "Unknown error occurred",
+          title: "Error Creating Seed Users",
+          description: result.error || "Failed to create seed authentication users.",
           variant: "destructive",
         });
-        return false;
+        console.error('Error creating seed users:', result.error);
       }
-
     } catch (error) {
-      console.error('Exception calling create-seed-auth-users:', error);
+      console.error('Unexpected error in createAuthUsers:', error);
       toast({
-        title: "Error Creating Auth Users",
-        description: "Failed to call the user creation function",
+        title: "Unexpected Error",
+        description: "An unexpected error occurred while creating seed users.",
         variant: "destructive",
       });
-      return false;
     } finally {
       setIsLoading(false);
     }
@@ -55,4 +43,4 @@ export const useSeedData = () => {
     createAuthUsers,
     isLoading
   };
-};
+}
