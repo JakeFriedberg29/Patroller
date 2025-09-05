@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { useEquipment } from "@/hooks/useEquipment";
 import { usePermissions } from "@/hooks/usePermissions";
+import { supabase } from "@/integrations/supabase/client";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -41,12 +46,18 @@ export default function Equipment() {
   const { equipment, loading, updateEquipment, createEquipment, canManageEquipment } = useEquipment();
   const { isPlatformAdmin } = usePermissions();
 
+  const [locations, setLocations] = useState<any[]>([]);
   const [newEquipment, setNewEquipment] = useState({
     name: "",
     category: "",
     status: "available" as const,
     model: "",
     serial_number: "",
+    location_id: "",
+    description: "",
+    purchase_date: "",
+    last_maintenance: "",
+    next_maintenance: "",
     organization_id: id || "",
   });
 
@@ -60,13 +71,46 @@ export default function Equipment() {
       status: "available" as const,
       model: "",
       serial_number: "",
+      location_id: "",
+      description: "",
+      purchase_date: "",
+      last_maintenance: "",
+      next_maintenance: "",
       organization_id: id || "",
     });
   };
 
+  // Fetch locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('locations')
+          .select('id, name')
+          .eq('is_active', true);
+        
+        if (error) throw error;
+        setLocations(data || []);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+    
+    fetchLocations();
+  }, []);
+
   const handleAddEquipment = async () => {
     if (newEquipment.name && newEquipment.category) {
-      const success = await createEquipment(newEquipment);
+      const equipmentData = {
+        ...newEquipment,
+        specifications: { description: newEquipment.description },
+        maintenance_schedule: {
+          last_maintenance: newEquipment.last_maintenance || null,
+          next_maintenance: newEquipment.next_maintenance || null
+        }
+      };
+      
+      const success = await createEquipment(equipmentData);
       if (success) {
         setAddModalOpen(false);
         resetNewEquipment();
@@ -174,10 +218,10 @@ export default function Equipment() {
             <TableHeader>
               <TableRow>
                 <TableHead>Equipment</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Serial Number</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Maintenance</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -198,8 +242,18 @@ export default function Equipment() {
                       {formatStatus(item.status)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{item.model || 'N/A'}</TableCell>
-                  <TableCell className="text-muted-foreground">{item.serial_number || 'N/A'}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {locations.find(loc => loc.id === item.location_id)?.name || 'No Location'}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <div className="text-xs space-y-1">
+                      <div>Last: {item.maintenance_schedule?.last_maintenance ? format(new Date(item.maintenance_schedule.last_maintenance), 'yyyy-MM-dd') : 'N/A'}</div>
+                      <div>Next: {item.maintenance_schedule?.next_maintenance ? format(new Date(item.maintenance_schedule.next_maintenance), 'yyyy-MM-dd') : 'N/A'}</div>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {canManageEquipment && (
                       <DropdownMenu>
@@ -285,55 +339,121 @@ export default function Equipment() {
 
       {/* Add Equipment Modal */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Equipment</DialogTitle>
             <DialogDescription>
-              Add new equipment to the inventory
+              Enter the details for the new equipment item
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="equipment-name">Equipment Name</Label>
-              <Input
-                id="equipment-name"
-                placeholder="Enter equipment name..."
-                value={newEquipment.name}
-                onChange={(e) => setNewEquipment(prev => ({ ...prev, name: e.target.value }))}
-              />
+          
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="equipment-name">Equipment Name *</Label>
+                  <Input
+                    id="equipment-name"
+                    placeholder="Enter equipment name"
+                    value={newEquipment.name}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="equipment-type">Type *</Label>
+                  <Select value={newEquipment.category} onValueChange={(value) => setNewEquipment(prev => ({ ...prev, category: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select equipment type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {equipmentTypes.map((type) => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="equipment-status">Status</Label>
+                  <Select value={newEquipment.status} onValueChange={(value) => setNewEquipment(prev => ({ ...prev, status: value as any }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusTypes.map((status) => (
+                        <SelectItem key={status} value={status}>{formatStatus(status)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="equipment-location">Location *</Label>
+                  <Select value={newEquipment.location_id} onValueChange={(value) => setNewEquipment(prev => ({ ...prev, location_id: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>{location.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="serial-number">Serial Number</Label>
+                <Input
+                  id="serial-number"
+                  placeholder="Enter serial number"
+                  value={newEquipment.serial_number}
+                  onChange={(e) => setNewEquipment(prev => ({ ...prev, serial_number: e.target.value }))}
+                />
+              </div>
+              
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Enter equipment description"
+                  value={newEquipment.description}
+                  onChange={(e) => setNewEquipment(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="equipment-category">Category</Label>
-              <Select value={newEquipment.category} onValueChange={(value) => setNewEquipment(prev => ({ ...prev, category: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {equipmentTypes.map((type) => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="equipment-model">Model</Label>
-              <Input
-                id="equipment-model"
-                placeholder="Enter model..."
-                value={newEquipment.model}
-                onChange={(e) => setNewEquipment(prev => ({ ...prev, model: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="serial-number">Serial Number</Label>
-              <Input
-                id="serial-number"
-                placeholder="Enter serial number..."
-                value={newEquipment.serial_number}
-                onChange={(e) => setNewEquipment(prev => ({ ...prev, serial_number: e.target.value }))}
-              />
+
+            <div>
+              <h3 className="text-lg font-medium mb-4">Important Dates</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Purchase Date</Label>
+                  <Input
+                    type="date"
+                    value={newEquipment.purchase_date}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, purchase_date: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Last Maintenance</Label>
+                  <Input
+                    type="date"
+                    value={newEquipment.last_maintenance}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, last_maintenance: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Next Maintenance</Label>
+                  <Input
+                    type="date"
+                    value={newEquipment.next_maintenance}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, next_maintenance: e.target.value }))}
+                  />
+                </div>
+              </div>
             </div>
           </div>
+          
           <DialogFooter className="flex justify-between">
             <Button variant="outline" onClick={() => {
               setAddModalOpen(false);

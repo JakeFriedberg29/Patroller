@@ -17,6 +17,9 @@ export interface Equipment {
   maintenance_schedule?: any;
   purchase_date?: string;
   warranty_expires?: string;
+  description?: string;
+  last_maintenance?: string;
+  next_maintenance?: string;
   created_at: string;
   updated_at: string;
 }
@@ -88,7 +91,7 @@ export const useEquipment = () => {
     }
   };
 
-  const createEquipment = async (equipmentData: Omit<Equipment, 'id' | 'created_at' | 'updated_at'>) => {
+  const createEquipment = async (equipmentData: any) => {
     if (!canManageEquipment) {
       toast({
         title: "Permission Denied",
@@ -99,9 +102,30 @@ export const useEquipment = () => {
     }
 
     try {
+      // Get current user's organization if not provided
+      let orgId = equipmentData.organization_id;
+      if (!orgId) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('organization_id')
+          .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
+          .single();
+        
+        if (userData?.organization_id) {
+          orgId = userData.organization_id;
+        }
+      }
+
+      if (!orgId) {
+        throw new Error('Organization ID is required');
+      }
+
       const { error } = await supabase
         .from('equipment')
-        .insert(equipmentData);
+        .insert({
+          ...equipmentData,
+          organization_id: orgId
+        });
 
       if (error) throw error;
 
