@@ -34,6 +34,12 @@ export const useLocations = () => {
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
+      // Helper function to validate UUID
+      const isValidUuid = (id: string | undefined): boolean => {
+        return !!(id && id !== 'undefined' && id !== 'null' && 
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+      };
+
       let query = supabase
         .from('locations')
         .select('*')
@@ -41,10 +47,14 @@ export const useLocations = () => {
 
       // Apply organization filtering based on user role
       if (isPlatformAdmin) {
-        // Platform admins can see all locations, optionally filtered by URL organization
-        if (params.id && params.id !== 'undefined' && params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-          query = query.eq('organization_id', params.id);
+        // Platform admins: use URL organization ID if valid, otherwise show all
+        const urlOrgId = params.id;
+        console.log('Platform admin locations fetch - URL org ID:', urlOrgId, 'isValid:', isValidUuid(urlOrgId));
+        
+        if (isValidUuid(urlOrgId)) {
+          query = query.eq('organization_id', urlOrgId);
         }
+        // If no specific org in URL, show all locations (platform admin global view)
       } else if (currentUser?.organization_id) {
         // Regular users see only their organization's locations
         query = query.eq('organization_id', currentUser.organization_id);
@@ -93,21 +103,36 @@ export const useLocations = () => {
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
+      // Helper function to validate UUID
+      const isValidUuid = (id: string | undefined): boolean => {
+        return !!(id && id !== 'undefined' && id !== 'null' && 
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+      };
+
       let organizationId = currentUser?.organization_id;
 
-      // If platform admin, get organization from URL params
-      if (isPlatformAdmin && !organizationId && params.id) {
-        // Validate that it's not "undefined" and is a valid UUID format
-        if (params.id !== 'undefined' && params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-          organizationId = params.id;
+      // For platform admins, ALWAYS use URL organization ID if available and valid
+      if (isPlatformAdmin) {
+        const urlOrgId = params.id;
+        console.log('Platform admin creating location - URL org ID:', urlOrgId, 'isValid:', isValidUuid(urlOrgId));
+        
+        if (isValidUuid(urlOrgId)) {
+          organizationId = urlOrgId;
         } else {
-          console.error("Invalid organization ID in URL:", params.id);
+          console.error("Platform admin: Invalid organization ID in URL:", urlOrgId);
           throw new Error("Invalid organization ID in URL");
         }
       }
 
-      if (!organizationId) {
-        console.error('No organization context found. currentUser:', currentUser, 'params.id:', params.id, 'isPlatformAdmin:', isPlatformAdmin);
+      console.log('Create location context:', {
+        isPlatformAdmin,
+        currentUserOrgId: currentUser?.organization_id,
+        urlOrgId: params.id,
+        finalOrgId: organizationId
+      });
+
+      if (!isValidUuid(organizationId)) {
+        console.error('No valid organization context found. currentUser:', currentUser, 'params.id:', params.id, 'isPlatformAdmin:', isPlatformAdmin);
         throw new Error('No organization context found');
       }
 

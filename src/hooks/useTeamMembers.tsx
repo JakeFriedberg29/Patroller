@@ -36,21 +36,37 @@ export const useTeamMembers = () => {
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
+      // Helper function to validate UUID
+      const isValidUuid = (id: string | undefined): boolean => {
+        return !!(id && id !== 'undefined' && id !== 'null' && 
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+      };
+
       let organizationId = currentUser?.organization_id;
 
-        // If platform admin, get organization from URL params
-        if (isPlatformAdmin && !organizationId && params.id) {
-          // Validate that it's not "undefined" and is a valid UUID format
-          if (params.id !== 'undefined' && params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-            organizationId = params.id;
-          } else {
-            console.error("Invalid organization ID in URL:", params.id);
-            throw new Error("Invalid organization ID in URL");
-          }
+      // For platform admins, ALWAYS use URL organization ID if available and valid
+      if (isPlatformAdmin) {
+        const urlOrgId = params.id;
+        console.log('Platform admin URL org ID:', urlOrgId, 'isValid:', isValidUuid(urlOrgId));
+        
+        if (isValidUuid(urlOrgId)) {
+          organizationId = urlOrgId;
+        } else if (!organizationId) {
+          console.error("Platform admin: Invalid or missing organization ID in URL:", urlOrgId);
+          setTeamMembers([]);
+          return;
         }
+      }
 
-      if (!organizationId) {
-        console.error('No organization context found. currentUser:', currentUser, 'params.id:', params.id, 'isPlatformAdmin:', isPlatformAdmin);
+      console.log('Final organization context:', {
+        isPlatformAdmin,
+        currentUserOrgId: currentUser?.organization_id,
+        urlOrgId: params.id,
+        finalOrgId: organizationId
+      });
+
+      if (!isValidUuid(organizationId)) {
+        console.error('No valid organization context found. currentUser:', currentUser, 'params.id:', params.id, 'isPlatformAdmin:', isPlatformAdmin);
         setTeamMembers([]);
         return;
       }
@@ -96,14 +112,22 @@ export const useTeamMembers = () => {
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
+      // Helper function to validate UUID
+      const isValidUuid = (id: string | undefined): boolean => {
+        return !!(id && id !== 'undefined' && id !== 'null' && 
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+      };
+
       let organizationId = currentUser?.organization_id;
       let tenantId = currentUser?.tenant_id;
 
-      // If platform admin, get organization from URL params
-      if (isPlatformAdmin && !organizationId && params.id) {
-        // Validate that it's not "undefined" and is a valid UUID format
-        if (params.id !== 'undefined' && params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-          organizationId = params.id;
+      // For platform admins, ALWAYS use URL organization ID if available and valid
+      if (isPlatformAdmin) {
+        const urlOrgId = params.id;
+        console.log('Platform admin creating member - URL org ID:', urlOrgId, 'isValid:', isValidUuid(urlOrgId));
+        
+        if (isValidUuid(urlOrgId)) {
+          organizationId = urlOrgId;
           // Get tenant_id for this organization
           const { data: orgData } = await supabase
             .from('organizations')
@@ -112,13 +136,21 @@ export const useTeamMembers = () => {
             .single();
           tenantId = orgData?.tenant_id;
         } else {
-          console.error("Invalid organization ID in URL:", params.id);
+          console.error("Platform admin: Invalid organization ID in URL:", urlOrgId);
           throw new Error("Invalid organization ID in URL");
         }
       }
 
-      if (!organizationId || !tenantId) {
-        console.error('No organization context found. currentUser:', currentUser, 'params.id:', params.id, 'isPlatformAdmin:', isPlatformAdmin);
+      console.log('Create member context:', {
+        isPlatformAdmin,
+        currentUserOrgId: currentUser?.organization_id,
+        urlOrgId: params.id,
+        finalOrgId: organizationId,
+        tenantId
+      });
+
+      if (!isValidUuid(organizationId) || !tenantId) {
+        console.error('No valid organization context found. currentUser:', currentUser, 'params.id:', params.id, 'isPlatformAdmin:', isPlatformAdmin);
         throw new Error('No organization context found');
       }
 

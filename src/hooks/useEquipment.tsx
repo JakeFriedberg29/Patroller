@@ -43,15 +43,24 @@ export const useEquipment = () => {
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
+      // Helper function to validate UUID
+      const isValidUuid = (id: string | undefined): boolean => {
+        return !!(id && id !== 'undefined' && id !== 'null' && 
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+      };
+
       let query = supabase.from('equipment').select('*');
       
       // Apply organization filtering based on user role
       if (isPlatformAdmin) {
-        // Platform admins see all equipment, optionally filtered by URL organization
-        if (urlOrganizationId && urlOrganizationId !== 'undefined' && urlOrganizationId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-          query = query.eq('organization_id', urlOrganizationId);
+        // Platform admins: use URL organization ID if valid, otherwise show all
+        const urlOrgId = urlOrganizationId;
+        console.log('Platform admin equipment fetch - URL org ID:', urlOrgId, 'isValid:', isValidUuid(urlOrgId));
+        
+        if (isValidUuid(urlOrgId)) {
+          query = query.eq('organization_id', urlOrgId);
         }
-        // If no specific org in URL, show all equipment (platform admin view)
+        // If no specific org in URL, show all equipment (platform admin global view)
       } else if (currentUser?.organization_id) {
         // Regular users see only their organization's equipment
         query = query.eq('organization_id', currentUser.organization_id);
@@ -132,22 +141,37 @@ export const useEquipment = () => {
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
+      // Helper function to validate UUID
+      const isValidUuid = (id: string | undefined): boolean => {
+        return !!(id && id !== 'undefined' && id !== 'null' && 
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+      };
+
       // Determine target organization
       let targetOrgId = currentUser?.organization_id;
       
-      // For platform admins, get organization from URL if not set
-      if (isPlatformAdmin && !targetOrgId && urlOrganizationId) {
-        // Validate that it's not "undefined" and is a valid UUID format
-        if (urlOrganizationId !== 'undefined' && urlOrganizationId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-          targetOrgId = urlOrganizationId;
+      // For platform admins, ALWAYS use URL organization ID if available and valid
+      if (isPlatformAdmin) {
+        const urlOrgId = urlOrganizationId;
+        console.log('Platform admin creating equipment - URL org ID:', urlOrgId, 'isValid:', isValidUuid(urlOrgId));
+        
+        if (isValidUuid(urlOrgId)) {
+          targetOrgId = urlOrgId;
         } else {
-          console.error("Invalid organization ID in URL:", urlOrganizationId);
+          console.error("Platform admin: Invalid organization ID in URL:", urlOrgId);
           throw new Error("Invalid organization ID in URL");
         }
       }
 
-      if (!targetOrgId) {
-        console.error('No organization context found. currentUser:', currentUser, 'urlOrganizationId:', urlOrganizationId, 'isPlatformAdmin:', isPlatformAdmin);
+      console.log('Create equipment context:', {
+        isPlatformAdmin,
+        currentUserOrgId: currentUser?.organization_id,
+        urlOrgId: urlOrganizationId,
+        finalOrgId: targetOrgId
+      });
+
+      if (!isValidUuid(targetOrgId)) {
+        console.error('No valid organization context found. currentUser:', currentUser, 'urlOrganizationId:', urlOrganizationId, 'isPlatformAdmin:', isPlatformAdmin);
         throw new Error('No organization context found');
       }
 
