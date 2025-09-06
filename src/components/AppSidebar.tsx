@@ -144,36 +144,6 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 py-4">
-        {/* Platform Admin Navigation - Always visible for platform admins */}
-        {profile?.roleType === 'platform_admin' && (isInEnterprise || isInOrganization) && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Platform Admin</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {mainItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url} end className={({ isActive }) => getNavCls({ isActive })}>
-                        <item.icon className="mr-3 h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-                {adminItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url} end className={({ isActive }) => getNavCls({ isActive })}>
-                        <item.icon className="mr-3 h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
 
         {isInEnterprise ? (
           <>
