@@ -48,7 +48,7 @@ export const useEquipment = () => {
       // Apply organization filtering based on user role
       if (isPlatformAdmin) {
         // Platform admins see all equipment, optionally filtered by URL organization
-        if (urlOrganizationId) {
+        if (urlOrganizationId && urlOrganizationId !== 'undefined' && urlOrganizationId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
           query = query.eq('organization_id', urlOrganizationId);
         }
         // If no specific org in URL, show all equipment (platform admin view)
@@ -137,19 +137,32 @@ export const useEquipment = () => {
       
       // For platform admins, get organization from URL if not set
       if (isPlatformAdmin && !targetOrgId && urlOrganizationId) {
-        targetOrgId = urlOrganizationId;
+        // Validate that it's not "undefined" and is a valid UUID format
+        if (urlOrganizationId !== 'undefined' && urlOrganizationId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          targetOrgId = urlOrganizationId;
+        } else {
+          console.error("Invalid organization ID in URL:", urlOrganizationId);
+          throw new Error("Invalid organization ID in URL");
+        }
       }
 
       if (!targetOrgId) {
         throw new Error('No organization context found');
       }
 
+      // Clean up date fields - convert empty strings to null to prevent database errors
+      const cleanedData = {
+        ...equipmentData,
+        purchase_date: equipmentData.purchase_date === '' ? null : equipmentData.purchase_date,
+        warranty_expires: equipmentData.warranty_expires === '' ? null : equipmentData.warranty_expires,
+        last_maintenance: equipmentData.last_maintenance === '' ? null : equipmentData.last_maintenance,
+        next_maintenance: equipmentData.next_maintenance === '' ? null : equipmentData.next_maintenance,
+        organization_id: targetOrgId
+      };
+
       const { error } = await supabase
         .from('equipment')
-        .insert({
-          ...equipmentData,
-          organization_id: targetOrgId
-        });
+        .insert(cleanedData);
 
       if (error) throw error;
 

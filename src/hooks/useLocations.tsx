@@ -42,7 +42,7 @@ export const useLocations = () => {
       // Apply organization filtering based on user role
       if (isPlatformAdmin) {
         // Platform admins can see all locations, optionally filtered by URL organization
-        if (params.id) {
+        if (params.id && params.id !== 'undefined' && params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
           query = query.eq('organization_id', params.id);
         }
       } else if (currentUser?.organization_id) {
@@ -97,7 +97,13 @@ export const useLocations = () => {
 
       // If platform admin, get organization from URL params
       if (isPlatformAdmin && !organizationId && params.id) {
-        organizationId = params.id;
+        // Validate that it's not "undefined" and is a valid UUID format
+        if (params.id !== 'undefined' && params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          organizationId = params.id;
+        } else {
+          console.error("Invalid organization ID in URL:", params.id);
+          throw new Error("Invalid organization ID in URL");
+        }
       }
 
       if (!organizationId) {
@@ -107,9 +113,14 @@ export const useLocations = () => {
       // Process coordinates - convert to proper point format or set to null
       let processedCoordinates = null;
       if (locationData.coordinates && typeof locationData.coordinates === 'string') {
-        // Try to parse coordinates as "lat,lng" format
-        const coordParts = locationData.coordinates.split(',').map(part => part.trim());
-        if (coordParts.length === 2 && !isNaN(Number(coordParts[0])) && !isNaN(Number(coordParts[1]))) {
+        // Skip processing if coordinates is just a string that doesn't contain valid numbers
+        const coordParts = locationData.coordinates.split(',').map(part => {
+          const trimmed = part.trim();
+          const num = parseFloat(trimmed);
+          return isNaN(num) ? null : num;
+        }).filter(n => n !== null);
+        
+        if (coordParts.length === 2) {
           processedCoordinates = `(${coordParts[0]},${coordParts[1]})`;
         }
       }

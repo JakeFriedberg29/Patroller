@@ -40,7 +40,13 @@ export const useTeamMembers = () => {
 
         // If platform admin, get organization from URL params
         if (isPlatformAdmin && !organizationId && params.id) {
-          organizationId = params.id;
+          // Validate that it's not "undefined" and is a valid UUID format
+          if (params.id !== 'undefined' && params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+            organizationId = params.id;
+          } else {
+            console.error("Invalid organization ID in URL:", params.id);
+            throw new Error("Invalid organization ID in URL");
+          }
         }
 
       if (!organizationId) {
@@ -62,9 +68,10 @@ export const useTeamMembers = () => {
       console.error('Error fetching team members:', error);
       toast({
         title: "Error",
-        description: "Failed to load team members",
+        description: error instanceof Error ? error.message : "Failed to load team members",
         variant: "destructive"
       });
+      setTeamMembers([]); // Set to empty array on error
     } finally {
       setLoading(false);
     }
@@ -94,14 +101,20 @@ export const useTeamMembers = () => {
 
       // If platform admin, get organization from URL params
       if (isPlatformAdmin && !organizationId && params.id) {
-        organizationId = params.id;
-        // Get tenant_id for this organization
-        const { data: orgData } = await supabase
-          .from('organizations')
-          .select('tenant_id')
-          .eq('id', organizationId)
-          .single();
-        tenantId = orgData?.tenant_id;
+        // Validate that it's not "undefined" and is a valid UUID format
+        if (params.id !== 'undefined' && params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          organizationId = params.id;
+          // Get tenant_id for this organization
+          const { data: orgData } = await supabase
+            .from('organizations')
+            .select('tenant_id')
+            .eq('id', organizationId)
+            .single();
+          tenantId = orgData?.tenant_id;
+        } else {
+          console.error("Invalid organization ID in URL:", params.id);
+          throw new Error("Invalid organization ID in URL");
+        }
       }
 
       if (!organizationId || !tenantId) {
