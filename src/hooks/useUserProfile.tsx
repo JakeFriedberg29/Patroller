@@ -75,7 +75,8 @@ export const useUserProfile = () => {
           profileData: {
             ...profileData,
             tenant_id: data.tenant_id,
-            organization_id: data.organization_id
+            organization_id: data.organization_id,
+            user_id: data.id
           }
         });
       }

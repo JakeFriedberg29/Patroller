@@ -26,9 +26,25 @@ export const useTeamMembers = () => {
   const fetchTeamMembers = async () => {
     try {
       setLoading(true);
-      let query = supabase.from('users').select('*');
       
-      // RLS policies will handle filtering automatically
+      // Get current user info first to ensure proper organization filtering
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('organization_id, tenant_id')
+        .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!currentUser?.organization_id) {
+        console.error('No organization found for current user');
+        setTeamMembers([]);
+        return;
+      }
+
+      let query = supabase
+        .from('users')
+        .select('*')
+        .eq('organization_id', currentUser.organization_id);
+      
       const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;

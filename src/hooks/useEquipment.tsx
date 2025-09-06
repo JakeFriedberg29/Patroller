@@ -33,10 +33,26 @@ export const useEquipment = () => {
   const fetchEquipment = async () => {
     try {
       setLoading(true);
+      
+      // Get current user info first to ensure proper organization filtering
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('organization_id, tenant_id')
+        .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!currentUser?.organization_id && !isPlatformAdmin) {
+        console.error('No organization found for current user');
+        setEquipment([]);
+        return;
+      }
+
       let query = supabase.from('equipment').select('*');
       
-      // RLS policies will handle filtering automatically based on user permissions
-      // Platform admins can see all, others see only their organization's equipment
+      // Platform admins can see all equipment, others only see their organization's
+      if (!isPlatformAdmin) {
+        query = query.eq('organization_id', currentUser.organization_id);
+      }
       
       const { data, error } = await query.order('created_at', { ascending: false });
       
