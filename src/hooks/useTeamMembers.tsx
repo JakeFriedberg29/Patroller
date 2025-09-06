@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -18,10 +19,11 @@ export interface TeamMember {
 }
 
 export const useTeamMembers = () => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { isPlatformAdmin } = usePermissions();
+  const params = useParams();
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchTeamMembers = async () => {
     try {
@@ -36,14 +38,10 @@ export const useTeamMembers = () => {
 
       let organizationId = currentUser?.organization_id;
 
-      // If platform admin, get organization from URL
-      if (isPlatformAdmin && !organizationId) {
-        const urlParts = window.location.pathname.split('/');
-        const orgIndex = urlParts.indexOf('organization');
-        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
-          organizationId = urlParts[orgIndex + 1];
+        // If platform admin, get organization from URL params
+        if (isPlatformAdmin && !organizationId && params.id) {
+          organizationId = params.id;
         }
-      }
 
       if (!organizationId) {
         console.error('No organization context found');
@@ -94,20 +92,16 @@ export const useTeamMembers = () => {
       let organizationId = currentUser?.organization_id;
       let tenantId = currentUser?.tenant_id;
 
-      // If platform admin, get organization from URL
-      if (isPlatformAdmin && !organizationId) {
-        const urlParts = window.location.pathname.split('/');
-        const orgIndex = urlParts.indexOf('organization');
-        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
-          organizationId = urlParts[orgIndex + 1];
-          // Get tenant_id for this organization
-          const { data: orgData } = await supabase
-            .from('organizations')
-            .select('tenant_id')
-            .eq('id', organizationId)
-            .single();
-          tenantId = orgData?.tenant_id;
-        }
+      // If platform admin, get organization from URL params
+      if (isPlatformAdmin && !organizationId && params.id) {
+        organizationId = params.id;
+        // Get tenant_id for this organization
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('tenant_id')
+          .eq('id', organizationId)
+          .single();
+        tenantId = orgData?.tenant_id;
       }
 
       if (!organizationId || !tenantId) {

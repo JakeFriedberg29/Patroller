@@ -48,11 +48,8 @@ export const useEquipment = () => {
       // Apply organization filtering based on user role
       if (isPlatformAdmin) {
         // Platform admins see all equipment, optionally filtered by URL organization
-        const urlParts = window.location.pathname.split('/');
-        const orgIndex = urlParts.indexOf('organization');
-        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
-          const orgId = urlParts[orgIndex + 1];
-          query = query.eq('organization_id', orgId);
+        if (urlOrganizationId) {
+          query = query.eq('organization_id', urlOrganizationId);
         }
         // If no specific org in URL, show all equipment (platform admin view)
       } else if (currentUser?.organization_id) {
@@ -139,12 +136,8 @@ export const useEquipment = () => {
       let targetOrgId = currentUser?.organization_id;
       
       // For platform admins, get organization from URL if not set
-      if (isPlatformAdmin && !targetOrgId) {
-        const urlParts = window.location.pathname.split('/');
-        const orgIndex = urlParts.indexOf('organization');
-        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
-          targetOrgId = urlParts[orgIndex + 1];
-        }
+      if (isPlatformAdmin && !targetOrgId && urlOrganizationId) {
+        targetOrgId = urlOrganizationId;
       }
 
       if (!targetOrgId) {

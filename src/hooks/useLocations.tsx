@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -16,10 +17,11 @@ export interface Location {
 }
 
 export const useLocations = () => {
+  const { toast } = useToast();
+  const { isPlatformAdmin, canManageLocations } = usePermissions();
+  const params = useParams();
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const { canManageLocations, isPlatformAdmin } = usePermissions();
 
   const fetchLocations = async () => {
     try {
@@ -40,11 +42,8 @@ export const useLocations = () => {
       // Apply organization filtering based on user role
       if (isPlatformAdmin) {
         // Platform admins can see all locations, optionally filtered by URL organization
-        const urlParts = window.location.pathname.split('/');
-        const orgIndex = urlParts.indexOf('organization');
-        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
-          const orgId = urlParts[orgIndex + 1];
-          query = query.eq('organization_id', orgId);
+        if (params.id) {
+          query = query.eq('organization_id', params.id);
         }
       } else if (currentUser?.organization_id) {
         // Regular users see only their organization's locations
@@ -96,17 +95,23 @@ export const useLocations = () => {
 
       let organizationId = currentUser?.organization_id;
 
-      // If platform admin, get organization from URL
-      if (isPlatformAdmin && !organizationId) {
-        const urlParts = window.location.pathname.split('/');
-        const orgIndex = urlParts.indexOf('organization');
-        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
-          organizationId = urlParts[orgIndex + 1];
-        }
+      // If platform admin, get organization from URL params
+      if (isPlatformAdmin && !organizationId && params.id) {
+        organizationId = params.id;
       }
 
       if (!organizationId) {
         throw new Error('No organization context found');
+      }
+
+      // Process coordinates - convert to proper point format or set to null
+      let processedCoordinates = null;
+      if (locationData.coordinates && typeof locationData.coordinates === 'string') {
+        // Try to parse coordinates as "lat,lng" format
+        const coordParts = locationData.coordinates.split(',').map(part => part.trim());
+        if (coordParts.length === 2 && !isNaN(Number(coordParts[0])) && !isNaN(Number(coordParts[1]))) {
+          processedCoordinates = `(${coordParts[0]},${coordParts[1]})`;
+        }
       }
 
       const { error } = await supabase
@@ -115,7 +120,7 @@ export const useLocations = () => {
           name: locationData.name,
           description: locationData.description,
           address: locationData.address,
-          coordinates: locationData.coordinates,
+          coordinates: processedCoordinates,
           organization_id: organizationId,
         });
 
