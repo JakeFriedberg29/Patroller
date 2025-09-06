@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -29,29 +30,39 @@ export const useEquipment = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { canManageEquipment, isPlatformAdmin } = usePermissions();
+  const { id: urlOrganizationId } = useParams();
 
   const fetchEquipment = async () => {
     try {
       setLoading(true);
       
-      // Get current user info first to ensure proper organization filtering
-      const { data: currentUser } = await supabase
-        .from('users')
-        .select('organization_id, tenant_id')
-        .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (!currentUser?.organization_id && !isPlatformAdmin) {
-        console.error('No organization found for current user');
-        setEquipment([]);
-        return;
-      }
-
       let query = supabase.from('equipment').select('*');
       
-      // Platform admins can see all equipment, others only see their organization's
+      // Platform admins can see all equipment, others need organization filtering
       if (!isPlatformAdmin) {
-        query = query.eq('organization_id', currentUser.organization_id);
+        // Try to get organization from URL first
+        let organizationId = urlOrganizationId;
+        
+        // If URL organization is undefined or invalid, get from user context
+        if (!organizationId || organizationId === "undefined") {
+          const { data: currentUser } = await supabase
+            .from('users')
+            .select('organization_id, tenant_id')
+            .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
+            .single();
+
+          if (!currentUser?.organization_id) {
+            console.error('No organization found for current user');
+            setEquipment([]);
+            return;
+          }
+          organizationId = currentUser.organization_id;
+        }
+        
+        query = query.eq('organization_id', organizationId);
+      } else if (urlOrganizationId && urlOrganizationId !== "undefined") {
+        // Platform admin viewing specific organization
+        query = query.eq('organization_id', urlOrganizationId);
       }
       
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -118,9 +129,15 @@ export const useEquipment = () => {
     }
 
     try {
-      // Get current user's organization if not provided or if it's "undefined" string
+      // Determine which organization_id to use
       let orgId = equipmentData.organization_id;
-      if (!orgId || orgId === "undefined") {
+      
+      // If URL has a valid organization ID and it's not "undefined", use it
+      if (urlOrganizationId && urlOrganizationId !== "undefined") {
+        orgId = urlOrganizationId;
+      }
+      // Otherwise, if orgId is not set or is "undefined", get from user
+      else if (!orgId || orgId === "undefined") {
         const { data: userData } = await supabase
           .from('users')
           .select('organization_id')
