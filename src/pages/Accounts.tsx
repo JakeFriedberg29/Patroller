@@ -27,62 +27,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Building2, Mail, Phone, Users, Filter, MoreHorizontal } from "lucide-react";
+import { Plus, Search, Building2, Mail, Phone, Users, Filter, MoreHorizontal, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-
-const accounts = [
-  {
-    id: 1,
-    name: "Mountain Rescue Team Alpha",
-    type: "Organization",
-    category: "Search & Rescue",
-    members: 0,
-    email: "dispatch@mrt-alpha.org",
-    phone: "(555) 123-4567",
-    created: "8/26/2025"
-  },
-  {
-    id: 2,
-    name: "Coastal Lifeguard Services",
-    type: "Enterprise",
-    category: "Lifeguard Service",
-    members: 0,
-    email: "ops@coastallifeguard.org",
-    phone: "(555) 987-6543",
-    created: "8/26/2025"
-  },
-  {
-    id: 3,
-    name: "Wilderness Adventures Inc",
-    type: "Enterprise",
-    category: "Event Medical",
-    members: 0,
-    email: "safety@wildadventures.com",
-    phone: "(555) 456-7890",
-    created: "8/26/2025"
-  },
-  {
-    id: 4,
-    name: "Coastal Lifeguard Division",
-    type: "Organization",
-    category: "Lifeguard Service",
-    members: 1,
-    email: "operations@coastallifeguard.gov",
-    phone: "(555) 987-6543",
-    created: "8/26/2025"
-  },
-  {
-    id: 5,
-    name: "Mountain Ridge SAR",
-    type: "Organization",
-    category: "Search & Rescue",
-    members: 0,
-    email: "dispatch@mountainridgesar.org",
-    phone: "(555) 123-4567",
-    created: "8/26/2025"
-  }
-];
+import { useAccounts, CreateAccountRequest } from "@/hooks/useAccounts";
 
 const typeColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   "Enterprise": "default",
@@ -101,15 +49,17 @@ const categoryColors: Record<string, "default" | "secondary" | "destructive" | "
 export default function Accounts() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { accounts, loading, createAccount, canManageAccounts } = useAccounts();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("All Types");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("All Categories");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [formData, setFormData] = useState({
+  const [isCreating, setIsCreating] = useState(false);
+  const [formData, setFormData] = useState<CreateAccountRequest>({
     name: "",
-    type: "",
+    type: "Organization",
     category: "",
     primaryEmail: "",
     primaryPhone: "",
@@ -121,7 +71,7 @@ export default function Accounts() {
     zip: ""
   });
 
-  const handleViewAccount = (accountId: number) => {
+  const handleViewAccount = (accountId: string) => {
     const account = accounts.find(acc => acc.id === accountId);
     if (account?.type === "Enterprise") {
       navigate(`/enterprises/${accountId}/enterprise-view`);
@@ -137,37 +87,44 @@ export default function Accounts() {
     }));
   };
 
-  const handleSubmit = () => {
-    try {
-      // Here you would typically submit to an API
-      console.log("Creating account:", formData);
-      setIsAddModalOpen(false);
-      
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.type || !formData.category || !formData.primaryEmail || !formData.primaryPhone) {
       toast({
-        title: "Account Created Successfully",
-        description: `${formData.name} has been added to the platform.`,
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
       });
-      
-      // Reset form
-      setFormData({
-        name: "",
-        type: "",
-        category: "",
-        primaryEmail: "",
-        primaryPhone: "",
-        secondaryEmail: "",
-        secondaryPhone: "",
-        address: "",
-        city: "",
-        state: "",
-        zip: ""
-      });
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const success = await createAccount(formData);
+      if (success) {
+        setIsAddModalOpen(false);
+        // Reset form
+        setFormData({
+          name: "",
+          type: "Organization",
+          category: "",
+          primaryEmail: "",
+          primaryPhone: "",
+          secondaryEmail: "",
+          secondaryPhone: "",
+          address: "",
+          city: "",
+          state: "",
+          zip: ""
+        });
+      }
     } catch (error) {
       toast({
         title: "Error Creating Account",
         description: "Failed to create the account. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -187,6 +144,33 @@ export default function Accounts() {
 
   const accountTypes = [...new Set(accounts.map(account => account.type))];
   const accountCategories = [...new Set(accounts.map(account => account.category))];
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading accounts...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if not platform admin
+  if (!canManageAccounts) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-muted-foreground">Access Denied</h2>
+            <p className="text-muted-foreground mt-2">You don't have permission to view accounts</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -385,7 +369,7 @@ export default function Accounts() {
 
             <div className="space-y-2">
               <Label htmlFor="type">Type *</Label>
-              <Select value={formData.type} onValueChange={(value) => handleInputChange("type", value)}>
+              <Select value={formData.type} onValueChange={(value) => handleInputChange("type", value as 'Enterprise' | 'Organization')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -409,6 +393,7 @@ export default function Accounts() {
                   <SelectItem value="Event Medical">Event Medical</SelectItem>
                   <SelectItem value="Ski Patrol">Ski Patrol</SelectItem>
                   <SelectItem value="Harbor Master">Harbor Master</SelectItem>
+                  <SelectItem value="Volunteer Emergency Services">Volunteer Emergency Services</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -491,10 +476,11 @@ export default function Accounts() {
           </div>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)} disabled={isCreating}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit}>
+            <Button onClick={handleSubmit} disabled={isCreating}>
+              {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Create Account
             </Button>
           </div>
