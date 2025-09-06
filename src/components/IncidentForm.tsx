@@ -24,7 +24,7 @@ export function IncidentForm({ incident, onSubmit }: IncidentFormProps) {
     incident_type: incident?.incident_type || "",
     priority: incident?.priority || "medium",
     status: incident?.status || "open",
-    location_id: incident?.location_id || "",
+    location_id: incident?.location_id || "none",
     occurred_at: incident?.occurred_at ? new Date(incident.occurred_at) : new Date()
   });
 
@@ -34,7 +34,8 @@ export function IncidentForm({ incident, onSubmit }: IncidentFormProps) {
     e.preventDefault();
     onSubmit({
       ...formData,
-      occurred_at: formData.occurred_at.toISOString()
+      occurred_at: formData.occurred_at.toISOString(),
+      location_id: formData.location_id === "none" ? null : formData.location_id
     });
   };
 
@@ -135,7 +136,7 @@ export function IncidentForm({ incident, onSubmit }: IncidentFormProps) {
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No specific location</SelectItem>
+                  <SelectItem value="none">No specific location</SelectItem>
                   {locations.map((location) => (
                     <SelectItem key={location.id} value={location.id}>
                       {location.name}
