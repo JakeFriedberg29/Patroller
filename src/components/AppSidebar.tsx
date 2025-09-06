@@ -61,6 +61,7 @@ const organizationItems = [
   { title: "Team Directory", url: "/team-directory", icon: Users },
   { title: "Locations", url: "/locations", icon: MapPin },
   { title: "Equipment", url: "/equipment", icon: Package },
+  { title: "Incidents", url: "/incidents", icon: AlertTriangle },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Logs", url: "/logs", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },

@@ -19,6 +19,7 @@ import MissionControl from "./pages/MissionControl";
 import TeamDirectory from "./pages/TeamDirectory";
 import Locations from "./pages/Locations";
 import Equipment from "./pages/Equipment";
+import Incidents from "./pages/Incidents";
 import OrganizationReports from "./pages/OrganizationReports";
 import OrganizationLogs from "./pages/OrganizationLogs";
 import CreateReport from "./pages/CreateReport";
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/organization/:id/team-directory" element={<TeamDirectory />} />
             <Route path="/organization/:id/locations" element={<Locations />} />
           <Route path="/organization/:id/equipment" element={<Equipment />} />
+          <Route path="/organization/:id/incidents" element={<Incidents />} />
           <Route path="/organization/:id/reports/create/:templateId" element={<CreateReport />} />
           <Route path="/organization/:id/reports" element={<OrganizationReports />} />
           <Route path="/organization/:id/logs" element={<OrganizationLogs />} />
