@@ -19,14 +19,42 @@ export const useLocations = () => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { canManageLocations } = usePermissions();
+  const { canManageLocations, isPlatformAdmin } = usePermissions();
 
   const fetchLocations = async () => {
     try {
       setLoading(true);
-      let query = supabase.from('locations').select('*');
       
-      // RLS policies will handle filtering automatically
+      // Get current user info first
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('organization_id, tenant_id')
+        .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      let query = supabase
+        .from('locations')
+        .select('*')
+        .eq('is_active', true);
+
+      // Apply organization filtering based on user role
+      if (isPlatformAdmin) {
+        // Platform admins can see all locations, optionally filtered by URL organization
+        const urlParts = window.location.pathname.split('/');
+        const orgIndex = urlParts.indexOf('organization');
+        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
+          const orgId = urlParts[orgIndex + 1];
+          query = query.eq('organization_id', orgId);
+        }
+      } else if (currentUser?.organization_id) {
+        // Regular users see only their organization's locations
+        query = query.eq('organization_id', currentUser.organization_id);
+      } else {
+        console.error('No organization context found');
+        setLocations([]);
+        return;
+      }
+      
       const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -59,15 +87,26 @@ export const useLocations = () => {
         return false;
       }
 
-      // Get current user's organization
+      // Get current user's info
       const { data: currentUser } = await supabase
         .from('users')
         .select('organization_id, tenant_id')
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
-      if (!currentUser?.organization_id) {
-        throw new Error('No organization found for current user');
+      let organizationId = currentUser?.organization_id;
+
+      // If platform admin, get organization from URL
+      if (isPlatformAdmin && !organizationId) {
+        const urlParts = window.location.pathname.split('/');
+        const orgIndex = urlParts.indexOf('organization');
+        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
+          organizationId = urlParts[orgIndex + 1];
+        }
+      }
+
+      if (!organizationId) {
+        throw new Error('No organization context found');
       }
 
       const { error } = await supabase
@@ -77,7 +116,7 @@ export const useLocations = () => {
           description: locationData.description,
           address: locationData.address,
           coordinates: locationData.coordinates,
-          organization_id: currentUser.organization_id,
+          organization_id: organizationId,
         });
 
       if (error) throw error;

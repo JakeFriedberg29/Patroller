@@ -64,11 +64,12 @@ export const useEnterpriseData = (tenantId?: string) => {
           .eq('organization_id', org.id)
           .eq('status', 'active');
 
-        // Get recent audit log to determine last activity
+        // Get recent audit log to determine last activity (simplified approach)
         const { data: recentActivity } = await supabase
           .from('audit_logs')
           .select('created_at')
-          .or(`resource_id.eq.${org.id},user_id.in.(select id from users where organization_id='${org.id}')`)
+          .eq('resource_type', 'organization')
+          .eq('resource_id', org.id)
           .order('created_at', { ascending: false })
           .limit(1);
 

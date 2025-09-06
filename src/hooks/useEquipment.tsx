@@ -36,33 +36,32 @@ export const useEquipment = () => {
     try {
       setLoading(true);
       
+      // Get current user info first
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('organization_id, tenant_id')
+        .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
       let query = supabase.from('equipment').select('*');
       
-      // Platform admins can see all equipment, others need organization filtering
-      if (!isPlatformAdmin) {
-        // Try to get organization from URL first
-        let organizationId = urlOrganizationId;
-        
-        // If URL organization is undefined or invalid, get from user context
-        if (!organizationId || organizationId === "undefined") {
-          const { data: currentUser } = await supabase
-            .from('users')
-            .select('organization_id, tenant_id')
-            .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
-            .single();
-
-          if (!currentUser?.organization_id) {
-            console.error('No organization found for current user');
-            setEquipment([]);
-            return;
-          }
-          organizationId = currentUser.organization_id;
+      // Apply organization filtering based on user role
+      if (isPlatformAdmin) {
+        // Platform admins see all equipment, optionally filtered by URL organization
+        const urlParts = window.location.pathname.split('/');
+        const orgIndex = urlParts.indexOf('organization');
+        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
+          const orgId = urlParts[orgIndex + 1];
+          query = query.eq('organization_id', orgId);
         }
-        
-        query = query.eq('organization_id', organizationId);
-      } else if (urlOrganizationId && urlOrganizationId !== "undefined") {
-        // Platform admin viewing specific organization
-        query = query.eq('organization_id', urlOrganizationId);
+        // If no specific org in URL, show all equipment (platform admin view)
+      } else if (currentUser?.organization_id) {
+        // Regular users see only their organization's equipment
+        query = query.eq('organization_id', currentUser.organization_id);
+      } else {
+        console.error('No organization context found');
+        setEquipment([]);
+        return;
       }
       
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -129,40 +128,34 @@ export const useEquipment = () => {
     }
 
     try {
-      // Determine which organization_id to use
-      let orgId = equipmentData.organization_id;
+      // Get current user's organization info
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('organization_id, tenant_id')
+        .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      // Determine target organization
+      let targetOrgId = currentUser?.organization_id;
       
-      // If URL has a valid organization ID and it's not "undefined", use it
-      if (urlOrganizationId && urlOrganizationId !== "undefined") {
-        orgId = urlOrganizationId;
-      }
-      // Otherwise, if orgId is not set or is "undefined", get from user
-      else if (!orgId || orgId === "undefined") {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('organization_id')
-          .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
-          .single();
-        
-        if (userData?.organization_id) {
-          orgId = userData.organization_id;
+      // For platform admins, get organization from URL if not set
+      if (isPlatformAdmin && !targetOrgId) {
+        const urlParts = window.location.pathname.split('/');
+        const orgIndex = urlParts.indexOf('organization');
+        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
+          targetOrgId = urlParts[orgIndex + 1];
         }
       }
 
-      if (!orgId || orgId === "undefined") {
-        toast({
-          title: "Error",
-          description: "No organization assigned. Please contact your administrator.",
-          variant: "destructive"
-        });
-        return false;
+      if (!targetOrgId) {
+        throw new Error('No organization context found');
       }
 
       const { error } = await supabase
         .from('equipment')
         .insert({
           ...equipmentData,
-          organization_id: orgId
+          organization_id: targetOrgId
         });
 
       if (error) throw error;

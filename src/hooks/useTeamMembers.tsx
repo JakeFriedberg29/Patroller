@@ -27,15 +27,26 @@ export const useTeamMembers = () => {
     try {
       setLoading(true);
       
-      // Get current user info first to ensure proper organization filtering
+      // Get current user info first
       const { data: currentUser } = await supabase
         .from('users')
         .select('organization_id, tenant_id')
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
-      if (!currentUser?.organization_id) {
-        console.error('No organization found for current user');
+      let organizationId = currentUser?.organization_id;
+
+      // If platform admin, get organization from URL
+      if (isPlatformAdmin && !organizationId) {
+        const urlParts = window.location.pathname.split('/');
+        const orgIndex = urlParts.indexOf('organization');
+        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
+          organizationId = urlParts[orgIndex + 1];
+        }
+      }
+
+      if (!organizationId) {
+        console.error('No organization context found');
         setTeamMembers([]);
         return;
       }
@@ -43,7 +54,7 @@ export const useTeamMembers = () => {
       let query = supabase
         .from('users')
         .select('*')
-        .eq('organization_id', currentUser.organization_id);
+        .eq('organization_id', organizationId);
       
       const { data, error } = await query.order('created_at', { ascending: false });
       
@@ -73,15 +84,34 @@ export const useTeamMembers = () => {
     radio_call_sign?: string;
   }) => {
     try {
-      // Get current user's organization
+      // Get current user's info
       const { data: currentUser } = await supabase
         .from('users')
         .select('organization_id, tenant_id')
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
-      if (!currentUser?.organization_id) {
-        throw new Error('No organization found for current user');
+      let organizationId = currentUser?.organization_id;
+      let tenantId = currentUser?.tenant_id;
+
+      // If platform admin, get organization from URL
+      if (isPlatformAdmin && !organizationId) {
+        const urlParts = window.location.pathname.split('/');
+        const orgIndex = urlParts.indexOf('organization');
+        if (orgIndex !== -1 && urlParts[orgIndex + 1]) {
+          organizationId = urlParts[orgIndex + 1];
+          // Get tenant_id for this organization
+          const { data: orgData } = await supabase
+            .from('organizations')
+            .select('tenant_id')
+            .eq('id', organizationId)
+            .single();
+          tenantId = orgData?.tenant_id;
+        }
+      }
+
+      if (!organizationId || !tenantId) {
+        throw new Error('No organization context found');
       }
 
       const { error } = await supabase
@@ -92,8 +122,8 @@ export const useTeamMembers = () => {
           first_name: memberData.first_name,
           last_name: memberData.last_name,
           phone: memberData.phone,
-          organization_id: currentUser.organization_id,
-          tenant_id: currentUser.tenant_id,
+          organization_id: organizationId,
+          tenant_id: tenantId,
           status: 'active',
           profile_data: {
             role: memberData.role,
