@@ -10,7 +10,7 @@ export const usePermissions = () => {
   const canManageUsers = isPlatformAdmin || isEnterpriseAdmin || isOrganizationAdmin;
   const canManageEquipment = isPlatformAdmin || isOrganizationAdmin;
   const canManageLocations = isPlatformAdmin || isOrganizationAdmin;
-  const canManageIncidents = isPlatformAdmin || isOrganizationAdmin;
+  const canManageIncidents = isPlatformAdmin || isEnterpriseAdmin || isOrganizationAdmin;
   const canReportIncidents = true; // All users can report incidents
   const canViewAllData = isPlatformAdmin;
   const canManageOrganizations = isPlatformAdmin || isEnterpriseAdmin;

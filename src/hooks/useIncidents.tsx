@@ -26,7 +26,7 @@ export const useIncidents = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { canManageIncidents, isPlatformAdmin } = usePermissions();
+  const { canManageIncidents, isPlatformAdmin, isEnterpriseAdmin, isOrganizationAdmin } = usePermissions();
   const { id: urlOrganizationId } = useParams();
 
   const fetchIncidents = async () => {
@@ -58,6 +58,23 @@ export const useIncidents = () => {
           query = query.eq('organization_id', urlOrgId);
         }
         // If no specific org in URL, show all incidents (platform admin global view)
+      } else if (isEnterpriseAdmin) {
+        // Enterprise admins: see incidents from all organizations in their tenant
+        // Use URL organization ID if specified, otherwise show tenant-wide incidents
+        const urlOrgId = urlOrganizationId;
+        if (isValidUuid(urlOrgId)) {
+          query = query.eq('organization_id', urlOrgId);
+        } else {
+          // Show all incidents from organizations in this tenant
+          const { data: orgIds } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('tenant_id', currentUser?.tenant_id);
+          
+          if (orgIds && orgIds.length > 0) {
+            query = query.in('organization_id', orgIds.map(org => org.id));
+          }
+        }
       } else if (currentUser?.organization_id) {
         // Regular users see only their organization's incidents
         query = query.eq('organization_id', currentUser.organization_id);
@@ -101,15 +118,15 @@ export const useIncidents = () => {
       // Determine target organization
       let targetOrgId = currentUser?.organization_id;
       
-      // For platform admins, use URL organization ID if available and valid
-      if (isPlatformAdmin) {
+      // For platform or enterprise admins, use URL organization ID if available and valid
+      if (isPlatformAdmin || isEnterpriseAdmin) {
         const urlOrgId = urlOrganizationId;
-        console.log('Platform admin creating incident - URL org ID:', urlOrgId, 'isValid:', isValidUuid(urlOrgId));
+        console.log('Admin creating incident - URL org ID:', urlOrgId, 'isValid:', isValidUuid(urlOrgId));
         
         if (isValidUuid(urlOrgId)) {
           targetOrgId = urlOrgId;
         } else {
-          console.error("Platform admin: Invalid organization ID in URL:", urlOrgId);
+          console.error("Admin: Invalid organization ID in URL:", urlOrgId);
           throw new Error("Invalid organization ID in URL");
         }
       }
@@ -153,7 +170,10 @@ export const useIncidents = () => {
   };
 
   const updateIncident = async (id: string, updates: Partial<Incident>) => {
-    if (!canManageIncidents) {
+    // Check if user has permission - Platform, Enterprise, or Organization admin
+    const canEdit = isPlatformAdmin || isEnterpriseAdmin || isOrganizationAdmin;
+    
+    if (!canEdit) {
       toast({
         title: "Permission Denied",
         description: "You don't have permission to edit incidents",
