@@ -71,6 +71,8 @@ export const useAccounts = () => {
     try {
       setLoading(true);
       
+      console.log("Fetching accounts - isPlatformAdmin:", isPlatformAdmin);
+      
       if (!isPlatformAdmin) {
         toast({
           title: "Access Denied",
@@ -87,6 +89,7 @@ export const useAccounts = () => {
         .order('created_at', { ascending: false });
 
       if (tenantsError) throw tenantsError;
+      console.log("Fetched tenants:", tenants);
 
       // Fetch organizations
       const { data: organizations, error: orgsError } = await supabase
@@ -95,6 +98,7 @@ export const useAccounts = () => {
         .order('created_at', { ascending: false });
 
       if (orgsError) throw orgsError;
+      console.log("Fetched organizations:", organizations);
 
       // Get user counts for each tenant/organization
       const { data: userCounts, error: userCountsError } = await supabase
@@ -108,7 +112,7 @@ export const useAccounts = () => {
       const enterpriseAccounts: Account[] = (tenants || []).map(tenant => {
         const memberCount = userCounts?.filter(u => u.tenant_id === tenant.id).length || 0;
         
-        return {
+        const account = {
           id: tenant.id,
           name: tenant.name,
           type: 'Enterprise' as const,
@@ -121,13 +125,16 @@ export const useAccounts = () => {
           is_active: tenant.subscription_status === 'active',
           settings: tenant.settings
         };
+        
+        console.log("Created enterprise account:", account);
+        return account;
       });
 
       // Process organizations as Organization accounts
       const organizationAccounts: Account[] = (organizations || []).map(org => {
         const memberCount = userCounts?.filter(u => u.organization_id === org.id).length || 0;
         
-        return {
+        const account = {
           id: org.id,
           name: org.name,
           type: 'Organization' as const,
@@ -142,8 +149,12 @@ export const useAccounts = () => {
           address: org.address,
           settings: org.settings
         };
+        
+        console.log("Created organization account:", account);
+        return account;
       });
 
+      console.log("Final accounts array:", [...enterpriseAccounts, ...organizationAccounts]);
       setAccounts([...enterpriseAccounts, ...organizationAccounts]);
     } catch (error) {
       console.error('Error fetching accounts:', error);

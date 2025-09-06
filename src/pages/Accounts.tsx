@@ -72,10 +72,26 @@ export default function Accounts() {
   });
 
   const handleViewAccount = (accountId: string) => {
+    console.log("handleViewAccount called with accountId:", accountId);
+    console.log("Available accounts:", accounts);
+    
     const account = accounts.find(acc => acc.id === accountId);
+    console.log("Found account:", account);
+    
+    if (!account) {
+      toast({
+        title: "Error",
+        description: "Account not found",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (account?.type === "Enterprise") {
+      console.log("Navigating to enterprise:", `/enterprises/${accountId}/enterprise-view`);
       navigate(`/enterprises/${accountId}/enterprise-view`);
     } else {
+      console.log("Navigating to organization:", `/organization/${accountId}/mission-control`);
       navigate(`/organization/${accountId}/mission-control`);
     }
   };
@@ -156,6 +172,10 @@ export default function Accounts() {
       </div>
     );
   }
+
+  // Debug accounts data
+  console.log("Accounts data loaded:", accounts);
+  console.log("First account:", accounts[0]);
 
   // Show access denied if not platform admin
   if (!canManageAccounts) {
@@ -290,7 +310,11 @@ export default function Accounts() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleViewAccount(account.id)}>
+                        <DropdownMenuItem onClick={() => {
+                          console.log("Dropdown item clicked for account:", account);
+                          console.log("Account ID:", account.id);
+                          handleViewAccount(account.id);
+                        }}>
                           View Account
                         </DropdownMenuItem>
                       </DropdownMenuContent>
