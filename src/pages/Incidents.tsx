@@ -25,7 +25,7 @@ export default function Incidents() {
   const { incidents, loading, createIncident, updateIncident, canManageIncidents, fetchIncidents } = useIncidents();
   const { isPlatformAdmin, isOrganizationAdmin } = usePermissions();
 
-  const canCreate = canManageIncidents;
+  const canCreate = true; // All authenticated users can report incidents
   const canEdit = isPlatformAdmin || isOrganizationAdmin;
 
   const filteredIncidents = incidents.filter(incident => {

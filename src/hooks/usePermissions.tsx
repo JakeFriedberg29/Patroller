@@ -11,6 +11,7 @@ export const usePermissions = () => {
   const canManageEquipment = isPlatformAdmin || isOrganizationAdmin;
   const canManageLocations = isPlatformAdmin || isOrganizationAdmin;
   const canManageIncidents = isPlatformAdmin || isOrganizationAdmin;
+  const canReportIncidents = true; // All users can report incidents
   const canViewAllData = isPlatformAdmin;
   const canManageOrganizations = isPlatformAdmin || isEnterpriseAdmin;
   const canManageEnterprise = isPlatformAdmin || isEnterpriseAdmin;
@@ -26,6 +27,7 @@ export const usePermissions = () => {
     canViewAllData,
     canManageOrganizations,
     canManageEnterprise,
+    canReportIncidents,
     profile
   };
 };
