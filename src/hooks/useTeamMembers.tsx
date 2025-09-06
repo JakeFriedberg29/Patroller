@@ -50,7 +50,7 @@ export const useTeamMembers = () => {
         }
 
       if (!organizationId) {
-        console.error('No organization context found');
+        console.error('No organization context found. currentUser:', currentUser, 'params.id:', params.id, 'isPlatformAdmin:', isPlatformAdmin);
         setTeamMembers([]);
         return;
       }
@@ -118,6 +118,7 @@ export const useTeamMembers = () => {
       }
 
       if (!organizationId || !tenantId) {
+        console.error('No organization context found. currentUser:', currentUser, 'params.id:', params.id, 'isPlatformAdmin:', isPlatformAdmin);
         throw new Error('No organization context found');
       }
 

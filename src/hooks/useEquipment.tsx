@@ -56,7 +56,7 @@ export const useEquipment = () => {
         // Regular users see only their organization's equipment
         query = query.eq('organization_id', currentUser.organization_id);
       } else {
-        console.error('No organization context found');
+        console.error('No organization context found. currentUser:', currentUser, 'urlOrganizationId:', urlOrganizationId, 'isPlatformAdmin:', isPlatformAdmin);
         setEquipment([]);
         return;
       }
@@ -147,6 +147,7 @@ export const useEquipment = () => {
       }
 
       if (!targetOrgId) {
+        console.error('No organization context found. currentUser:', currentUser, 'urlOrganizationId:', urlOrganizationId, 'isPlatformAdmin:', isPlatformAdmin);
         throw new Error('No organization context found');
       }
 

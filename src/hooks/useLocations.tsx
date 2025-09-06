@@ -49,7 +49,7 @@ export const useLocations = () => {
         // Regular users see only their organization's locations
         query = query.eq('organization_id', currentUser.organization_id);
       } else {
-        console.error('No organization context found');
+        console.error('No organization context found. currentUser:', currentUser, 'params.id:', params.id, 'isPlatformAdmin:', isPlatformAdmin);
         setLocations([]);
         return;
       }
@@ -107,6 +107,7 @@ export const useLocations = () => {
       }
 
       if (!organizationId) {
+        console.error('No organization context found. currentUser:', currentUser, 'params.id:', params.id, 'isPlatformAdmin:', isPlatformAdmin);
         throw new Error('No organization context found');
       }
 

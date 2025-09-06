@@ -73,7 +73,19 @@ export default function Accounts() {
 
   const handleViewAccount = (accountId: string) => {
     console.log("handleViewAccount called with accountId:", accountId);
+    console.log("AccountId type:", typeof accountId);
     console.log("Available accounts:", accounts);
+    
+    // Validate accountId
+    if (!accountId || accountId === 'undefined' || accountId === 'null') {
+      console.error("Invalid accountId received:", accountId);
+      toast({
+        title: "Error",
+        description: "Invalid account ID",
+        variant: "destructive"
+      });
+      return;
+    }
     
     const account = accounts.find(acc => acc.id === accountId);
     console.log("Found account:", account);

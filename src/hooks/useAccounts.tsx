@@ -112,6 +112,12 @@ export const useAccounts = () => {
       const enterpriseAccounts: Account[] = (tenants || []).map(tenant => {
         const memberCount = userCounts?.filter(u => u.tenant_id === tenant.id).length || 0;
         
+        // Validate tenant ID
+        if (!tenant.id || tenant.id === 'undefined') {
+          console.error("Invalid tenant ID found:", tenant);
+          return null;
+        }
+        
         const account = {
           id: tenant.id,
           name: tenant.name,
@@ -128,11 +134,17 @@ export const useAccounts = () => {
         
         console.log("Created enterprise account:", account);
         return account;
-      });
+      }).filter(Boolean) as Account[];
 
       // Process organizations as Organization accounts
       const organizationAccounts: Account[] = (organizations || []).map(org => {
         const memberCount = userCounts?.filter(u => u.organization_id === org.id).length || 0;
+        
+        // Validate organization ID
+        if (!org.id || org.id === 'undefined') {
+          console.error("Invalid organization ID found:", org);
+          return null;
+        }
         
         const account = {
           id: org.id,
@@ -152,7 +164,7 @@ export const useAccounts = () => {
         
         console.log("Created organization account:", account);
         return account;
-      });
+      }).filter(Boolean) as Account[];
 
       console.log("Final accounts array:", [...enterpriseAccounts, ...organizationAccounts]);
       setAccounts([...enterpriseAccounts, ...organizationAccounts]);
