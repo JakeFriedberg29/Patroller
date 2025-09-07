@@ -47,7 +47,7 @@ export default function Logs() {
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState("ALL");
   const [resourceFilter, setResourceFilter] = useState("ALL");
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
