@@ -302,16 +302,16 @@ export default function PlatformNotificationCenter() {
           </div>
 
           {/* Table */}
-          <div className="border rounded-md">
+          <div className="rounded-md border">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Recipient</TableHead>
-                  <TableHead>Organization</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Sent</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold">Type</TableHead>
+                  <TableHead className="font-semibold">Recipient</TableHead>
+                  <TableHead className="font-semibold">Organization</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="font-semibold">Last Sent</TableHead>
+                  <TableHead className="text-right font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
