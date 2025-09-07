@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search, Filter, RefreshCw, Download, Calendar, User, UserPlus, UserX, Settings, Shield, FileText, CheckCircle, Clock, Database, Key, Building, MoreHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -234,7 +234,6 @@ export default function Logs() {
           </Button>
         </div>
       </div>
-
 
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
