@@ -127,39 +127,6 @@ export default function Logs() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{logs.length}</div>
-            <p className="text-xs text-muted-foreground">Total Logs</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">
-              {logs.filter(log => log.action === 'CREATE').length}
-            </div>
-            <p className="text-xs text-muted-foreground">Created Items</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">
-              {logs.filter(log => log.action === 'UPDATE').length}
-            </div>
-            <p className="text-xs text-muted-foreground">Updated Items</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">
-              {new Set(logs.map(log => log.user_email)).size}
-            </div>
-            <p className="text-xs text-muted-foreground">Active Users</p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Search and Filters */}
       <Card>
