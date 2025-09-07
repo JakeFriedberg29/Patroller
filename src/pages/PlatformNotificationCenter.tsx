@@ -27,8 +27,17 @@ import {
   Building2,
   Users,
   Shield,
-  Edit
+  Edit,
+  Download
 } from "lucide-react";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 
 const mockActivationNotifications = [
@@ -240,6 +249,10 @@ export default function PlatformNotificationCenter() {
           </h1>
           <p className="text-muted-foreground">Manage platform-wide notification settings and activation emails</p>
         </div>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Export
+        </Button>
       </div>
 
       <Tabs defaultValue="activation-emails" className="space-y-6">
@@ -249,108 +262,105 @@ export default function PlatformNotificationCenter() {
         </TabsList>
 
         <TabsContent value="activation-emails" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Account Activation Email Notifications
-              </CardTitle>
+          {/* Search and Filters */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by recipient, organization, or title..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-32">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="disabled">Disabled</SelectItem>
+                </SelectContent>
+              </Select>
               
-              {/* Search and Filters */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by recipient, organization, or title..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-32">
-                      <Filter className="mr-2 h-4 w-4" />
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="sent">Sent</SelectItem>
-                      <SelectItem value="disabled">Disabled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select value={recipientTypeFilter} onValueChange={setRecipientTypeFilter}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Recipient Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="platform admin">Platform Admin</SelectItem>
-                      <SelectItem value="enterprise admin">Enterprise Admin</SelectItem>
-                      <SelectItem value="organization admin">Organization Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="space-y-4">
-                {filteredNotifications.slice(0, parseInt(rowsPerPage)).map((notif) => (
-                  <div key={notif.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
-                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                          <Mail className="h-4 w-4" />
-                        </div>
-                        <div className="space-y-2 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-semibold">{notif.title}</h3>
-                            <Badge variant={getStatusVariant(notif.status)}>
-                              {notif.status}
-                            </Badge>
-                            <div className="flex items-center gap-1">
-                              {getRecipientTypeIcon(notif.recipientType)}
-                              <Badge variant="outline">
-                                {notif.recipientType}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {notif.recipient}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Building2 className="h-3 w-3" />
-                              {notif.organizationName}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              Created: {formatDate(notif.createdDate)}
-                            </div>
-                            {notif.lastSent && (
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                Last sent: {formatDate(notif.lastSent)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
+              <Select value={recipientTypeFilter} onValueChange={setRecipientTypeFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Recipient Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="platform admin">Platform Admin</SelectItem>
+                  <SelectItem value="enterprise admin">Enterprise Admin</SelectItem>
+                  <SelectItem value="organization admin">Organization Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Recipient</TableHead>
+                  <TableHead>Organization</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last Sent</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredNotifications.length > 0 ? (
+                  filteredNotifications.slice(0, parseInt(rowsPerPage)).map((notif) => (
+                    <TableRow key={notif.id}>
+                      <TableCell>
                         <div className="flex items-center gap-2">
-                          <Label htmlFor={`toggle-${notif.id}`} className="text-sm">
-                            {notif.isEnabled ? 'Enabled' : 'Disabled'}
-                          </Label>
-                          <Switch
-                            id={`toggle-${notif.id}`}
-                            checked={notif.isEnabled}
-                            onCheckedChange={() => handleToggleNotification(notif.id)}
-                          />
+                          <div className="p-1.5 rounded bg-primary/10 text-primary">
+                            {getRecipientTypeIcon(notif.recipientType)}
+                          </div>
+                          <div>
+                            <div className="font-medium">{notif.recipientType}</div>
+                            <div className="text-sm text-muted-foreground">{notif.title}</div>
+                          </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-mono text-sm">{notif.recipient}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <span>{notif.organizationName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={getStatusVariant(notif.status)}>
+                            {notif.status}
+                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={notif.isEnabled}
+                              onCheckedChange={() => handleToggleNotification(notif.id)}
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          {formatDate(notif.lastSent)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -359,37 +369,41 @@ export default function PlatformNotificationCenter() {
                           <Eye className="mr-2 h-4 w-4" />
                           View Email
                         </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Pagination */}
-              <div className="flex items-center justify-between pt-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Show</span>
-                  <Select value={rowsPerPage} onValueChange={setRowsPerPage}>
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-sm text-muted-foreground">
-                    of {filteredNotifications.length} notifications
-                  </span>
-                </div>
-                
-                <div className="text-sm text-muted-foreground">
-                  Showing {Math.min(parseInt(rowsPerPage), filteredNotifications.length)} of {filteredNotifications.length} results
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No notifications found matching your search criteria.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Show</span>
+              <Select value={rowsPerPage} onValueChange={setRowsPerPage}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">entries</span>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              Showing {Math.min(parseInt(rowsPerPage), filteredNotifications.length)} of {filteredNotifications.length} results
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
