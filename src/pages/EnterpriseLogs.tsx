@@ -1,10 +1,16 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Search, Filter, RefreshCw, Download, Calendar, User, UserPlus, UserX, Settings, Shield, FileText, CheckCircle, Clock, Database, Key, Building, MoreHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -12,464 +18,501 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  BarChart3, 
-  Search, 
-  Download, 
-  Filter,
-  Calendar,
-  User,
-  Shield,
-  Activity,
-  AlertTriangle,
-  Info,
-  CheckCircle,
-  Building2
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
 
-const mockAuditLogs = [
+const actionOptions = [
+  { value: "ALL", label: "All Actions" },
+  { value: "CREATE", label: "Create" },
+  { value: "UPDATE", label: "Update" },
+  { value: "DELETE", label: "Delete" },
+  { value: "LOGIN", label: "Login" },
+  { value: "LOGOUT", label: "Logout" },
+  { value: "ACTIVATE", label: "Activate" },
+  { value: "ASSIGN", label: "Assign" }
+];
+
+const resourceOptions = [
+  { value: "ALL", label: "All Resources" },
+  { value: "user", label: "Users" },
+  { value: "organization", label: "Organizations" },
+  { value: "report", label: "Reports" },
+  { value: "equipment", label: "Equipment" },
+  { value: "session", label: "Sessions" }
+];
+
+// Mock data for enterprise logs
+const mockLogs = [
   {
     id: "log-001",
-    timestamp: "2024-01-15T14:30:25Z",
-    user: "Sarah Johnson",
-    action: "Created Organization",
-    resource: "MegaCorp Healthcare",
-    resourceType: "Organization",
-    ip: "192.168.1.100",
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-    status: "Success",
-    details: "Created new organization with ID: org-005"
+    action: "CREATE",
+    resource_type: "organization",
+    created_at: "2024-01-15T14:30:25Z",
+    user_name: "Sarah Johnson",
+    user_email: "sarah.johnson@enterprise.com",
+    ip_address: "192.168.1.100",
+    metadata: { setup_method: "admin_panel" },
+    new_values: { name: "New Organization", status: "active" },
+    old_values: null
   },
   {
-    id: "log-002", 
-    timestamp: "2024-01-15T13:45:12Z",
-    user: "Mike Chen",
-    action: "User Permission Modified",
-    resource: "admin-002",
-    resourceType: "User",
-    ip: "192.168.1.105",
-    userAgent: "Mozilla/5.0 (macOS; Intel Mac OS X 10_15_7)",
-    status: "Success",
-    details: "Updated permissions for enterprise admin"
+    id: "log-002",
+    action: "UPDATE",
+    resource_type: "user",
+    created_at: "2024-01-15T13:45:12Z",
+    user_name: "Mike Chen",
+    user_email: "mike.chen@enterprise.com",
+    ip_address: "192.168.1.105",
+    metadata: {},
+    new_values: { role_type: "enterprise_admin", status: "active" },
+    old_values: { role_type: "organization_admin" }
   },
   {
     id: "log-003",
-    timestamp: "2024-01-15T12:20:33Z",
-    user: "System",
-    action: "Failed Login Attempt",
-    resource: "robert.davis@megacorp.com",
-    resourceType: "Authentication",
-    ip: "203.0.113.45",
-    userAgent: "Mozilla/5.0 (X11; Linux x86_64)",
-    status: "Failed",
-    details: "Multiple failed login attempts detected"
+    action: "LOGIN",
+    resource_type: "session",
+    created_at: "2024-01-15T12:20:33Z",
+    user_name: null,
+    user_email: "robert.davis@enterprise.com",
+    ip_address: "203.0.113.45",
+    metadata: {},
+    new_values: {},
+    old_values: {}
   },
   {
     id: "log-004",
-    timestamp: "2024-01-15T11:15:48Z",
-    user: "Dr. Emily Rodriguez",
-    action: "Notification Sent",
-    resource: "System Maintenance Alert",
-    resourceType: "Notification",
-    ip: "192.168.1.110",
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-    status: "Success",
-    details: "Sent notification to 2,847 users across all organizations"
+    action: "CREATE",
+    resource_type: "report",
+    created_at: "2024-01-15T11:15:48Z",
+    user_name: "Dr. Emily Rodriguez",
+    user_email: "emily.rodriguez@enterprise.com",
+    ip_address: "192.168.1.110",
+    metadata: { setup_method: "bulk_import" },
+    new_values: { title: "Monthly Safety Report", status: "draft" },
+    old_values: null
   },
   {
     id: "log-005",
-    timestamp: "2024-01-15T10:05:17Z",
-    user: "Robert Davis",
-    action: "Organization Settings Updated",
-    resource: "MegaCorp Energy",
-    resourceType: "Organization",
-    ip: "192.168.1.120",
-    userAgent: "Mozilla/5.0 (macOS; Intel Mac OS X 10_15_7)",
-    status: "Success",
-    details: "Updated security settings and compliance configuration"
-  }
-];
-
-const mockSystemLogs = [
-  {
-    id: "sys-001",
-    timestamp: "2024-01-15T14:35:00Z",
-    level: "INFO",
-    service: "Authentication Service",
-    message: "User login successful",
-    details: "User 'sarah.johnson@megacorp.com' logged in from IP 192.168.1.100"
-  },
-  {
-    id: "sys-002",
-    timestamp: "2024-01-15T14:30:15Z", 
-    level: "WARN",
-    service: "Database Service",
-    message: "High query response time detected",
-    details: "Query execution time exceeded 5 seconds for organization lookup"
-  },
-  {
-    id: "sys-003",
-    timestamp: "2024-01-15T14:25:42Z",
-    level: "ERROR",
-    service: "Notification Service",
-    message: "Failed to send email notification",
-    details: "SMTP connection timeout for notification ID notif-001"
-  },
-  {
-    id: "sys-004",
-    timestamp: "2024-01-15T14:20:33Z",
-    level: "INFO",
-    service: "Backup Service",
-    message: "Automated backup completed successfully",
-    details: "Database backup completed in 45 minutes, size: 2.3 GB"
-  },
-  {
-    id: "sys-005",
-    timestamp: "2024-01-15T14:15:12Z",
-    level: "WARN",
-    service: "Security Service",
-    message: "Suspicious login activity detected",
-    details: "Multiple failed login attempts from IP 203.0.113.45"
-  }
-];
-
-const mockSecurityLogs = [
-  {
-    id: "sec-001",
-    timestamp: "2024-01-15T13:45:00Z",
-    event: "Failed Authentication",
-    severity: "High",
-    source: "Login System",
-    target: "robert.davis@megacorp.com",
-    description: "Multiple failed login attempts within 5 minutes",
-    action: "Account temporarily locked"
-  },
-  {
-    id: "sec-002",
-    timestamp: "2024-01-15T12:30:15Z",
-    event: "Permission Escalation",
-    severity: "Medium",
-    source: "Admin Panel",
-    target: "User ID: admin-003",
-    description: "User granted additional administrative privileges",
-    action: "Change logged and approved"
-  },
-  {
-    id: "sec-003",
-    timestamp: "2024-01-15T11:20:45Z",
-    event: "Suspicious API Access",
-    severity: "Medium",
-    source: "API Gateway",
-    target: "Enterprise Data Endpoint",
-    description: "Unusual API access pattern detected from external IP",
-    action: "Access rate limited"
-  },
-  {
-    id: "sec-004",
-    timestamp: "2024-01-15T10:15:30Z",
-    event: "Data Export",
-    severity: "Low",
-    source: "Admin Dashboard",
-    target: "Organization Reports",
-    description: "Large dataset export initiated by enterprise admin",
-    action: "Export approved and logged"
+    action: "UPDATE",
+    resource_type: "organization",
+    created_at: "2024-01-15T10:05:17Z",
+    user_name: "Robert Davis",
+    user_email: "robert.davis@enterprise.com",
+    ip_address: "192.168.1.120",
+    metadata: {},
+    new_values: { settings: "updated", status: "active" },
+    old_values: { settings: "default" }
   }
 ];
 
 export default function EnterpriseLogs() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [actionFilter, setActionFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [userFilter, setUserFilter] = useState("all");
-  const [rowsPerPage, setRowsPerPage] = useState("10");
+  const [actionFilter, setActionFilter] = useState("ALL");
+  const [resourceFilter, setResourceFilter] = useState("ALL");
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const { toast } = useToast();
 
-  const filteredAuditLogs = mockAuditLogs.filter((log) => {
-    const matchesSearch = log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.resource.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesAction = actionFilter === "all" || log.action.toLowerCase().includes(actionFilter);
-    const matchesStatus = statusFilter === "all" || log.status.toLowerCase() === statusFilter;
-    const matchesUser = userFilter === "all" || log.user.toLowerCase().includes(userFilter);
+  const getActionIcon = (action: string) => {
+    const iconClass = "h-4 w-4";
+    switch (action.toLowerCase()) {
+      case 'create':
+        return <UserPlus className={iconClass} />;
+      case 'update':
+        return <Settings className={iconClass} />;
+      case 'delete':
+        return <UserX className={iconClass} />;
+      case 'login':
+        return <Key className={iconClass} />;
+      case 'logout':
+        return <Key className={iconClass} />;
+      case 'activate':
+        return <CheckCircle className={iconClass} />;
+      case 'assign':
+        return <Shield className={iconClass} />;
+      default:
+        return <Clock className={iconClass} />;
+    }
+  };
+
+  const getActionVariant = (action: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (action.toLowerCase()) {
+      case 'create':
+      case 'activate':
+        return 'default';
+      case 'update':
+        return 'secondary';
+      case 'delete':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getResourceIcon = (resourceType: string) => {
+    const iconClass = "h-3 w-3";
+    switch (resourceType.toLowerCase()) {
+      case 'user':
+        return <User className={iconClass} />;
+      case 'organization':
+        return <Building className={iconClass} />;
+      case 'report':
+        return <FileText className={iconClass} />;
+      case 'equipment':
+        return <Settings className={iconClass} />;
+      default:
+        return <Database className={iconClass} />;
+    }
+  };
+
+  const generateDescription = (log: any) => {
+    const performer = log.user_name || log.user_email || 'System';
+    const target = log.new_values?.email || log.new_values?.name || log.new_values?.title || 'item';
     
-    return matchesSearch && matchesAction && matchesStatus && matchesUser;
-  });
-
-  const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'success': return 'default';
-      case 'failed': return 'destructive';
-      case 'warning': return 'destructive';
-      default: return 'secondary';
-    }
-  };
-
-  const getLevelIcon = (level: string) => {
-    switch (level.toLowerCase()) {
-      case 'error': return <AlertTriangle className="h-4 w-4 text-destructive" />;
-      case 'warn': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      case 'info': return <Info className="h-4 w-4 text-blue-500" />;
-      default: return <CheckCircle className="h-4 w-4 text-green-500" />;
-    }
-  };
-
-  const getSeverityVariant = (severity: string) => {
-    switch (severity.toLowerCase()) {
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'secondary';
+    switch (`${log.action.toLowerCase()}_${log.resource_type.toLowerCase()}`) {
+      case 'create_user':
+        return `Created user account for ${target}`;
+      case 'update_user':
+        return `Updated user ${target}`;
+      case 'delete_user':
+        return `Deleted user ${target}`;
+      case 'activate_user':
+        return `Activated user account for ${target}`;
+      case 'login_session':
+        return `Signed in`;
+      case 'logout_session':
+        return `Signed out`;
+      case 'create_organization':
+        return `Created organization ${target}`;
+      case 'update_organization':
+        return `Updated organization ${target}`;
+      case 'create_report':
+        return `Created report ${target}`;
+      default:
+        return `Performed ${log.action.toLowerCase()} on ${log.resource_type}`;
     }
   };
 
   const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString();
+    try {
+      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+    } catch {
+      return new Date(timestamp).toLocaleString();
+    }
+  };
+
+  // Filter and pagination logic
+  const filteredLogs = mockLogs.filter(log => {
+    const matchesSearch = log.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.action?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.resource_type?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAction = actionFilter === "ALL" || log.action === actionFilter;
+    const matchesResource = resourceFilter === "ALL" || log.resource_type === resourceFilter;
+    return matchesSearch && matchesAction && matchesResource;
+  });
+
+  const totalPages = Math.ceil(filteredLogs.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedLogs = filteredLogs.slice(startIndex, startIndex + rowsPerPage);
+
+  const handleExportLogs = () => {
+    if (mockLogs.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No logs available to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const csvData = mockLogs.map(log => ({
+      Timestamp: new Date(log.created_at).toISOString(),
+      Action: log.action,
+      Resource: log.resource_type,
+      User: log.user_name || log.user_email || 'System',
+      'IP Address': log.ip_address || 'N/A',
+      Details: JSON.stringify(log.metadata || {})
+    }));
+
+    const csvContent = [
+      Object.keys(csvData[0]).join(','),
+      ...csvData.map(row => Object.values(row).map(val => `"${val}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `enterprise-logs-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Complete",
+      description: "Enterprise logs have been exported successfully.",
+    });
   };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-3">
-            <BarChart3 className="h-8 w-8" />
-            Enterprise Logs
-          </h1>
-          <p className="text-muted-foreground">Monitor and analyze system activity across your enterprise</p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Calendar className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Enterprise Activity Logs</h1>
+            <p className="text-muted-foreground mt-1">
+              Monitor and analyze activity across all organizations in your enterprise
+            </p>
+          </div>
         </div>
-        <Button>
-          <Download className="mr-2 h-4 w-4" />
-          Export Logs
-        </Button>
+        
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => window.location.reload()}
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExportLogs}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
       </div>
 
-      <Tabs defaultValue="audit" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="audit">Audit Logs</TabsTrigger>
-          <TabsTrigger value="system">System Logs</TabsTrigger>
-          <TabsTrigger value="security">Security Logs</TabsTrigger>
-        </TabsList>
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search logs by action, user, or details..." 
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <Select value={actionFilter} onValueChange={setActionFilter}>
+          <SelectTrigger className="w-[180px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Filter by action" />
+          </SelectTrigger>
+          <SelectContent>
+            {actionOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        <TabsContent value="audit" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Audit Trail
-              </CardTitle>
-              
-              {/* Search and Filters */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search audit logs..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Select value={actionFilter} onValueChange={setActionFilter}>
-                    <SelectTrigger className="w-40">
-                      <Filter className="mr-2 h-4 w-4" />
-                      <SelectValue placeholder="Action" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Actions</SelectItem>
-                      <SelectItem value="created">Created</SelectItem>
-                      <SelectItem value="modified">Modified</SelectItem>
-                      <SelectItem value="deleted">Deleted</SelectItem>
-                      <SelectItem value="login">Login</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="success">Success</SelectItem>
-                      <SelectItem value="failed">Failed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Timestamp</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Action</TableHead>
-                      <TableHead>Resource</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>IP Address</TableHead>
-                      <TableHead>Details</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredAuditLogs.slice(0, parseInt(rowsPerPage)).map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {formatTimestamp(log.timestamp)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            {log.user}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{log.action}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-medium">{log.resource}</div>
-                            <div className="text-sm text-muted-foreground">{log.resourceType}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(log.status)}>
-                            {log.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">{log.ip}</TableCell>
-                        <TableCell className="max-w-xs truncate" title={log.details}>
-                          {log.details}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              {/* Pagination */}
-              <div className="flex items-center justify-between pt-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Show</span>
-                  <Select value={rowsPerPage} onValueChange={setRowsPerPage}>
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-sm text-muted-foreground">
-                    of {filteredAuditLogs.length} logs
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <Select value={resourceFilter} onValueChange={setResourceFilter}>
+          <SelectTrigger className="w-[180px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Filter by resource" />
+          </SelectTrigger>
+          <SelectContent>
+            {resourceOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-        <TabsContent value="system" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                System Logs
-              </CardTitle>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="space-y-4">
-                {mockSystemLogs.map((log) => (
-                  <div key={log.id} className="border rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      {getLevelIcon(log.level)}
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Badge variant={log.level === 'ERROR' ? 'destructive' : log.level === 'WARN' ? 'default' : 'secondary'}>
-                              {log.level}
-                            </Badge>
-                            <span className="font-medium">{log.service}</span>
-                          </div>
-                          <span className="text-sm text-muted-foreground">
-                            {formatTimestamp(log.timestamp)}
-                          </span>
-                        </div>
-                        <p className="font-medium">{log.message}</p>
-                        <p className="text-sm text-muted-foreground">{log.details}</p>
+      {/* Active Filters */}
+      {(actionFilter !== "ALL" || resourceFilter !== "ALL" || searchTerm) && (
+        <div className="flex flex-wrap gap-2">
+          {actionFilter !== "ALL" && (
+            <Badge variant="secondary" className="gap-1">
+              Action: {actionOptions.find(o => o.value === actionFilter)?.label}
+              <button onClick={() => setActionFilter("ALL")} className="ml-1 hover:bg-background rounded-full">
+                ×
+              </button>
+            </Badge>
+          )}
+          {resourceFilter !== "ALL" && (
+            <Badge variant="secondary" className="gap-1">
+              Resource: {resourceOptions.find(o => o.value === resourceFilter)?.label}
+              <button onClick={() => setResourceFilter("ALL")} className="ml-1 hover:bg-background rounded-full">
+                ×
+              </button>
+            </Badge>
+          )}
+          {searchTerm && (
+            <Badge variant="secondary" className="gap-1">
+              Search: "{searchTerm}"
+              <button onClick={() => setSearchTerm("")} className="ml-1 hover:bg-background rounded-full">
+                ×
+              </button>
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* Activity Logs Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-semibold">Action</TableHead>
+                <TableHead className="font-semibold">Resource</TableHead>
+                <TableHead className="font-semibold">User</TableHead>
+                <TableHead className="font-semibold">Description</TableHead>
+                <TableHead className="font-semibold">Timestamp</TableHead>
+                <TableHead className="font-semibold">Details</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredLogs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      {searchTerm || actionFilter !== "ALL" || resourceFilter !== "ALL" 
+                        ? "No logs found matching your criteria."
+                        : "No enterprise logs available yet. Activity will appear here as users interact with the system."
+                      }
+                    </p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedLogs.map((log) => (
+                  <TableRow key={log.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {getActionIcon(log.action)}
+                        <Badge variant={getActionVariant(log.action)}>
+                          {log.action.toUpperCase()}
+                        </Badge>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Security Events
-              </CardTitle>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Timestamp</TableHead>
-                      <TableHead>Event</TableHead>
-                      <TableHead>Severity</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead>Target</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Action Taken</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockSecurityLogs.map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {formatTimestamp(log.timestamp)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {getResourceIcon(log.resource_type)}
+                        <span className="capitalize">{log.resource_type}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">
+                          {log.user_name || log.user_email || 'System'}
+                        </div>
+                        {log.ip_address && (
+                          <div className="text-xs text-muted-foreground">
+                            IP: {log.ip_address}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{log.event}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getSeverityVariant(log.severity)}>
-                            {log.severity}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{log.source}</TableCell>
-                        <TableCell className="font-mono text-sm">{log.target}</TableCell>
-                        <TableCell className="max-w-xs">{log.description}</TableCell>
-                        <TableCell className="max-w-xs text-sm text-muted-foreground">{log.action}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="max-w-md">
+                        <p className="text-sm">{generateDescription(log)}</p>
+                        {(log.new_values?.role_type || log.new_values?.status || log.metadata?.setup_method) && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {log.new_values?.role_type && (
+                              <Badge variant="outline" className="text-xs">
+                                Role: {log.new_values.role_type}
+                              </Badge>
+                            )}
+                            {log.new_values?.status && (
+                              <Badge variant="outline" className="text-xs">
+                                Status: {log.new_values.status}
+                              </Badge>
+                            )}
+                            {log.metadata?.setup_method && (
+                              <Badge variant="outline" className="text-xs">
+                                Setup: {log.metadata.setup_method}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div>{formatTimestamp(log.created_at)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(log.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {(log.metadata || log.new_values || log.old_values) && (
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">View details</span>
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+          
+          {/* Pagination */}
+          {filteredLogs.length > 0 && (
+            <div className="flex items-center justify-between p-4 border-t">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Rows per page:</span>
+                <Select value={rowsPerPage.toString()} onValueChange={(value) => {
+                  setRowsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}>
+                  <SelectTrigger className="w-16">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {startIndex + 1}-{Math.min(startIndex + rowsPerPage, filteredLogs.length)} of {filteredLogs.length}
+                </span>
+                <div className="flex gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
