@@ -121,11 +121,9 @@ export default function Settings() {
     console.log("Settings component - useEffect triggered");
     console.log("ID from params:", id);
     console.log("Accounts length:", accounts.length);
-    console.log("Loading:", loading);
     console.log("Accounts data:", accounts);
     
-    // If we have an ID and we're not loading, try to find the account
-    if (id && !loading) {
+    if (id && accounts.length > 0) {
       const account = accounts.find(acc => acc.id === id);
       console.log("Found account:", account);
       
@@ -147,8 +145,7 @@ export default function Settings() {
           state: "",
           zip: ""
         });
-      } else if (accounts.length > 0) {
-        // Only show error if we have loaded accounts but can't find the specific one
+      } else {
         console.log("Account not found - ID:", id, "Available accounts:", accounts.map(a => a.id));
         toast({
           title: "Account Not Found",
@@ -157,11 +154,10 @@ export default function Settings() {
         });
         navigate('/accounts');
       }
-    } else if (!id) {
-      // No ID provided, redirect to accounts
-      navigate('/accounts');
+    } else {
+      console.log("Waiting for data - ID:", id, "Accounts length:", accounts.length);
     }
-  }, [id, accounts, loading, navigate, toast]);
+  }, [id, accounts, navigate, toast]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
