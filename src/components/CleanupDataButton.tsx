@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { cleanupDummyData } from "@/utils/cleanupDummyData";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,46 +16,43 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export function CleanupDataButton() {
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
   const { toast } = useToast();
 
-  const handleCleanup = async () => {
-    setIsDeleting(true);
+  const handleCleanupData = async () => {
+    setIsCleaningUp(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('cleanup-dummy-data', {
-        body: {}
-      });
+      const result = await cleanupDummyData();
       
-      if (error) {
-        toast({
-          title: "Error Cleaning Data",
-          description: error.message || "Failed to clean up dummy data.",
-          variant: "destructive",
-        });
-      } else if (data.success) {
-        const counts = data.deleted_counts;
-        const totalDeleted = Object.values(counts).reduce((sum: number, count: any) => sum + count, 0);
+      if (result.success) {
+        const deletedCounts = result.data?.deleted_counts || {};
+        const totalDeleted = Object.values(deletedCounts).reduce((sum: number, count: any) => sum + count, 0);
         
         toast({
-          title: "Data Cleaned Successfully",
-          description: `Deleted ${totalDeleted} records across all tables. The platform is now clean.`,
+          title: "Data Cleanup Complete",
+          description: `Successfully deleted ${totalDeleted} records across all tables.`,
         });
+
+        // Refresh the page after cleanup to reset any cached data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         toast({
-          title: "Cleanup Failed",
-          description: data.error || "Failed to clean up dummy data.",
+          title: "Error Cleaning Up Data",
+          description: result.error || "Failed to cleanup dummy data.",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Unexpected error occurred while cleaning data.",
+        description: "Unexpected error occurred during data cleanup.",
         variant: "destructive",
       });
     } finally {
-      setIsDeleting(false);
+      setIsCleaningUp(false);
     }
   };
 
@@ -63,38 +60,40 @@ export function CleanupDataButton() {
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button 
+          disabled={isCleaningUp}
           variant="destructive"
           size="sm"
           className="gap-2"
         >
-          <Trash2 className="h-4 w-4" />
-          Clean All Data
+          {isCleaningUp ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Cleaning...
+            </>
+          ) : (
+            <>
+              <Trash2 className="h-4 w-4" />
+              Clean All Data
+            </>
+          )}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete All Dummy Data</AlertDialogTitle>
+          <AlertDialogTitle>Delete All Data?</AlertDialogTitle>
           <AlertDialogDescription>
             This will permanently delete ALL data from the platform including:
-            users, organizations, tenants, incidents, equipment, locations, and all related records.
+            users, organizations, tenants, incidents, equipment, locations, and audit logs.
             This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={handleCleanup}
-            disabled={isDeleting}
+            onClick={handleCleanupData}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isDeleting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Deleting...
-              </>
-            ) : (
-              "Delete All Data"
-            )}
+            Delete Everything
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

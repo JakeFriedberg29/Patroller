@@ -12,54 +12,55 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log('Starting dummy data cleanup...');
-
-    // Initialize Supabase client with service role key
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
+    console.log('Cleanup dummy data function called');
+    
+    // Initialize Supabase Admin Client
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
       }
-    });
+    );
 
     // Call the cleanup function
-    const { data, error } = await supabase.rpc('cleanup_dummy_data');
+    const { data, error } = await supabaseAdmin.rpc('cleanup_dummy_data');
 
     if (error) {
       console.error('Error calling cleanup_dummy_data:', error);
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: error.message 
+        JSON.stringify({
+          success: false,
+          error: error.message
         }),
-        { 
+        {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
-    console.log('Cleanup completed successfully:', data);
+    console.log('Cleanup completed:', data);
 
     return new Response(
       JSON.stringify(data),
-      { 
+      {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
 
   } catch (error) {
-    console.error('Unexpected error during cleanup:', error);
+    console.error('Unexpected error in cleanup-dummy-data:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || 'Unknown error occurred' 
+      JSON.stringify({
+        success: false,
+        error: error.message || 'An unexpected error occurred'
       }),
-      { 
+      {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
