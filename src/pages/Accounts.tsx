@@ -330,6 +330,15 @@ export default function Accounts() {
                         }}>
                           View Account
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          const settingsPath = account.type === 'Enterprise' 
+                            ? `/enterprises/${account.id}/settings`
+                            : `/organization/${account.id}/settings`;
+                          console.log("Navigating to settings:", settingsPath);
+                          navigate(settingsPath);
+                        }}>
+                          Settings
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

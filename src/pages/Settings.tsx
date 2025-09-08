@@ -120,9 +120,17 @@ export default function Settings() {
 
   // Load account data
   useEffect(() => {
+    console.log("Settings component - useEffect triggered");
+    console.log("ID from params:", id);
+    console.log("Accounts length:", accounts.length);
+    console.log("Accounts data:", accounts);
+    
     if (id && accounts.length > 0) {
       const account = accounts.find(acc => acc.id === id);
+      console.log("Found account:", account);
+      
       if (account) {
+        console.log("Setting current account:", account);
         setCurrentAccount(account);
         setFormData({
           name: account.name,
@@ -140,6 +148,7 @@ export default function Settings() {
           zip: ""
         });
       } else {
+        console.log("Account not found - ID:", id, "Available accounts:", accounts.map(a => a.id));
         toast({
           title: "Account Not Found",
           description: "The requested account could not be found.",
@@ -147,6 +156,8 @@ export default function Settings() {
         });
         navigate('/accounts');
       }
+    } else {
+      console.log("Waiting for data - ID:", id, "Accounts length:", accounts.length);
     }
   }, [id, accounts, navigate, toast]);
 
