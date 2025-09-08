@@ -369,26 +369,26 @@ export const useAccounts = () => {
       }
 
       if (account.type === 'Enterprise') {
-        // Soft delete tenant by marking as inactive
+        // Delete tenant from database
         const { error } = await supabase
           .from('tenants')
-          .update({ subscription_status: 'cancelled' })
+          .delete()
           .eq('id', id);
 
         if (error) throw error;
       } else {
-        // Soft delete organization by marking as inactive
+        // Delete organization from database
         const { error } = await supabase
           .from('organizations')
-          .update({ is_active: false })
+          .delete()
           .eq('id', id);
 
         if (error) throw error;
       }
 
       toast({
-        title: "Account Deactivated",
-        description: "Account has been deactivated successfully",
+        title: "Account Deleted",
+        description: "Account has been permanently deleted",
       });
 
       // Refresh the accounts list
@@ -398,7 +398,7 @@ export const useAccounts = () => {
       console.error('Error deleting account:', error);
       toast({
         title: "Error",
-        description: "Failed to deactivate account",
+        description: "Failed to delete account",
         variant: "destructive"
       });
       return false;
