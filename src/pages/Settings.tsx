@@ -1,12 +1,11 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -14,9 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Plus, Users, Search, Loader2 } from "lucide-react";
+import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Plus, Users, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAccounts } from "@/hooks/useAccounts";
 
 const mockAccountData = {
   id: 1,
@@ -93,82 +91,27 @@ const availableOrganizations = [
 
 export default function Settings() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const { accounts, loading, fetchAccounts, deleteAccount, updateAccount } = useAccounts();
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [organizations, setOrganizations] = useState(mockOrganizations);
-  const [accountData, setAccountData] = useState<any>(null);
-  const [accountNotFound, setAccountNotFound] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    type: "",
-    category: "",
-    primaryEmail: "",
-    primaryPhone: "",
-    primaryContact: "",
-    secondaryEmail: "",
-    secondaryPhone: "",
-    secondaryContact: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: ""
+    name: mockAccountData.name,
+    type: mockAccountData.type,
+    category: mockAccountData.category,
+    primaryEmail: mockAccountData.primaryEmail,
+    primaryPhone: mockAccountData.primaryPhone,
+    primaryContact: "John Doe",
+    secondaryEmail: mockAccountData.secondaryEmail,
+    secondaryPhone: mockAccountData.secondaryPhone,
+    secondaryContact: "Jane Smith",
+    address: mockAccountData.address,
+    city: mockAccountData.city,
+    state: mockAccountData.state,
+    zip: mockAccountData.zip
   });
 
   const [isEditing, setIsEditing] = useState(false);
-
-  // Load account data on component mount
-  useEffect(() => {
-    if (!id || id === 'undefined') {
-      setAccountNotFound(true);
-      toast({
-        title: "Invalid Account ID",
-        description: "The account ID in the URL is invalid.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    fetchAccounts();
-  }, [id, fetchAccounts]);
-
-  // Update form data when account data is loaded
-  useEffect(() => {
-    if (accounts.length > 0 && id && id !== 'undefined') {
-      const account = accounts.find(acc => acc.id === id);
-      
-      if (account) {
-        setAccountData(account);
-        setFormData({
-          name: account.name || "",
-          type: account.type || "",
-          category: account.category || "",
-          primaryEmail: account.email || "",
-          primaryPhone: account.phone || "",
-          primaryContact: "",
-          secondaryEmail: "",
-          secondaryPhone: "",
-          secondaryContact: "",
-          address: "",
-          city: "",
-          state: "",
-          zip: ""
-        });
-        setAccountNotFound(false);
-      } else {
-        setAccountNotFound(true);
-        toast({
-          title: "Account Not Found",
-          description: "The specified account could not be found.",
-          variant: "destructive",
-        });
-      }
-    }
-  }, [accounts, id, toast]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -177,27 +120,17 @@ export default function Settings() {
     }));
   };
 
-  const handleSave = async () => {
-    if (!accountData || !id) return;
-    
+  const handleSave = () => {
     try {
-      await updateAccount(id, {
-        name: formData.name,
-        type: formData.type as any,
-        category: formData.category,
-        email: formData.primaryEmail,
-        phone: formData.primaryPhone
-      });
-      
+      // Here you would typically save to an API
+      console.log("Saving settings:", formData);
       setIsEditing(false);
-      await fetchAccounts(); // Refresh data
       
       toast({
         title: "Settings Updated Successfully",
         description: "Your changes have been saved.",
       });
     } catch (error) {
-      console.error('Save error:', error);
       toast({
         title: "Error Saving Settings",
         description: "Failed to save your changes. Please try again.",
@@ -207,24 +140,22 @@ export default function Settings() {
   };
 
   const handleCancel = () => {
-    if (accountData) {
-      // Reset form data to original values
-      setFormData({
-        name: accountData.name || "",
-        type: accountData.type || "",
-        category: accountData.category || "",
-        primaryEmail: accountData.email || "",
-        primaryPhone: accountData.phone || "",
-        primaryContact: "",
-        secondaryEmail: "",
-        secondaryPhone: "",
-        secondaryContact: "",
-        address: "",
-        city: "",
-        state: "",
-        zip: ""
-      });
-    }
+    // Reset form data to original values
+    setFormData({
+      name: mockAccountData.name,
+      type: mockAccountData.type,
+      category: mockAccountData.category,
+      primaryEmail: mockAccountData.primaryEmail,
+      primaryPhone: mockAccountData.primaryPhone,
+      primaryContact: "John Doe",
+      secondaryEmail: mockAccountData.secondaryEmail,
+      secondaryPhone: mockAccountData.secondaryPhone,
+      secondaryContact: "Jane Smith",
+      address: mockAccountData.address,
+      city: mockAccountData.city,
+      state: mockAccountData.state,
+      zip: mockAccountData.zip
+    });
     setIsEditing(false);
   };
 
@@ -233,39 +164,9 @@ export default function Settings() {
     // Here you would typically call an API to disable the account
   };
 
-  const handleDeleteAccount = async () => {
-    if (!id || id === 'undefined') {
-      toast({
-        title: "Error",
-        description: "Account ID not found or invalid",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsDeleting(true);
-    
-    try {
-      await deleteAccount(id);
-      
-      toast({
-        title: "Account Deleted Successfully",
-        description: "The account and all associated data have been permanently removed.",
-      });
-      
-      setIsDeleteModalOpen(false);
-      // Redirect to accounts list after successful deletion
-      navigate('/accounts');
-    } catch (error) {
-      console.error('Delete account error:', error);
-      toast({
-        title: "Delete Failed",
-        description: "Failed to delete the account. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleDeleteAccount = () => {
+    console.log("Deleting account");
+    // Here you would typically show a confirmation dialog and then call an API
   };
 
   const handleAddOrganization = (org: typeof availableOrganizations[0]) => {
@@ -303,47 +204,6 @@ export default function Settings() {
 
   const isEnterprise = formData.type === "Enterprise";
   const isOrganization = formData.type === "Organization";
-
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading account settings...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (accountNotFound || !id || id === 'undefined') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Account Not Found</h2>
-          <p className="text-muted-foreground mb-4">
-            The account you're trying to access doesn't exist or you don't have permission to view it.
-          </p>
-          <Button onClick={() => navigate('/accounts')}>
-            Return to Accounts
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render the form until we have account data
-  if (!accountData) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading account data...</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -432,30 +292,28 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Account Status and Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Account Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold">Account ID: {accountData.id}</h3>
-                <p className="text-sm text-muted-foreground">
-                  Members: {accountData.memberCount || 0} • Status: {accountData.status || 'Active'}
-                </p>
+      {/* Parent Enterprise - Only for Organizations */}
+      {isOrganization && mockAccountData.parentEnterprise && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Parent Enterprise
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold">{mockAccountData.parentEnterprise.name}</h3>
+                  <p className="text-sm text-muted-foreground">This organization is part of the above enterprise</p>
+                </div>
+                <Badge variant="secondary">{mockAccountData.parentEnterprise.type}</Badge>
               </div>
-              <Badge variant={accountData.status === 'Active' ? 'default' : 'secondary'}>
-                {accountData.status || 'Active'}
-              </Badge>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Organizations Management - Only for Enterprises */}
       {isEnterprise && (
@@ -735,7 +593,7 @@ export default function Settings() {
               </div>
               <Button 
                 variant="destructive"
-                onClick={() => setIsDeleteModalOpen(true)}
+                onClick={handleDeleteAccount}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete Account
@@ -744,54 +602,6 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Delete Account Confirmation Modal */}
-      <AlertDialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
-              Delete Account
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                Are you sure you want to permanently delete <strong>{formData.name}</strong>?
-              </p>
-              <p className="text-sm">
-                This action will:
-              </p>
-              <ul className="text-sm list-disc list-inside space-y-1 ml-4">
-                <li>Permanently remove all account data</li>
-                <li>Delete all associated users and roles</li>
-                <li>Remove all equipment, incidents, and reports</li>
-                <li>Cannot be undone</li>
-              </ul>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteAccount}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-destructive-foreground mr-2" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Account
-                </>
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
