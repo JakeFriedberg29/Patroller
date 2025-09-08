@@ -1,5 +1,5 @@
-import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Plus, Users, Search } from "lucide-react";
+import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Plus, Users, Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAccounts, Account } from "@/hooks/useAccounts";
+import { DeleteAccountModal } from "@/components/DeleteAccountModal";
 
 const mockAccountData = {
   id: 1,
@@ -91,27 +93,62 @@ const availableOrganizations = [
 
 export default function Settings() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const { accounts, loading, updateAccount, deleteAccount } = useAccounts();
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [organizations, setOrganizations] = useState(mockOrganizations);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
   const [formData, setFormData] = useState({
-    name: mockAccountData.name,
-    type: mockAccountData.type,
-    category: mockAccountData.category,
-    primaryEmail: mockAccountData.primaryEmail,
-    primaryPhone: mockAccountData.primaryPhone,
-    primaryContact: "John Doe",
-    secondaryEmail: mockAccountData.secondaryEmail,
-    secondaryPhone: mockAccountData.secondaryPhone,
-    secondaryContact: "Jane Smith",
-    address: mockAccountData.address,
-    city: mockAccountData.city,
-    state: mockAccountData.state,
-    zip: mockAccountData.zip
+    name: "",
+    type: "Organization",
+    category: "",
+    primaryEmail: "",
+    primaryPhone: "",
+    primaryContact: "",
+    secondaryEmail: "",
+    secondaryPhone: "",
+    secondaryContact: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: ""
   });
 
-  const [isEditing, setIsEditing] = useState(false);
+  // Load account data
+  useEffect(() => {
+    if (id && accounts.length > 0) {
+      const account = accounts.find(acc => acc.id === id);
+      if (account) {
+        setCurrentAccount(account);
+        setFormData({
+          name: account.name,
+          type: account.type,
+          category: account.category,
+          primaryEmail: account.email,
+          primaryPhone: account.phone,
+          primaryContact: "",
+          secondaryEmail: "",
+          secondaryPhone: "",
+          secondaryContact: "",
+          address: "",
+          city: "",
+          state: "",
+          zip: ""
+        });
+      } else {
+        toast({
+          title: "Account Not Found",
+          description: "The requested account could not be found.",
+          variant: "destructive"
+        });
+        navigate('/accounts');
+      }
+    }
+  }, [id, accounts, navigate, toast]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -120,16 +157,25 @@ export default function Settings() {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!currentAccount) return;
+    
     try {
-      // Here you would typically save to an API
-      console.log("Saving settings:", formData);
-      setIsEditing(false);
-      
-      toast({
-        title: "Settings Updated Successfully",
-        description: "Your changes have been saved.",
+      const success = await updateAccount(currentAccount.id, {
+        name: formData.name,
+        type: formData.type as 'Enterprise' | 'Organization',
+        category: formData.category,
+        email: formData.primaryEmail,
+        phone: formData.primaryPhone
       });
+      
+      if (success) {
+        setIsEditing(false);
+        toast({
+          title: "Settings Updated Successfully",
+          description: "Your changes have been saved.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error Saving Settings",
@@ -140,21 +186,23 @@ export default function Settings() {
   };
 
   const handleCancel = () => {
+    if (!currentAccount) return;
+    
     // Reset form data to original values
     setFormData({
-      name: mockAccountData.name,
-      type: mockAccountData.type,
-      category: mockAccountData.category,
-      primaryEmail: mockAccountData.primaryEmail,
-      primaryPhone: mockAccountData.primaryPhone,
-      primaryContact: "John Doe",
-      secondaryEmail: mockAccountData.secondaryEmail,
-      secondaryPhone: mockAccountData.secondaryPhone,
-      secondaryContact: "Jane Smith",
-      address: mockAccountData.address,
-      city: mockAccountData.city,
-      state: mockAccountData.state,
-      zip: mockAccountData.zip
+      name: currentAccount.name,
+      type: currentAccount.type,
+      category: currentAccount.category,
+      primaryEmail: currentAccount.email,
+      primaryPhone: currentAccount.phone,
+      primaryContact: "",
+      secondaryEmail: "",
+      secondaryPhone: "",
+      secondaryContact: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: ""
     });
     setIsEditing(false);
   };
@@ -164,9 +212,12 @@ export default function Settings() {
     // Here you would typically call an API to disable the account
   };
 
-  const handleDeleteAccount = () => {
-    console.log("Deleting account");
-    // Here you would typically show a confirmation dialog and then call an API
+  const handleDeleteAccount = async (accountId: string) => {
+    const success = await deleteAccount(accountId);
+    if (success) {
+      navigate('/accounts');
+    }
+    return success;
   };
 
   const handleAddOrganization = (org: typeof availableOrganizations[0]) => {
@@ -204,6 +255,18 @@ export default function Settings() {
 
   const isEnterprise = formData.type === "Enterprise";
   const isOrganization = formData.type === "Organization";
+
+  // Show loading state
+  if (loading || !currentAccount) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading account settings...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -593,7 +656,7 @@ export default function Settings() {
               </div>
               <Button 
                 variant="destructive"
-                onClick={handleDeleteAccount}
+                onClick={() => setDeleteModalOpen(true)}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete Account
@@ -602,6 +665,14 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        account={currentAccount}
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDeleteAccount}
+      />
     </div>
   );
 }
