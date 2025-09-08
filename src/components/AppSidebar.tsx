@@ -19,7 +19,6 @@ import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { useMemo } from "react";
 
 import {
   Sidebar,
@@ -75,17 +74,13 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { profile } = useUserProfile();
+  const currentPath = location.pathname;
   
   const isCollapsed = state === "collapsed";
-  const currentPath = location.pathname;
 
-  // Use memoized context detection for reliability
-  const { isInOrganization, isInEnterprise } = useMemo(() => {
-    return {
-      isInOrganization: currentPath.startsWith('/organization/') && Boolean(id),
-      isInEnterprise: currentPath.startsWith('/enterprises/') && Boolean(id)
-    };
-  }, [currentPath, id]);
+  // Check navigation context
+  const isInOrganization = currentPath.startsWith('/organization/') && id;
+  const isInEnterprise = currentPath.startsWith('/enterprises/') && id;
 
   const isActive = (path: string) => {
     if (isInOrganization || isInEnterprise) {
