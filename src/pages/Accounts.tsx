@@ -27,10 +27,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Building2, Mail, Phone, Users, Filter, MoreHorizontal, Loader2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Search, Building2, Mail, Phone, Users, Filter, MoreHorizontal, Loader2, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { useAccounts, CreateAccountRequest } from "@/hooks/useAccounts";
+import { useAccounts, CreateAccountRequest, Account } from "@/hooks/useAccounts";
+import { DeleteAccountModal } from "@/components/DeleteAccountModal";
 
 const typeColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   "Enterprise": "default",
@@ -49,7 +50,7 @@ const categoryColors: Record<string, "default" | "secondary" | "destructive" | "
 export default function Accounts() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { accounts, loading, createAccount, canManageAccounts } = useAccounts();
+  const { accounts, loading, createAccount, deleteAccount, canManageAccounts } = useAccounts();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("All Types");
@@ -57,6 +58,7 @@ export default function Accounts() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
+  const [deleteModalAccount, setDeleteModalAccount] = useState<Account | null>(null);
   const [formData, setFormData] = useState<CreateAccountRequest>({
     name: "",
     type: "Organization",
@@ -329,6 +331,14 @@ export default function Accounts() {
                         }}>
                           View Account
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => setDeleteModalAccount(account)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Account
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -522,6 +532,14 @@ export default function Accounts() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        account={deleteModalAccount}
+        isOpen={!!deleteModalAccount}
+        onClose={() => setDeleteModalAccount(null)}
+        onConfirm={deleteAccount}
+      />
     </div>
   );
 }
