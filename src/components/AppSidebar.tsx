@@ -78,9 +78,9 @@ export function AppSidebar() {
   
   const isCollapsed = state === "collapsed";
 
-  // Check navigation context
-  const isInOrganization = currentPath.includes('/organization/') && currentPath.split('/').length > 2;
-  const isInEnterprise = currentPath.includes('/enterprises/');
+  // Check navigation context - ensure we have a valid ID when checking organization/enterprise context
+  const isInOrganization = currentPath.includes('/organization/') && id && id !== 'undefined';
+  const isInEnterprise = currentPath.includes('/enterprises/') && id && id !== 'undefined';
 
   const isActive = (path: string) => {
     if (isInOrganization || isInEnterprise) {
@@ -95,9 +95,11 @@ export function AppSidebar() {
       : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1";
 
   const handleSettingsClick = () => {
-    if (isInOrganization) {
+    console.log('Settings clicked - currentPath:', currentPath, 'id:', id, 'isInOrganization:', isInOrganization, 'isInEnterprise:', isInEnterprise);
+    
+    if (isInOrganization && id && id !== 'undefined') {
       navigate(`/organization/${id}/settings`);
-    } else if (isInEnterprise) {
+    } else if (isInEnterprise && id && id !== 'undefined') {
       navigate(`/enterprises/${id}/settings`);
     } else {
       navigate('/settings');
