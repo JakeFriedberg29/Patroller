@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Plus, Users, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAccounts } from "@/hooks/useAccounts";
 
 const mockAccountData = {
   id: 1,
@@ -91,8 +93,12 @@ const availableOrganizations = [
 
 export default function Settings() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const { deleteAccount } = useAccounts();
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [organizations, setOrganizations] = useState(mockOrganizations);
   const [formData, setFormData] = useState({
@@ -164,9 +170,41 @@ export default function Settings() {
     // Here you would typically call an API to disable the account
   };
 
-  const handleDeleteAccount = () => {
-    console.log("Deleting account");
-    // Here you would typically show a confirmation dialog and then call an API
+  const handleDeleteAccount = async () => {
+    if (!id) {
+      toast({
+        title: "Error",
+        description: "Account ID not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeleting(true);
+    
+    try {
+      const success = await deleteAccount(id);
+      
+      if (success) {
+        toast({
+          title: "Account Deleted Successfully",
+          description: "The account and all associated data have been permanently removed.",
+        });
+        
+        setIsDeleteModalOpen(false);
+        // Redirect to accounts list after successful deletion
+        navigate('/accounts');
+      }
+    } catch (error) {
+      console.error('Delete account error:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete the account. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleAddOrganization = (org: typeof availableOrganizations[0]) => {
@@ -593,7 +631,7 @@ export default function Settings() {
               </div>
               <Button 
                 variant="destructive"
-                onClick={handleDeleteAccount}
+                onClick={() => setIsDeleteModalOpen(true)}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete Account
@@ -602,6 +640,54 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Account Confirmation Modal */}
+      <AlertDialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete Account
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to permanently delete <strong>{formData.name}</strong>?
+              </p>
+              <p className="text-sm">
+                This action will:
+              </p>
+              <ul className="text-sm list-disc list-inside space-y-1 ml-4">
+                <li>Permanently remove all account data</li>
+                <li>Delete all associated users and roles</li>
+                <li>Remove all equipment, incidents, and reports</li>
+                <li>Cannot be undone</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-destructive-foreground mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Account
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
