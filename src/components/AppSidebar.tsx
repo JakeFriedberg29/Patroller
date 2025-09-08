@@ -19,6 +19,7 @@ import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
 
 import {
   Sidebar,
@@ -74,13 +75,17 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { profile } = useUserProfile();
-  const currentPath = location.pathname;
   
   const isCollapsed = state === "collapsed";
+  const currentPath = location.pathname;
 
-  // Check navigation context with debugging
-  const isInOrganization = currentPath.startsWith('/organization/') && !!id;
-  const isInEnterprise = currentPath.startsWith('/enterprises/') && !!id;
+  // Use memoized context detection for reliability
+  const { isInOrganization, isInEnterprise } = useMemo(() => {
+    return {
+      isInOrganization: currentPath.startsWith('/organization/') && Boolean(id),
+      isInEnterprise: currentPath.startsWith('/enterprises/') && Boolean(id)
+    };
+  }, [currentPath, id]);
 
   const isActive = (path: string) => {
     if (isInOrganization || isInEnterprise) {
@@ -139,10 +144,6 @@ export function AppSidebar() {
               <h2 className="text-lg font-bold text-sidebar-foreground">MissionLog</h2>
               <p className="text-xs text-sidebar-foreground/70">
                 {isInEnterprise ? 'Enterprise View' : isInOrganization ? 'Organization View' : 'Platform View'}
-              </p>
-              {/* Temporary debugging display */}
-              <p className="text-xs text-red-500">
-                DEBUG: path={currentPath.substring(0, 20)}... id={id || 'none'} org={isInOrganization.toString()} ent={isInEnterprise.toString()}
               </p>
             </div>
           )}
