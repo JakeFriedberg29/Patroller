@@ -16,7 +16,6 @@ import {
 import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Plus, Users, Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAccounts, Account } from "@/hooks/useAccounts";
-import { DeleteAccountModal } from "@/components/DeleteAccountModal";
 
 const mockAccountData = {
   id: 1,
@@ -99,7 +98,6 @@ export default function Settings() {
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [organizations, setOrganizations] = useState(mockOrganizations);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
   const [formData, setFormData] = useState({
@@ -223,12 +221,21 @@ export default function Settings() {
     // Here you would typically call an API to disable the account
   };
 
-  const handleDeleteAccount = async (accountId: string) => {
-    const success = await deleteAccount(accountId);
-    if (success) {
-      navigate('/accounts');
+  const handleDeleteAccount = async () => {
+    if (!currentAccount) return;
+    
+    try {
+      const success = await deleteAccount(currentAccount.id);
+      if (success) {
+        navigate('/accounts');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete account",
+        variant: "destructive"
+      });
     }
-    return success;
   };
 
   const handleAddOrganization = (org: typeof availableOrganizations[0]) => {
@@ -667,7 +674,7 @@ export default function Settings() {
               </div>
               <Button 
                 variant="destructive"
-                onClick={() => setDeleteModalOpen(true)}
+                onClick={handleDeleteAccount}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete Account
@@ -676,14 +683,6 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Delete Account Modal */}
-      <DeleteAccountModal
-        account={currentAccount}
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={handleDeleteAccount}
-      />
     </div>
   );
 }
