@@ -78,9 +78,9 @@ export function AppSidebar() {
   
   const isCollapsed = state === "collapsed";
 
-  // Check navigation context
-  const isInOrganization = currentPath.startsWith('/organization/') && id;
-  const isInEnterprise = currentPath.startsWith('/enterprises/') && id;
+  // Check navigation context with debugging
+  const isInOrganization = currentPath.startsWith('/organization/') && !!id;
+  const isInEnterprise = currentPath.startsWith('/enterprises/') && !!id;
 
   const isActive = (path: string) => {
     if (isInOrganization || isInEnterprise) {
@@ -139,6 +139,10 @@ export function AppSidebar() {
               <h2 className="text-lg font-bold text-sidebar-foreground">MissionLog</h2>
               <p className="text-xs text-sidebar-foreground/70">
                 {isInEnterprise ? 'Enterprise View' : isInOrganization ? 'Organization View' : 'Platform View'}
+              </p>
+              {/* Temporary debugging display */}
+              <p className="text-xs text-red-500">
+                DEBUG: path={currentPath.substring(0, 20)}... id={id || 'none'} org={isInOrganization.toString()} ent={isInEnterprise.toString()}
               </p>
             </div>
           )}
