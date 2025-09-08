@@ -5,6 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AccountsOverTimeChart, AccountsByTypeChart, UsersOverTimeChart, ReportsByTypeChart } from "@/components/DashboardCharts";
+import { CleanupDataButton } from "@/components/CleanupDataButton";
 import { AlertTriangle, Clock, Users, FileText, Shield, RefreshCw, Calendar as CalendarIcon, Building2, Network, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -73,6 +74,7 @@ const Index = () => {
             <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
+          <CleanupDataButton />
         </div>
       </div>
 

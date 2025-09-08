@@ -843,6 +843,10 @@ export type Database = {
         Args: { p_equipment_id: string; p_user_id: string }
         Returns: boolean
       }
+      cleanup_dummy_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       create_audit_log_partition: {
         Args: { p_month: number; p_year: number }
         Returns: string
