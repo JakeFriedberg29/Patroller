@@ -8,52 +8,23 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  Bell, 
-  Search, 
-  Plus, 
-  Eye,
-  Settings,
-  Mail,
-  Filter,
-  Calendar,
-  Building2,
-  Users,
-  Shield,
-  Edit,
-  Download
-} from "lucide-react";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Bell, Search, Plus, Eye, Settings, Mail, Filter, Calendar, Building2, Users, Shield, Edit, Download } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-
-const mockActivationNotifications = [
-  {
-    id: "activation-001",
-    title: "New Platform Admin Account Activation",
-    type: "activation_email",
-    recipientType: "Platform Admin",
-    recipient: "john.doe@platform.com",
-    accountType: "Platform Admin",
-    organizationName: "Platform Administration",
-    isEnabled: true,
-    status: "Active",
-    createdDate: "2024-01-15T09:00:00Z",
-    lastSent: "2024-01-15T09:05:00Z",
-    emailTemplate: `Dear [RECIPIENT_NAME],
+const mockActivationNotifications = [{
+  id: "activation-001",
+  title: "New Platform Admin Account Activation",
+  type: "activation_email",
+  recipientType: "Platform Admin",
+  recipient: "john.doe@platform.com",
+  accountType: "Platform Admin",
+  organizationName: "Platform Administration",
+  isEnabled: true,
+  status: "Active",
+  createdDate: "2024-01-15T09:00:00Z",
+  lastSent: "2024-01-15T09:05:00Z",
+  emailTemplate: `Dear [RECIPIENT_NAME],
 
 Welcome to MissionLog Platform Administration!
 
@@ -83,20 +54,19 @@ MissionLog Platform Team
 
 ---
 This is an automated message. Please do not reply to this email.`
-  },
-  {
-    id: "activation-002", 
-    title: "Enterprise Admin Account Activation",
-    type: "activation_email",
-    recipientType: "Enterprise Admin",
-    recipient: "sarah.wilson@megacorp.com",
-    accountType: "Enterprise Admin",
-    organizationName: "MegaCorp Industries",
-    isEnabled: true,
-    status: "Sent",
-    createdDate: "2024-01-14T14:30:00Z",
-    lastSent: "2024-01-14T14:35:00Z",
-    emailTemplate: `Dear [RECIPIENT_NAME],
+}, {
+  id: "activation-002",
+  title: "Enterprise Admin Account Activation",
+  type: "activation_email",
+  recipientType: "Enterprise Admin",
+  recipient: "sarah.wilson@megacorp.com",
+  accountType: "Enterprise Admin",
+  organizationName: "MegaCorp Industries",
+  isEnabled: true,
+  status: "Sent",
+  createdDate: "2024-01-14T14:30:00Z",
+  lastSent: "2024-01-14T14:35:00Z",
+  emailTemplate: `Dear [RECIPIENT_NAME],
 
 Welcome to MissionLog!
 
@@ -127,20 +97,19 @@ MissionLog Platform Team
 
 ---
 This is an automated message. Please do not reply to this email.`
-  },
-  {
-    id: "activation-003",
-    title: "Organization Admin Account Activation", 
-    type: "activation_email",
-    recipientType: "Organization Admin",
-    recipient: "mike.johnson@cityrescue.org",
-    accountType: "Organization Admin",
-    organizationName: "City Emergency Services",
-    isEnabled: false,
-    status: "Disabled",
-    createdDate: "2024-01-13T11:20:00Z",
-    lastSent: null,
-    emailTemplate: `Dear [RECIPIENT_NAME],
+}, {
+  id: "activation-003",
+  title: "Organization Admin Account Activation",
+  type: "activation_email",
+  recipientType: "Organization Admin",
+  recipient: "mike.johnson@cityrescue.org",
+  accountType: "Organization Admin",
+  organizationName: "City Emergency Services",
+  isEnabled: false,
+  status: "Disabled",
+  createdDate: "2024-01-13T11:20:00Z",
+  lastSent: null,
+  emailTemplate: `Dear [RECIPIENT_NAME],
 
 Welcome to MissionLog!
 
@@ -171,9 +140,7 @@ MissionLog Platform Team
 
 ---
 This is an automated message. Please do not reply to this email.`
-  }
-];
-
+}];
 export default function PlatformNotificationCenter() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -182,65 +149,57 @@ export default function PlatformNotificationCenter() {
   const [notifications, setNotifications] = useState(mockActivationNotifications);
   const [selectedNotification, setSelectedNotification] = useState<typeof mockActivationNotifications[0] | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-
-  const filteredNotifications = notifications.filter((notif) => {
-    const matchesSearch = notif.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         notif.recipient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         notif.organizationName.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredNotifications = notifications.filter(notif => {
+    const matchesSearch = notif.title.toLowerCase().includes(searchTerm.toLowerCase()) || notif.recipient.toLowerCase().includes(searchTerm.toLowerCase()) || notif.organizationName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || notif.status.toLowerCase() === statusFilter;
     const matchesRecipientType = recipientTypeFilter === "all" || notif.recipientType.toLowerCase() === recipientTypeFilter.toLowerCase();
-    
     return matchesSearch && matchesStatus && matchesRecipientType;
   });
-
   const handleToggleNotification = (id: string) => {
-    setNotifications(prev => prev.map(notif => 
-      notif.id === id 
-        ? { 
-            ...notif, 
-            isEnabled: !notif.isEnabled,
-            status: !notif.isEnabled ? 'Active' : 'Disabled'
-          }
-        : notif
-    ));
-    
+    setNotifications(prev => prev.map(notif => notif.id === id ? {
+      ...notif,
+      isEnabled: !notif.isEnabled,
+      status: !notif.isEnabled ? 'Active' : 'Disabled'
+    } : notif));
     const notification = notifications.find(n => n.id === id);
     toast({
       title: `Notification ${!notification?.isEnabled ? 'Enabled' : 'Disabled'}`,
-      description: `Activation email notifications have been ${!notification?.isEnabled ? 'enabled' : 'disabled'} for ${notification?.recipientType}s.`,
+      description: `Activation email notifications have been ${!notification?.isEnabled ? 'enabled' : 'disabled'} for ${notification?.recipientType}s.`
     });
   };
-
   const handleViewNotification = (notification: typeof mockActivationNotifications[0]) => {
     setSelectedNotification(notification);
     setIsViewModalOpen(true);
   };
-
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'active': return 'default';
-      case 'sent': return 'secondary';
-      case 'disabled': return 'destructive';
-      default: return 'outline';
+      case 'active':
+        return 'default';
+      case 'sent':
+        return 'secondary';
+      case 'disabled':
+        return 'destructive';
+      default:
+        return 'outline';
     }
   };
-
   const getRecipientTypeIcon = (type: string) => {
     switch (type.toLowerCase()) {
-      case 'platform admin': return <Shield className="h-4 w-4" />;
-      case 'enterprise admin': return <Building2 className="h-4 w-4" />;
-      case 'organization admin': return <Users className="h-4 w-4" />;
-      default: return <Users className="h-4 w-4" />;
+      case 'platform admin':
+        return <Shield className="h-4 w-4" />;
+      case 'enterprise admin':
+        return <Building2 className="h-4 w-4" />;
+      case 'organization admin':
+        return <Users className="h-4 w-4" />;
+      default:
+        return <Users className="h-4 w-4" />;
     }
   };
-
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';
     return new Date(dateString).toLocaleString();
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
@@ -249,10 +208,7 @@ export default function PlatformNotificationCenter() {
           </h1>
           <p className="text-muted-foreground">Manage platform-wide notification settings and activation emails</p>
         </div>
-        <Button variant="outline" className="flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          Export
-        </Button>
+        
       </div>
 
       <Tabs defaultValue="activation-emails" className="space-y-6">
@@ -266,12 +222,7 @@ export default function PlatformNotificationCenter() {
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by recipient, organization, or title..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Search by recipient, organization, or title..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
             <div className="flex items-center gap-2">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -315,9 +266,7 @@ export default function PlatformNotificationCenter() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredNotifications.length > 0 ? (
-                  filteredNotifications.slice(0, parseInt(rowsPerPage)).map((notif) => (
-                    <TableRow key={notif.id}>
+                {filteredNotifications.length > 0 ? filteredNotifications.slice(0, parseInt(rowsPerPage)).map(notif => <TableRow key={notif.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="p-1.5 rounded bg-primary/10 text-primary">
@@ -347,10 +296,7 @@ export default function PlatformNotificationCenter() {
                             {notif.status}
                           </Badge>
                           <div className="flex items-center gap-2">
-                            <Switch
-                              checked={notif.isEnabled}
-                              onCheckedChange={() => handleToggleNotification(notif.id)}
-                            />
+                            <Switch checked={notif.isEnabled} onCheckedChange={() => handleToggleNotification(notif.id)} />
                           </div>
                         </div>
                       </TableCell>
@@ -361,24 +307,16 @@ export default function PlatformNotificationCenter() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewNotification(notif)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => handleViewNotification(notif)}>
                           <Eye className="mr-2 h-4 w-4" />
                           View Email
                         </Button>
                       </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
+                    </TableRow>) : <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No notifications found matching your search criteria.
                     </TableCell>
-                  </TableRow>
-                )}
+                  </TableRow>}
               </TableBody>
             </Table>
           </div>
@@ -503,8 +441,7 @@ export default function PlatformNotificationCenter() {
               Email Template - {selectedNotification?.title}
             </DialogTitle>
           </DialogHeader>
-          {selectedNotification && (
-            <div className="space-y-4">
+          {selectedNotification && <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg text-sm">
                 <div>
                   <span className="font-medium">Recipient Type:</span> {selectedNotification.recipientType}
@@ -524,32 +461,25 @@ export default function PlatformNotificationCenter() {
               </div>
               <div>
                 <Label htmlFor="email-content">Email Content</Label>
-                <Textarea
-                  id="email-content"
-                  value={selectedNotification.emailTemplate}
-                  readOnly
-                  className="min-h-96 mt-2 font-mono text-sm"
-                />
+                <Textarea id="email-content" value={selectedNotification.emailTemplate} readOnly className="min-h-96 mt-2 font-mono text-sm" />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
                   Close
                 </Button>
                 <Button onClick={() => {
-                  // Handle edit functionality
-                  toast({
-                    title: "Edit Feature",
-                    description: "Email template editing will be available in a future update.",
-                  });
-                }}>
+              // Handle edit functionality
+              toast({
+                title: "Edit Feature",
+                description: "Email template editing will be available in a future update."
+              });
+            }}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Template
                 </Button>
               </div>
-            </div>
-          )}
+            </div>}
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
