@@ -27,10 +27,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Building2, Mail, Phone, Users, Filter, MoreHorizontal, Loader2 } from "lucide-react";
+import { Plus, Search, Building2, Mail, Phone, Users, Filter, MoreHorizontal, Loader2, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { useAccounts, CreateAccountRequest, Account } from "@/hooks/useAccounts";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 const typeColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   "Enterprise": "default",
@@ -58,9 +59,25 @@ export default function Accounts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
   
+  const handleCopyId = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id);
+      toast({
+        title: "Copied",
+        description: "Account ID copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: "Copy failed",
+        description: "Unable to copy account ID",
+        variant: "destructive",
+      });
+    }
+  };
+  
   const [formData, setFormData] = useState<CreateAccountRequest>({
     name: "",
-    type: "Organization",
+    type: "Enterprise",
     category: "",
     primaryEmail: "",
     primaryPhone: "",
@@ -315,32 +332,52 @@ export default function Accounts() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => {
-                          console.log("Dropdown item clicked for account:", account);
-                          console.log("Account ID:", account.id);
-                          handleViewAccount(account.id);
-                        }}>
-                          View Account
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          const settingsPath = account.type === 'Enterprise' 
-                            ? `/enterprises/${account.id}/settings`
-                            : `/organization/${account.id}/settings`;
-                          console.log("Navigating to settings:", settingsPath);
-                          navigate(settingsPath);
-                        }}>
-                          Settings
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-1">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleCopyId(account.id)}
+                            >
+                              <Copy className="h-4 w-4" />
+                              <span className="sr-only">Copy Account ID</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Copy Account ID
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {
+                            console.log("Dropdown item clicked for account:", account);
+                            console.log("Account ID:", account.id);
+                            handleViewAccount(account.id);
+                          }}>
+                            View Account
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            const settingsPath = account.type === 'Enterprise' 
+                              ? `/enterprises/${account.id}/settings`
+                              : `/organization/${account.id}/settings`;
+                            console.log("Navigating to settings:", settingsPath);
+                            navigate(settingsPath);
+                          }}>
+                            Settings
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

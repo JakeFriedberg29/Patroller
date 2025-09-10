@@ -82,7 +82,7 @@ export const useAccounts = () => {
         return;
       }
 
-      // Fetch tenants (Enterprises)
+      // Fetch tenants (Accounts). Each account is its own tenant.
       const { data: tenants, error: tenantsError } = await supabase
         .from('tenants')
         .select('*')
@@ -91,24 +91,15 @@ export const useAccounts = () => {
       if (tenantsError) throw tenantsError;
       console.log("Fetched tenants:", tenants);
 
-      // Fetch organizations
-      const { data: organizations, error: orgsError } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (orgsError) throw orgsError;
-      console.log("Fetched organizations:", organizations);
-
       // Get user counts for each tenant/organization
       const { data: userCounts, error: userCountsError } = await supabase
         .from('users')
-        .select('tenant_id, organization_id')
+        .select('tenant_id')
         .eq('status', 'active');
 
       if (userCountsError) throw userCountsError;
 
-      // Process tenants as Enterprise accounts
+      // Process tenants as Accounts
       const enterpriseAccounts: Account[] = (tenants || []).map(tenant => {
         const memberCount = userCounts?.filter(u => u.tenant_id === tenant.id).length || 0;
         
@@ -136,38 +127,8 @@ export const useAccounts = () => {
         return account;
       }).filter(Boolean) as Account[];
 
-      // Process organizations as Organization accounts
-      const organizationAccounts: Account[] = (organizations || []).map(org => {
-        const memberCount = userCounts?.filter(u => u.organization_id === org.id).length || 0;
-        
-        // Validate organization ID
-        if (!org.id || org.id === 'undefined') {
-          console.error("Invalid organization ID found:", org);
-          return null;
-        }
-        
-        const account = {
-          id: org.id,
-          name: org.name,
-          type: 'Organization' as const,
-          category: mapOrgTypeToCategory(org.organization_type),
-          members: memberCount,
-          email: org.contact_email || 'N/A',
-          phone: org.contact_phone || 'N/A',
-          created: new Date(org.created_at).toLocaleDateString(),
-          tenant_id: org.tenant_id,
-          organization_type: org.organization_type,
-          is_active: org.is_active,
-          address: org.address,
-          settings: org.settings
-        };
-        
-        console.log("Created organization account:", account);
-        return account;
-      }).filter(Boolean) as Account[];
-
-      console.log("Final accounts array:", [...enterpriseAccounts, ...organizationAccounts]);
-      setAccounts([...enterpriseAccounts, ...organizationAccounts]);
+      console.log("Final accounts array (tenants only):", enterpriseAccounts);
+      setAccounts(enterpriseAccounts);
     } catch (error) {
       console.error('Error fetching accounts:', error);
       toast({
