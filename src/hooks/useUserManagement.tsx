@@ -71,6 +71,21 @@ export const useUserManagement = () => {
 
       console.log('Creating user with tenant ID:', tenantId);
       
+      // Pre-check: email must not exist anywhere (global uniqueness across tenants/orgs)
+      const { data: existingUsers, error: existingErr } = await supabase
+        .from('users')
+        .select('id, tenant_id')
+        .ilike('email', userData.email.trim());
+
+      if (existingErr) {
+        console.error('Error checking existing users:', existingErr);
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
+        toast.error('A user with this email already exists in another account.');
+        return { success: false, error: 'Email already exists in another account' };
+      }
+      
       // Create user in the database first (without email confirmation)
       const { data, error } = await supabase.rpc('create_user_with_activation', {
         p_email: userData.email,
@@ -85,6 +100,11 @@ export const useUserManagement = () => {
 
       if (error) {
         console.error('Error creating user:', error);
+        const normalized = error.message?.toLowerCase() || '';
+        if (normalized.includes('uniq_users_email_lower') || normalized.includes('duplicate') || normalized.includes('unique')) {
+          toast.error('Email already exists in another account.');
+          return { success: false, error: 'Email already exists in another account' };
+        }
         toast.error('Failed to create user: ' + error.message);
         return { success: false, error: error.message };
       }

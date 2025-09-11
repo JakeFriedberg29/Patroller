@@ -11,7 +11,10 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 const Index = () => {
+  // Redirect users to their tenant/organization dashboards based on role and profile
+  useAuthRedirect();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(2024, 0, 1),
     to: new Date()

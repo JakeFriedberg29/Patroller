@@ -3,3 +3,15 @@ description:
 globs:
 alwaysApply: true
 ---
+#tenancy rules
+every table needs a tenant_id
+enterprises can view organizations they're assigned to
+never return or expose data across tenants, even in admin queries
+
+#user rules
+the user types include: 
+##platform admin - has global access
+##enterprise admin - can edit their enterprise's settings and view all organizations
+##enterprise user - can view their enterprise's settings and view organizations they're assigned to
+#organization admin - can edit their organization's settings
+##organization user - can login and submit reports
