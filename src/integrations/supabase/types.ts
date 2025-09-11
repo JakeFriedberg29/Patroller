@@ -984,6 +984,8 @@ export type Database = {
         | "observer"
         | "responder"
         | "team_leader"
+        | "enterprise_user"
+        | "organization_user"
       subscription_tier:
         | "free"
         | "basic"
@@ -1149,6 +1151,8 @@ export const Constants = {
         "observer",
         "responder",
         "team_leader",
+        "enterprise_user",
+        "organization_user",
       ],
       subscription_tier: [
         "free",
