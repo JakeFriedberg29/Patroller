@@ -18,6 +18,7 @@ import {
 import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
 
 import {
@@ -74,6 +75,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { profile } = useUserProfile();
+  const { isResponder } = usePermissions();
   const currentPath = location.pathname;
   
   const isCollapsed = state === "collapsed";
@@ -214,7 +216,10 @@ export function AppSidebar() {
               <SidebarGroupLabel>Organization</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {organizationItems.map((item) => (
+                  {(isResponder 
+                    ? organizationItems.filter(i => ["Mission Control","Incidents","Reports","Logs"].includes(i.title)) 
+                    : organizationItems
+                  ).map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
                         <NavLink to={`/organization/${id}${item.url}`} className={({ isActive }) => getNavCls({ isActive })}>

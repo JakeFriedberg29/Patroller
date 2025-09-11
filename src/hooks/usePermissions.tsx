@@ -6,6 +6,7 @@ export const usePermissions = () => {
   const isPlatformAdmin = profile?.roleType === 'platform_admin';
   const isEnterpriseAdmin = profile?.roleType === 'enterprise_user';
   const isOrganizationAdmin = profile?.roleType === 'organization_user';
+  const isResponder = profile?.roleType === 'responder';
 
   const orgAdminPermission = (profile?.profileData?.org_admin_permission as 'full' | 'view' | undefined) || 'full';
   const isOrgAdminViewOnly = isOrganizationAdmin && orgAdminPermission === 'view';
@@ -15,6 +16,7 @@ export const usePermissions = () => {
   const canManageLocations = isPlatformAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly);
   const canManageIncidents = isPlatformAdmin || isEnterpriseAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly);
   const canReportIncidents = true; // All users can report incidents
+  const canSubmitReports = true; // Responders can submit reports
   const canViewAllData = isPlatformAdmin;
   const canManageOrganizations = isPlatformAdmin || isEnterpriseAdmin;
   const canManageEnterprise = isPlatformAdmin || isEnterpriseAdmin;
@@ -24,6 +26,7 @@ export const usePermissions = () => {
     isPlatformAdmin,
     isEnterpriseAdmin,
     isOrganizationAdmin,
+    isResponder,
     isOrgAdminViewOnly,
     canManageUsers,
     canManageEquipment,
@@ -33,6 +36,7 @@ export const usePermissions = () => {
     canManageOrganizations,
     canManageEnterprise,
     canReportIncidents,
+    canSubmitReports,
     canManageOrgSettings,
     profile
   };
