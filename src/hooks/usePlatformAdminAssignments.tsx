@@ -1,3 +1,67 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+export interface PlatformAssignment {
+  id: string;
+  platform_admin_id: string;
+  account_id: string; // tenant id or organization id depending on account_type
+  account_type: "Enterprise" | "Organization";
+  is_active: boolean;
+}
+
+export const usePlatformAdminAssignments = () => {
+  const { user } = useAuth();
+  const [assignments, setAssignments] = useState<PlatformAssignment[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user) {
+        setAssignments([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      try {
+        // get platform admin's internal user_id
+        const { data: me, error: meErr } = await supabase
+          .from('users')
+          .select('id')
+          .eq('auth_user_id', user.id)
+          .single();
+        if (meErr) throw meErr;
+
+        const { data, error } = await supabase
+          .from('platform_admin_account_assignments')
+          .select('*')
+          .eq('platform_admin_id', me.id)
+          .eq('is_active', true);
+        if (error) throw error;
+
+        const mapped = (data || []).map((row: any) => ({
+          id: row.id,
+          platform_admin_id: row.platform_admin_id,
+          account_id: row.account_id,
+          account_type: (row.account_type === 'Enterprise' || row.account_type === 'Organization') ? row.account_type : 'Enterprise',
+          is_active: row.is_active,
+        })) as PlatformAssignment[];
+        setAssignments(mapped);
+      } catch (e: any) {
+        setError(e.message || 'Failed to load assignments');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [user]);
+
+  return { assignments, loading, error };
+};
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';

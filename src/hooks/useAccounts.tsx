@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
+import { usePlatformAdminAssignments } from '@/hooks/usePlatformAdminAssignments';
 
 export interface Account {
   id: string;
@@ -66,6 +67,7 @@ export const useAccounts = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { isPlatformAdmin } = usePermissions();
+  const { assignments } = usePlatformAdminAssignments();
 
   const fetchAccounts = async () => {
     try {
@@ -166,8 +168,13 @@ export const useAccounts = () => {
         return account;
       }).filter(Boolean) as Account[];
 
-      console.log("Final accounts array:", [...enterpriseAccounts, ...organizationAccounts]);
-      setAccounts([...enterpriseAccounts, ...organizationAccounts]);
+      let combined = [...enterpriseAccounts, ...organizationAccounts];
+      if (isPlatformAdmin && assignments.length > 0) {
+        const allowedIds = new Set(assignments.map(a => a.account_id));
+        combined = combined.filter(acc => allowedIds.has(acc.id));
+      }
+      console.log("Final accounts array (after assignment filter if platform admin):", combined);
+      setAccounts(combined);
     } catch (error) {
       console.error('Error fetching accounts:', error);
       toast({
@@ -409,7 +416,7 @@ export const useAccounts = () => {
     if (isPlatformAdmin) {
       fetchAccounts();
     }
-  }, [isPlatformAdmin]);
+  }, [isPlatformAdmin, assignments]);
 
   return {
     accounts,
