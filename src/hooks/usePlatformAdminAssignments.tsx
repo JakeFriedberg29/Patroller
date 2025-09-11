@@ -1,20 +1,37 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 export interface PlatformAssignment {
   id: string;
   platform_admin_id: string;
-  account_id: string; // tenant id or organization id depending on account_type
+  account_id: string;
   account_type: "Enterprise" | "Organization";
   is_active: boolean;
 }
 
+export interface AccountAssignment {
+  id: string;
+  account_id: string;
+  account_type: 'Enterprise' | 'Organization';
+  account_name: string;
+  is_active: boolean;
+  assigned_at: string;
+}
+
+export interface Account {
+  id: string;
+  name: string;
+  type: 'Enterprise' | 'Organization';
+}
+
+// Hook for getting current user's platform admin assignments (for navigation purposes)
 export const usePlatformAdminAssignments = () => {
   const { user } = useAuth();
   const [assignments, setAssignments] = useState<PlatformAssignment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const load = async () => {
@@ -25,7 +42,7 @@ export const usePlatformAdminAssignments = () => {
       }
 
       setLoading(true);
-      setError(null);
+      setError('');
       try {
         // get platform admin's internal user_id
         const { data: me, error: meErr } = await supabase
@@ -62,26 +79,8 @@ export const usePlatformAdminAssignments = () => {
   return { assignments, loading, error };
 };
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-
-export interface AccountAssignment {
-  id: string;
-  account_id: string;
-  account_type: 'enterprise' | 'organization';
-  account_name: string;
-  is_active: boolean;
-  assigned_at: string;
-}
-
-export interface Account {
-  id: string;
-  name: string;
-  type: 'enterprise' | 'organization';
-}
-
-export const usePlatformAdminAssignments = (platformAdminId?: string) => {
+// Hook for managing platform admin assignments (for admin management)
+export const usePlatformAdminAssignmentManager = (platformAdminId?: string) => {
   const [assignments, setAssignments] = useState<AccountAssignment[]>([]);
   const [availableAccounts, setAvailableAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -100,11 +99,11 @@ export const usePlatformAdminAssignments = (platformAdminId?: string) => {
           account_id,
           account_type,
           is_active,
-          assigned_at
+          created_at
         `)
         .eq('platform_admin_id', adminId)
         .eq('is_active', true)
-        .order('assigned_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error loading assignments:', error);
@@ -117,8 +116,8 @@ export const usePlatformAdminAssignments = (platformAdminId?: string) => {
       }
 
       // Get account details
-      const enterpriseIds = data.filter(a => a.account_type === 'enterprise').map(a => a.account_id);
-      const organizationIds = data.filter(a => a.account_type === 'organization').map(a => a.account_id);
+      const enterpriseIds = data.filter(a => a.account_type === 'Enterprise').map(a => a.account_id);
+      const organizationIds = data.filter(a => a.account_type === 'Organization').map(a => a.account_id);
 
       const [enterpriseData, organizationData] = await Promise.all([
         enterpriseIds.length > 0 ? supabase
@@ -137,8 +136,9 @@ export const usePlatformAdminAssignments = (platformAdminId?: string) => {
 
       const enrichedAssignments: AccountAssignment[] = data.map(assignment => ({
         ...assignment,
-        account_type: assignment.account_type as 'enterprise' | 'organization',
-        account_name: accountNames.get(assignment.account_id) || 'Unknown'
+        account_type: assignment.account_type as 'Enterprise' | 'Organization',
+        account_name: accountNames.get(assignment.account_id) || 'Unknown',
+        assigned_at: assignment.created_at
       }));
 
       setAssignments(enrichedAssignments);
@@ -171,8 +171,8 @@ export const usePlatformAdminAssignments = (platformAdminId?: string) => {
       ]);
 
       const accounts: Account[] = [
-        ...(tenantData.data?.map(t => ({ id: t.id, name: t.name, type: 'enterprise' as const })) || []),
-        ...(organizationData.data?.map(o => ({ id: o.id, name: o.name, type: 'organization' as const })) || [])
+        ...(tenantData.data?.map(t => ({ id: t.id, name: t.name, type: 'Enterprise' as const })) || []),
+        ...(organizationData.data?.map(o => ({ id: o.id, name: o.name, type: 'Organization' as const })) || [])
       ];
 
       setAvailableAccounts(accounts);
@@ -182,7 +182,7 @@ export const usePlatformAdminAssignments = (platformAdminId?: string) => {
   };
 
   // Add assignment
-  const addAssignment = async (adminId: string, accountId: string, accountType: 'enterprise' | 'organization') => {
+  const addAssignment = async (adminId: string, accountId: string, accountType: 'Enterprise' | 'Organization') => {
     try {
       const { error } = await supabase
         .from('platform_admin_account_assignments')

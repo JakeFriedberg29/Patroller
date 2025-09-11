@@ -31,6 +31,7 @@ import EnterpriseAdmins from "./pages/EnterpriseAdmins";
 import EnterpriseNotificationCenter from "./pages/EnterpriseNotificationCenter";
 import EnterpriseLogs from "./pages/EnterpriseLogs";
 import PlatformNotificationCenter from "./pages/PlatformNotificationCenter";
+import ResponderDashboard from "./pages/ResponderDashboard";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/organization/:id" element={<ProtectedRoute requireAssignment accountType="Organization"><AccountDetail /></ProtectedRoute>} />
             <Route path="/organization/:id/mission-control" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
+            <Route path="/organization/:id/responder-dashboard" element={<ProtectedRoute requireAssignment accountType="Organization"><ResponderDashboard /></ProtectedRoute>} />
             <Route path="/organization/:id/team-directory" element={<ProtectedRoute requireAssignment accountType="Organization"><TeamDirectory /></ProtectedRoute>} />
             <Route path="/organization/:id/locations" element={<ProtectedRoute requireAssignment accountType="Organization"><Locations /></ProtectedRoute>} />
           <Route path="/organization/:id/equipment" element={<ProtectedRoute requireAssignment accountType="Organization"><Equipment /></ProtectedRoute>} />

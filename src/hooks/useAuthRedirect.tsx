@@ -36,8 +36,18 @@ export const useAuthRedirect = () => {
           navigate('/', { replace: true });
         }
         break;
+      case 'responder':
+      case 'member':
+      case 'observer':
+        // Responders and regular users get simplified dashboard
+        if (organizationId) {
+          navigate(`/organization/${organizationId}/responder-dashboard`, { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
+        break;
       default:
-        // Regular users (responder, supervisor, member) go to organization mission control dashboard
+        // Other users (supervisor, team_leader) go to organization mission control dashboard
         if (organizationId) {
           navigate(`/organization/${organizationId}/mission-control`, { replace: true });
         } else {

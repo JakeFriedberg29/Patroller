@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, X, Building2, Users, CheckSquare } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { usePlatformAdminAssignments, type Account, type AccountAssignment } from '@/hooks/usePlatformAdminAssignments';
+import { usePlatformAdminAssignmentManager, type Account, type AccountAssignment } from '@/hooks/usePlatformAdminAssignments';
 
 interface AccountAssignmentManagerProps {
   platformAdminId: string;
@@ -25,7 +25,7 @@ export const AccountAssignmentManager = ({
     isLoading,
     addAssignment,
     removeAssignment
-  } = usePlatformAdminAssignments(platformAdminId);
+  } = usePlatformAdminAssignmentManager(platformAdminId);
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
@@ -173,11 +173,11 @@ export const AccountAssignmentManager = ({
   };
 
   const getAccountIcon = (type: string) => {
-    return type === 'enterprise' ? Building2 : Users;
+    return type === 'Enterprise' ? Building2 : Users;
   };
 
   const getAccountTypeLabel = (type: string) => {
-    return type === 'enterprise' ? 'Enterprise' : 'Organization';
+    return type === 'Enterprise' ? 'Enterprise' : 'Organization';
   };
 
   return (
