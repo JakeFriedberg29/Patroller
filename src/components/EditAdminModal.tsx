@@ -13,6 +13,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Edit, Loader2, Shield, ShieldX, Trash2, AlertTriangle } from "lucide-react";
+import { AccountAssignmentManager } from "@/components/AccountAssignmentManager";
 
 // Validation schema
 const formSchema = z.object({
@@ -237,7 +238,7 @@ export const EditAdminModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -401,6 +402,17 @@ export const EditAdminModal = ({
             </div>
 
             <Separator className="my-6" />
+
+            {/* Account Assignments for Platform Admins */}
+            {accountType === "platform" && admin && (
+              <div className="space-y-4">
+                <AccountAssignmentManager
+                  platformAdminId={admin.id}
+                  platformAdminName={`${admin.firstName} ${admin.lastName}`}
+                />
+                <Separator className="my-6" />
+              </div>
+            )}
 
             <div className="flex justify-between pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

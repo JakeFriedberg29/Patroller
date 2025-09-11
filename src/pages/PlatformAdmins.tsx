@@ -419,7 +419,7 @@ export default function PlatformAdmins() {
               <Input id="email" type="email" value={newAdmin.email} onChange={e => setNewAdmin({
               ...newAdmin,
               email: e.target.value
-            })} placeholder="responder@organization.org" />
+            })} placeholder="admin@platform.com" />
             </div>
 
             <div className="space-y-2">
@@ -428,6 +428,16 @@ export default function PlatformAdmins() {
               ...newAdmin,
               phone: e.target.value
             })} placeholder="(555) 123-4567" />
+            </div>
+
+            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+              <h4 className="font-medium text-sm">Account Creation Process</h4>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>• Admin will receive an activation email with temporary login credentials</p>
+                <p>• They must click the activation link to confirm their account</p>
+                <p>• After creation, you can assign specific accounts for this admin to oversee</p>
+                <p>• Account activation link expires in 24 hours</p>
+              </div>
             </div>
           </div>
 

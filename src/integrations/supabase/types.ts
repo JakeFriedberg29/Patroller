@@ -489,6 +489,42 @@ export type Database = {
           },
         ]
       }
+      platform_admin_account_assignments: {
+        Row: {
+          account_id: string
+          account_type: string
+          assigned_at: string
+          assigned_by: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          platform_admin_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          account_type: string
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          platform_admin_id: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          account_type?: string
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          platform_admin_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       report_templates: {
         Row: {
           created_at: string
@@ -838,6 +874,14 @@ export type Database = {
       activate_user_account: {
         Args: { p_activation_token: string }
         Returns: Json
+      }
+      assert_record_matches_org_tenant: {
+        Args: { p_org_id: string; p_tenant_id: string }
+        Returns: undefined
+      }
+      assert_same_tenant_for_user_and_org: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: undefined
       }
       assign_equipment: {
         Args: { p_equipment_id: string; p_user_id: string }
