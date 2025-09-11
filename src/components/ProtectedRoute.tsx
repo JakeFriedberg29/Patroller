@@ -3,6 +3,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePlatformAdminAssignments } from "@/hooks/usePlatformAdminAssignments";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ const ProtectedRoute = ({ children, requireAssignment, accountType }: ProtectedR
   const { isPlatformAdmin } = usePermissions();
   const { assignments, loading: loadingAssignments } = usePlatformAdminAssignments();
   const params = useParams();
+  const { profile } = useUserProfile();
 
   if (loading) {
     return (
@@ -43,6 +45,13 @@ const ProtectedRoute = ({ children, requireAssignment, accountType }: ProtectedR
       if (!allowed) {
         return <Navigate to="/accounts" replace />;
       }
+    }
+  }
+
+  // Enterprise admins: prevent navigating to other enterprises
+  if (!isPlatformAdmin && accountType === 'Enterprise' && params.id && profile?.profileData?.tenant_id) {
+    if (params.id !== profile.profileData.tenant_id) {
+      return <Navigate to="/" replace />;
     }
   }
 

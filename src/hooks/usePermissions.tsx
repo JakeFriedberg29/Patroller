@@ -4,8 +4,8 @@ export const usePermissions = () => {
   const { profile } = useUserProfile();
 
   const isPlatformAdmin = profile?.roleType === 'platform_admin';
-  const isEnterpriseAdmin = profile?.roleType === 'enterprise_admin';
-  const isOrganizationAdmin = profile?.roleType === 'organization_admin';
+  const isEnterpriseAdmin = profile?.roleType === 'enterprise_user';
+  const isOrganizationAdmin = profile?.roleType === 'organization_user';
   
   const canManageUsers = isPlatformAdmin || isEnterpriseAdmin || isOrganizationAdmin;
   const canManageEquipment = isPlatformAdmin || isOrganizationAdmin;
