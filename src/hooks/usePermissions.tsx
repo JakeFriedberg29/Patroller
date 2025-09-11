@@ -6,20 +6,25 @@ export const usePermissions = () => {
   const isPlatformAdmin = profile?.roleType === 'platform_admin';
   const isEnterpriseAdmin = profile?.roleType === 'enterprise_user';
   const isOrganizationAdmin = profile?.roleType === 'organization_user';
+
+  const orgAdminPermission = (profile?.profileData?.org_admin_permission as 'full' | 'view' | undefined) || 'full';
+  const isOrgAdminViewOnly = isOrganizationAdmin && orgAdminPermission === 'view';
   
-  const canManageUsers = isPlatformAdmin || isEnterpriseAdmin || isOrganizationAdmin;
-  const canManageEquipment = isPlatformAdmin || isOrganizationAdmin;
-  const canManageLocations = isPlatformAdmin || isOrganizationAdmin;
-  const canManageIncidents = isPlatformAdmin || isEnterpriseAdmin || isOrganizationAdmin;
+  const canManageUsers = isPlatformAdmin || isEnterpriseAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly);
+  const canManageEquipment = isPlatformAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly);
+  const canManageLocations = isPlatformAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly);
+  const canManageIncidents = isPlatformAdmin || isEnterpriseAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly);
   const canReportIncidents = true; // All users can report incidents
   const canViewAllData = isPlatformAdmin;
   const canManageOrganizations = isPlatformAdmin || isEnterpriseAdmin;
   const canManageEnterprise = isPlatformAdmin || isEnterpriseAdmin;
+  const canManageOrgSettings = isPlatformAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly);
 
   return {
     isPlatformAdmin,
     isEnterpriseAdmin,
     isOrganizationAdmin,
+    isOrgAdminViewOnly,
     canManageUsers,
     canManageEquipment,
     canManageLocations,
@@ -28,6 +33,7 @@ export const usePermissions = () => {
     canManageOrganizations,
     canManageEnterprise,
     canReportIncidents,
+    canManageOrgSettings,
     profile
   };
 };
