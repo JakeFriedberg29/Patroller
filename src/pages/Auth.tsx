@@ -145,12 +145,13 @@ const Auth = () => {
                 onClick={async () => {
                   if (loginEmail) {
                     const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
-                      redirectTo: `${window.location.origin}/auth`
+                      redirectTo: `${window.location.origin}/reset-password`
                     });
                     if (error) {
                       toast.error("Failed to send password reset email");
                     } else {
                       toast.success("Password reset email sent! Check your inbox.");
+                      // Optionally guide the user to check their email or proceed
                     }
                   } else {
                     toast.error("Please enter your email address first.");
