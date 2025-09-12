@@ -86,7 +86,7 @@ export const useAccounts = () => {
 
       // Fetch tenants (Enterprises)
       const { data: tenants, error: tenantsError } = await supabase
-        .from('tenants')
+        .from('enterprises')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -214,7 +214,7 @@ export const useAccounts = () => {
         // eslint-disable-next-line no-constant-condition
         while (true) {
           const { data } = await supabase
-            .from('tenants')
+            .from('enterprises')
             .select('id')
             .eq('slug', attempt)
             .limit(1);
@@ -277,7 +277,7 @@ export const useAccounts = () => {
         // Create standalone Organization
         // First need to get a tenant to assign to
         const { data: tenants } = await supabase
-          .from('tenants')
+          .from('enterprises')
           .select('id')
           .eq('subscription_tier', 'enterprise')
           .limit(1);
@@ -358,7 +358,7 @@ export const useAccounts = () => {
       if (account.type === 'Enterprise') {
         // Update tenant
         const { error } = await supabase
-          .from('tenants')
+          .from('enterprises')
           .update({
             name: updates.name,
             settings: {
@@ -430,7 +430,7 @@ export const useAccounts = () => {
       if (account.type === 'Enterprise') {
         // Delete tenant from database
         const { error } = await supabase
-          .from('tenants')
+          .from('enterprises')
           .delete()
           .eq('id', id);
 

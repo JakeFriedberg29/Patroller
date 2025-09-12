@@ -37,7 +37,7 @@ export const useEnterpriseData = (tenantId?: string) => {
 
       // Fetch tenant/enterprise info
       const { data: tenant } = await supabase
-        .from('tenants')
+        .from('enterprises')
         .select('*')
         .eq('id', tenantId)
         .single();

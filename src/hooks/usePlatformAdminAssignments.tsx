@@ -121,7 +121,7 @@ export const usePlatformAdminAssignmentManager = (platformAdminId?: string) => {
 
       const [enterpriseData, organizationData] = await Promise.all([
         enterpriseIds.length > 0 ? supabase
-          .from('tenants')
+          .from('enterprises')
           .select('id, name')
           .in('id', enterpriseIds) : Promise.resolve({ data: [] }),
         organizationIds.length > 0 ? supabase
@@ -159,7 +159,7 @@ export const usePlatformAdminAssignmentManager = (platformAdminId?: string) => {
     try {
       const [tenantData, organizationData] = await Promise.all([
         supabase
-          .from('tenants')
+          .from('enterprises')
           .select('id, name')
           .eq('subscription_status', 'active')
           .order('name'),
