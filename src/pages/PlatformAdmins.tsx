@@ -17,6 +17,7 @@ import { useUserManagement } from "@/hooks/useUserManagement";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
 import { EditAdminModal } from "@/components/EditAdminModal";
+import { DeleteAdminModal } from "@/components/DeleteAdminModal";
 import { useSeedData } from "@/hooks/useSeedData";
 // import { DeleteAdminModal } from "@/components/DeleteAdminModal";
 // import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
@@ -86,6 +87,7 @@ export default function PlatformAdmins() {
         `)
         .eq('user_roles.role_type', 'platform_admin')
         .eq('user_roles.is_active', true)
+        .neq('status', 'inactive')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -463,8 +465,16 @@ export default function PlatformAdmins() {
         />
       )}
 
-      {/* Delete & Bulk Delete - Coming Soon */}
-      {/* <DeleteAdminModal /> */}
-      {/* <BulkDeleteAdminModal /> */}
+      {/* Delete Admin Dialog */}
+      {currentAdmin && (
+        <DeleteAdminModal
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          admin={currentAdmin as any}
+          accountType="platform"
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
+      {/* BulkDelete coming soon */}
     </div>;
 }

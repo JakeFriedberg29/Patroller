@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -64,12 +65,26 @@ export function AddAdminModal({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const roleTitle = accountType === "enterprise" ? "Enterprise Admin" : "Organization Admin";
-    
+
+    // Resolve tenant id correctly when creating users for an organization
+    let tenantIdToUse: string | undefined = accountId;
+    if (accountType === "organization" && accountId) {
+      const { data: org, error: orgErr } = await supabase
+        .from('organizations')
+        .select('tenant_id')
+        .eq('id', accountId)
+        .single();
+      if (orgErr) {
+        console.error('Failed to load organization tenant_id:', orgErr);
+      }
+      tenantIdToUse = org?.tenant_id || undefined;
+    }
+
     const result = await createUser({
       email: values.email,
       fullName: values.fullName,
       role: roleTitle,
-      tenantId: accountId,
+      tenantId: tenantIdToUse,
       organizationId: accountType === "organization" ? accountId : undefined,
       department: values.department,
       location: values.location,

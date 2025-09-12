@@ -36,51 +36,48 @@ export const useEmailService = () => {
 
   const sendActivationEmail = async (request: SendEmailRequest) => {
     setIsLoading(true);
-    let usedProvider: EmailProvider = EMAIL_PROVIDER;
-
+    
     try {
-      let primary;
-      let fallback;
+      let response;
+      let error;
 
       if (EMAIL_PROVIDER === 'resend') {
-        primary = invokeResendEmail;
-        fallback = invokeSupabaseInvite;
+        // Use Resend service (requires domain verification)
+        console.log('Sending email via Resend...');
+        ({ data: response, error } = await supabase.functions.invoke('send-resend-email', {
+          body: request
+        }));
       } else {
-        primary = invokeSupabaseInvite;
-        fallback = invokeResendEmail;
-      }
+        // Use Supabase Auth (default, works immediately)
+        console.log('Sending email via Supabase Auth...');
+        ({ data: response, error } = await supabase.functions.invoke('send-activation-email', {
+          body: request
+        }));
 
-      // Try primary provider
-      let { data: response, error } = await primary(request);
+        // If Supabase invite path fails for known reasons, fall back to Resend automatically
+        if ((error || !response?.success) && EMAIL_PROVIDER === 'supabase') {
+          const errMsg = error?.message || response?.error || '';
+          const shouldFallback =
+            errMsg.toLowerCase().includes('already registered') ||
+            errMsg.toLowerCase().includes('already signed up') ||
+            errMsg.toLowerCase().includes('failed to send invitation') ||
+            errMsg.toLowerCase().includes('rate limit') ||
+            errMsg.toLowerCase().includes('error generating activation token');
 
-      // Decide whether to fallback based on error conditions
-      const errorMessage = (error as any)?.message || (response && !response.success ? response.error : '');
-      const shouldFallbackFromSupabase = usedProvider === 'supabase' && (
-        errorMessage?.toLowerCase().includes('already registered') ||
-        errorMessage?.toLowerCase().includes('already signed up') ||
-        errorMessage?.toLowerCase().includes('can only send testing emails') ||
-        errorMessage?.toLowerCase().includes('testing') ||
-        !!error
-      );
-      const shouldFallbackFromResend = usedProvider === 'resend' && (
-        errorMessage?.toLowerCase().includes('domain verification required') ||
-        errorMessage?.toLowerCase().includes('invalid from address') ||
-        errorMessage?.toLowerCase().includes('resend_api_key') ||
-        !!error
-      );
-
-      if ((shouldFallbackFromSupabase || shouldFallbackFromResend)) {
-        console.warn(`Primary provider ${usedProvider} failed, attempting fallback...`, { errorMessage });
-        usedProvider = usedProvider === 'supabase' ? 'resend' : 'supabase';
-        const fallbackResult = await fallback(request);
-        response = fallbackResult.data as any;
-        error = fallbackResult.error as any;
+          if (shouldFallback) {
+            console.log('Falling back to Resend for activation email...');
+            ({ data: response, error } = await supabase.functions.invoke('send-resend-email', {
+              body: request
+            }));
+          }
+        }
       }
 
       if (error) {
-        console.error(`Error sending email via ${usedProvider}:`, error);
-
-        if ((error as any).message?.includes('Domain verification required')) {
+        console.error(`Error sending email via ${EMAIL_PROVIDER}:`, error);
+        
+        // Handle specific Resend domain verification error
+        if (error.message?.includes('Domain verification required')) {
           toast.error(
             'Email domain not verified. Please verify your domain at resend.com/domains or contact your administrator.',
             { duration: 6000 }
@@ -88,7 +85,8 @@ export const useEmailService = () => {
           return { success: false, error: 'Domain verification required' };
         }
 
-        if ((error as any).message?.toLowerCase().includes('can only send testing emails')) {
+        // Handle Supabase Auth limitations
+        if (error.message?.includes('can only send testing emails')) {
           toast.error(
             'Email service is in testing mode. Please contact your administrator to set up a verified domain.',
             { duration: 6000 }
@@ -97,43 +95,28 @@ export const useEmailService = () => {
         }
 
         toast.error(`Failed to send ${request.isResend ? 'resend' : 'send'} activation email`);
-        return { success: false, error: (error as any).message };
+        return { success: false, error: error.message };
       }
 
       if (!response?.success) {
-        const msg = response?.error || 'Failed to send activation email';
-        toast.error(msg);
-        return { success: false, error: msg };
+        const errorMessage = response?.error || 'Failed to send activation email';
+        toast.error(errorMessage);
+        return { success: false, error: errorMessage };
       }
 
       const action = request.isResend ? 'resent' : 'sent';
       toast.success(`Activation email ${action} successfully!`);
-
-      if (response.activationUrl) {
-        try {
-          if (typeof window !== 'undefined' && (window as any).navigator?.clipboard?.writeText) {
-            await (window as any).navigator.clipboard.writeText(response.activationUrl);
-            toast.success('Dev: Activation link copied to clipboard.');
-          } else {
-            console.log('Activation URL:', response.activationUrl);
-            toast.success('Dev: Activation link available in console.');
-          }
-        } catch (e) {
-          console.log('Activation URL:', response.activationUrl);
-          toast.success('Dev: Activation link available in console.');
-        }
-      }
-
-      return {
-        success: true,
+      
+      return { 
+        success: true, 
         message: response.message,
-        provider: usedProvider,
+        provider: EMAIL_PROVIDER === 'supabase' && response?.emailId ? 'resend' : EMAIL_PROVIDER,
         emailId: response.emailId,
-        activationUrl: response.activationUrl
+        activationUrl: response.activationUrl // Only returned in development
       };
 
     } catch (error: any) {
-      console.error(`Error in ${usedProvider} email service:`, error);
+      console.error(`Error in ${EMAIL_PROVIDER} email service:`, error);
       toast.error('Failed to send activation email');
       return { success: false, error: error.message };
     } finally {

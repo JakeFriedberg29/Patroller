@@ -29,6 +29,7 @@ export const useAuthRedirect = () => {
         }
         break;
       case 'organization_admin':
+      case 'team_leader':
         // Navigate to organization mission control dashboard
         if (organizationId) {
           navigate(`/organization/${organizationId}/mission-control`, { replace: true });

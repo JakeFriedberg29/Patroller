@@ -4,9 +4,9 @@ export const usePermissions = () => {
   const { profile } = useUserProfile();
 
   const isPlatformAdmin = profile?.roleType === 'platform_admin';
-  const isEnterpriseAdmin = profile?.roleType === 'enterprise_user';
-  const isOrganizationAdmin = profile?.roleType === 'organization_user';
-  const isResponder = profile?.roleType === 'responder';
+  const isEnterpriseAdmin = profile?.roleType === 'enterprise_admin';
+  const isOrganizationAdmin = profile?.roleType === 'organization_admin' || profile?.roleType === 'team_leader';
+  const isResponder = profile?.roleType === 'responder' || profile?.roleType === 'member';
 
   const orgAdminPermission = (profile?.profileData?.org_admin_permission as 'full' | 'view' | undefined) || 'full';
   const isOrgAdminViewOnly = isOrganizationAdmin && orgAdminPermission === 'view';
