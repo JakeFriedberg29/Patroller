@@ -30,7 +30,7 @@ const ProtectedRoute = ({ children, requireAssignment, accountType }: ProtectedR
     return <Navigate to="/auth" replace />;
   }
 
-  // If platform admin access must be scoped by assignment
+  // Platform admins have global access by default. If assignments exist, enforce them.
   if (requireAssignment && isPlatformAdmin) {
     if (loadingAssignments) {
       return (
@@ -39,11 +39,13 @@ const ProtectedRoute = ({ children, requireAssignment, accountType }: ProtectedR
         </div>
       );
     }
-    const routeAccountId = params.id;
-    if (routeAccountId) {
-      const allowed = assignments.some(a => a.account_id === routeAccountId && (!accountType || a.account_type === accountType));
-      if (!allowed) {
-        return <Navigate to="/accounts" replace />;
+    if (assignments.length > 0) {
+      const routeAccountId = params.id;
+      if (routeAccountId) {
+        const allowed = assignments.some(a => a.account_id === routeAccountId && (!accountType || a.account_type === accountType));
+        if (!allowed) {
+          return <Navigate to="/accounts" replace />;
+        }
       }
     }
   }
