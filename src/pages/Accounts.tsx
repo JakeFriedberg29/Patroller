@@ -27,8 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Building2, Mail, Phone, Users, Filter, MoreHorizontal, Loader2, Copy } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Search, Building2, Mail, Phone, Users, Filter, Loader2, Copy, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAccounts, CreateAccountRequest, Account } from "@/hooks/useAccounts";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -351,32 +350,15 @@ export default function Accounts() {
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => {
-                            console.log("Dropdown item clicked for account:", account);
-                            console.log("Account ID:", account.id);
-                            handleViewAccount(account.id);
-                          }}>
-                            View Account
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            const settingsPath = account.type === 'Enterprise' 
-                              ? `/enterprises/${account.id}/settings`
-                              : `/organization/${account.id}/settings`;
-                            console.log("Navigating to settings:", settingsPath);
-                            navigate(settingsPath);
-                          }}>
-                            Settings
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleViewAccount(account.id)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">View More</span>
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
