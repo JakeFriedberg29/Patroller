@@ -22,12 +22,13 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    if (!resendApiKey) {
-      throw new Error('RESEND_API_KEY environment variable is not set');
-    }
+    const origin = req.headers.get('origin') || '';
+    const isDevOrigin = origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('.dev');
 
-    const resend = new Resend(resendApiKey);
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const canUseResend = !!resendApiKey;
+
+    const resend = canUseResend ? new Resend(resendApiKey as string) : null;
 
     // Initialize Supabase client
     const supabase = createClient(
@@ -67,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Create activation URL
-    const baseUrl = req.headers.get('origin') || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.sandbox.lovable.dev';
+    const baseUrl = origin || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.sandbox.lovable.dev';
     const activationUrl = `${baseUrl}/activate?token=${tokenData.activation_token}`;
 
     // Prepare email content
@@ -115,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
             <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 5px; margin-bottom: 30px;">
               <h3 style="color: #856404; margin-top: 0;">Important Security Information</h3>
               <ul style="color: #856404; font-size: 14px; margin: 0; padding-left: 20px;">
-                <li>This invitation link will expire in 7 days</li>
+                <li>This invitation link will expire in 24 hours</li>
                 <li>If you didn't expect this invitation, please contact your administrator</li>
                 <li>Never share your login credentials with anyone</li>
               </ul>
@@ -145,7 +146,7 @@ To get started, please activate your account by visiting this link:
 ${activationUrl}
 
 Important Security Information:
-- This invitation link will expire in 7 days
+- This invitation link will expire in 24 hours
 - If you didn't expect this invitation, please contact your administrator
 - Never share your login credentials with anyone
 
@@ -155,10 +156,27 @@ Need help? Contact your system administrator.
     `;
 
     try {
+      if (!canUseResend) {
+        console.warn('RESEND_API_KEY is not set. Dev fallback active.');
+        if (isDevOrigin) {
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'Dev mode: Resend not configured. Use activationUrl to proceed.',
+            emailId: null,
+            activationUrl
+          }), {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders,
+            },
+          });
+        }
+        throw new Error('RESEND_API_KEY environment variable is not set');
+      }
+
       // Send email using Resend
-      // NOTE: Change the 'from' address to your verified domain once you set it up
-      // Example: 'Platform Admin <admin@yourcompany.com>'
-      const emailResponse = await resend.emails.send({
+      const emailResponse = await (resend as Resend).emails.send({
         from: 'Platform Admin <onboarding@resend.dev>', // CHANGE THIS to your verified domain
         to: [email],
         subject: `${isResend ? 'Reminder: ' : ''}Welcome to ${orgName} - Account Activation Required`,
@@ -168,14 +186,8 @@ Need help? Contact your system administrator.
           'X-Entity-Ref-ID': userId,
         },
         tags: [
-          {
-            name: 'category',
-            value: 'user_invitation'
-          },
-          {
-            name: 'user_id',
-            value: userId
-          }
+          { name: 'category', value: 'user_invitation' },
+          { name: 'user_id', value: userId }
         ]
       });
 
@@ -187,9 +199,9 @@ Need help? Contact your system administrator.
         .update({
           profile_data: {
             ...userData.profile_data,
-            [`${isResend ? 'resent' : 'sent'}_at`]: new Date().toISOString(),
+            activation_sent_at: new Date().toISOString(),
             resend_email_sent: true,
-            email_id: emailResponse.data?.id
+            email_id: (emailResponse as any).data?.id
           },
           updated_at: new Date().toISOString()
         })
@@ -203,8 +215,8 @@ Need help? Contact your system administrator.
       return new Response(JSON.stringify({ 
         success: true, 
         message: `Invitation ${isResend ? 'resent' : 'sent'} successfully via Resend`,
-        emailId: emailResponse.data?.id,
-        activationUrl: activationUrl // Remove this in production for security
+        emailId: (emailResponse as any).data?.id,
+        activationUrl: isDevOrigin ? activationUrl : undefined
       }), {
         status: 200,
         headers: {
@@ -215,17 +227,33 @@ Need help? Contact your system administrator.
 
     } catch (emailError: any) {
       console.error('Resend email error:', emailError);
-      
-      // Enhanced error handling for common Resend issues
-      if (emailError.message?.includes('You can only send testing emails')) {
+      const msg = emailError?.message || '';
+      const domainIssue = msg.includes('You can only send testing emails') || msg.includes('Invalid from address') || msg.includes('Domain verification required');
+
+      if (domainIssue && isDevOrigin) {
+        console.warn('Domain verification issue in dev. Returning activationUrl for manual delivery.');
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Dev mode: Domain not verified. Use activationUrl to proceed.',
+          emailId: null,
+          activationUrl
+        }), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders,
+          },
+        });
+      }
+
+      if (msg.includes('You can only send testing emails')) {
         throw new Error('Domain verification required. Please verify your domain at resend.com/domains and update the "from" address in the email function.');
       }
-      
-      if (emailError.message?.includes('Invalid from address')) {
+      if (msg.includes('Invalid from address')) {
         throw new Error('Invalid from address. Please use an email address from your verified domain.');
       }
-      
-      throw new Error(`Failed to send email: ${emailError.message}`);
+
+      throw new Error(`Failed to send email: ${msg}`);
     }
 
   } catch (error: any) {

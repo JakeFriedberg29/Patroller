@@ -85,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
         .update({
           profile_data: {
             ...userData.profile_data,
-            [`${isResend ? 'resent' : 'sent'}_at`]: new Date().toISOString(),
+            activation_sent_at: new Date().toISOString(),
             supabase_invite_sent: true
           },
           updated_at: new Date().toISOString()
