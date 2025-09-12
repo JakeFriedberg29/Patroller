@@ -54,7 +54,7 @@ export default function Accounts() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("All Types");
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("All Categories");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("All Subtypes");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
@@ -180,7 +180,7 @@ export default function Accounts() {
                          account.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          account.phone.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTypeFilter = selectedTypeFilter === "All Types" || account.type === selectedTypeFilter;
-    const matchesCategoryFilter = selectedCategoryFilter === "All Categories" || account.category === selectedCategoryFilter;
+    const matchesCategoryFilter = selectedCategoryFilter === "All Subtypes" || account.category === selectedCategoryFilter;
     return matchesSearch && matchesTypeFilter && matchesCategoryFilter;
   });
 
@@ -267,7 +267,7 @@ export default function Accounts() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="All Categories">All Categories</SelectItem>
+            <SelectItem value="All Subtypes">All Subtypes</SelectItem>
             {accountCategories.map(category => (
               <SelectItem key={category} value={category}>{category}</SelectItem>
             ))}
@@ -283,7 +283,7 @@ export default function Accounts() {
               <TableRow>
                 <TableHead className="font-semibold">Name</TableHead>
                 <TableHead className="font-semibold">Type</TableHead>
-                <TableHead className="font-semibold">Category</TableHead>
+                <TableHead className="font-semibold">Subtype</TableHead>
                 <TableHead className="font-semibold">Team Members</TableHead>
                 <TableHead className="font-semibold">Contact</TableHead>
                 <TableHead className="w-12"></TableHead>
@@ -445,6 +445,7 @@ export default function Accounts() {
               <Label htmlFor="name">Name *</Label>
               <Input
                 id="name"
+                className="border-2"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
               />
@@ -453,7 +454,7 @@ export default function Accounts() {
             <div className="space-y-2">
               <Label htmlFor="type">Type *</Label>
               <Select value={formData.type} onValueChange={(value) => handleInputChange("type", value as 'Enterprise' | 'Organization')}>
-                <SelectTrigger>
+                <SelectTrigger className="border-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -464,9 +465,9 @@ export default function Accounts() {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="category">Category *</Label>
+              <Label htmlFor="category">Subtype *</Label>
               <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
-                <SelectTrigger>
+                <SelectTrigger className="border-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -486,6 +487,7 @@ export default function Accounts() {
               <Input
                 id="primaryEmail"
                 type="email"
+                className="border-2"
                 value={formData.primaryEmail}
                 onChange={(e) => handleInputChange("primaryEmail", e.target.value)}
               />
@@ -496,6 +498,7 @@ export default function Accounts() {
               <Input
                 id="primaryPhone"
                 type="tel"
+                className="border-2"
                 value={formData.primaryPhone}
                 onChange={(e) => handleInputChange("primaryPhone", e.target.value)}
               />
@@ -506,6 +509,7 @@ export default function Accounts() {
               <Input
                 id="secondaryEmail"
                 type="email"
+                className="border-2"
                 value={formData.secondaryEmail}
                 onChange={(e) => handleInputChange("secondaryEmail", e.target.value)}
               />
@@ -516,15 +520,17 @@ export default function Accounts() {
               <Input
                 id="secondaryPhone"
                 type="tel"
+                className="border-2"
                 value={formData.secondaryPhone}
                 onChange={(e) => handleInputChange("secondaryPhone", e.target.value)}
               />
             </div>
 
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
               <Input
                 id="address"
+                className="border-2"
                 value={formData.address}
                 onChange={(e) => handleInputChange("address", e.target.value)}
               />
@@ -534,6 +540,7 @@ export default function Accounts() {
               <Label htmlFor="city">City</Label>
               <Input
                 id="city"
+                className="border-2"
                 value={formData.city}
                 onChange={(e) => handleInputChange("city", e.target.value)}
               />
@@ -543,6 +550,7 @@ export default function Accounts() {
               <Label htmlFor="state">State</Label>
               <Input
                 id="state"
+                className="border-2"
                 value={formData.state}
                 onChange={(e) => handleInputChange("state", e.target.value)}
               />
@@ -552,6 +560,7 @@ export default function Accounts() {
               <Label htmlFor="zip">ZIP Code</Label>
               <Input
                 id="zip"
+                className="border-2"
                 value={formData.zip}
                 onChange={(e) => handleInputChange("zip", e.target.value)}
               />
