@@ -9,6 +9,14 @@ export const useAuthRedirect = () => {
   const { profile } = useUserProfile();
 
   useEffect(() => {
+    // Fallback: if user is authenticated but profile hasn't loaded yet,
+    // send them to the global dashboard. When profile loads, it will
+    // re-run and route them more specifically if needed.
+    if (user && (!profile || !profile.roleType)) {
+      navigate('/', { replace: true });
+      return;
+    }
+
     if (!user || !profile || !profile.roleType) return;
 
     // Get the user's primary role from profile data
@@ -21,7 +29,6 @@ export const useAuthRedirect = () => {
         navigate('/', { replace: true });
         break;
       case 'enterprise_admin':
-        // Navigate to enterprise dashboard using tenant_id
         if (tenantId) {
           navigate(`/enterprises/${tenantId}/enterprise-view`, { replace: true });
         } else {
@@ -30,7 +37,6 @@ export const useAuthRedirect = () => {
         break;
       case 'organization_admin':
       case 'team_leader':
-        // Navigate to organization mission control dashboard
         if (organizationId) {
           navigate(`/organization/${organizationId}/mission-control`, { replace: true });
         } else {
@@ -40,7 +46,6 @@ export const useAuthRedirect = () => {
       case 'responder':
       case 'member':
       case 'observer':
-        // Responders and regular users get simplified dashboard
         if (organizationId) {
           navigate(`/organization/${organizationId}/responder-dashboard`, { replace: true });
         } else {
@@ -48,7 +53,6 @@ export const useAuthRedirect = () => {
         }
         break;
       default:
-        // Other users (supervisor, team_leader) go to organization mission control dashboard
         if (organizationId) {
           navigate(`/organization/${organizationId}/mission-control`, { replace: true });
         } else {

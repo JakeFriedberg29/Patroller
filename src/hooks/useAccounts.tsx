@@ -415,6 +415,11 @@ export const useAccounts = () => {
   useEffect(() => {
     if (isPlatformAdmin) {
       fetchAccounts();
+    } else {
+      // If the user isn't a platform admin, there's nothing to fetch here.
+      // Ensure the loading state doesn't hang so the UI can render Access Denied.
+      setAccounts([]);
+      setLoading(false);
     }
   }, [isPlatformAdmin, assignments]);
 
