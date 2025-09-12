@@ -126,11 +126,71 @@ export default function PlatformAdmins() {
   };
   const handleAddAdmin = async () => {
     if (newAdmin.firstName && newAdmin.lastName && newAdmin.email) {
+      // Resolve a valid tenant_id for platform admins
+      let tenantIdToUse: string | undefined;
+      try {
+        // Prefer a known platform tenant slug if it exists
+        const { data: platformTenant } = await supabase
+          .from('tenants')
+          .select('id, slug')
+          .eq('slug', 'missionlog-platform')
+          .maybeSingle();
+
+        if (platformTenant?.id) {
+          tenantIdToUse = platformTenant.id;
+        } else {
+          // Fallback: pick the first existing tenant
+          const { data: anyTenant } = await supabase
+            .from('tenants')
+            .select('id, slug')
+            .order('created_at', { ascending: true })
+            .limit(1);
+
+          if (anyTenant && anyTenant.length > 0) {
+            tenantIdToUse = anyTenant[0].id;
+          } else {
+            // If no tenants exist, create a platform tenant
+            const { data: createdTenant, error: createTenantErr } = await supabase
+              .from('tenants')
+              .insert({
+                name: 'MissionLog Platform',
+                slug: 'missionlog-platform',
+                subscription_tier: 'enterprise',
+                subscription_status: 'active',
+                settings: {}
+              })
+              .select('id')
+              .single();
+            if (createTenantErr) {
+              throw createTenantErr;
+            }
+            tenantIdToUse = createdTenant?.id;
+          }
+        }
+      } catch (e: any) {
+        console.error('Failed to resolve tenant for platform admin:', e);
+        toast({
+          title: 'Tenant Resolution Failed',
+          description: 'Could not resolve or create a tenant for the new platform admin.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      if (!tenantIdToUse) {
+        toast({
+          title: 'No Tenant Found',
+          description: 'Unable to find or create a tenant. Please try again.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       const result = await createUser({
         email: newAdmin.email,
         fullName: `${newAdmin.firstName} ${newAdmin.lastName}`,
         role: 'Platform Admin',
-        tenantId: '95d3bca1-40f0-4630-a60e-1d98dacf3e60', // Demo tenant
+        tenantId: tenantIdToUse,
         phone: newAdmin.phone
       });
       if (result.success) {
