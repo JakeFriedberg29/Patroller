@@ -198,6 +198,49 @@ export const useAccounts = () => {
     }
 
     try {
+      const slugify = (text: string) =>
+        text
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+
+      const getUniqueTenantSlug = async (base: string): Promise<string> => {
+        let attempt = base;
+        let counter = 2;
+        // Ensure uniqueness across tenants.slug
+        // RLS: platform admins have SELECT via policy
+        // Loop will usually exit immediately
+        // Guard against excessive loops
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { data } = await supabase
+            .from('tenants')
+            .select('id')
+            .eq('slug', attempt)
+            .limit(1);
+          if (!data || data.length === 0) return attempt;
+          attempt = `${base}-${counter++}`;
+          if (counter > 1000) return `${base}-${crypto.randomUUID().slice(0, 8)}`;
+        }
+      };
+
+      const getUniqueOrgSlug = async (tenantId: string, base: string): Promise<string> => {
+        let attempt = base;
+        let counter = 2;
+        // UNIQUE constraint is (tenant_id, slug)
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { data } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .eq('slug', attempt)
+            .limit(1);
+          if (!data || data.length === 0) return attempt;
+          attempt = `${base}-${counter++}`;
+          if (counter > 1000) return `${base}-${crypto.randomUUID().slice(0, 8)}`;
+        }
+      };
       const address = {
         street: accountData.address || '',
         city: accountData.city || '',
@@ -208,11 +251,16 @@ export const useAccounts = () => {
 
       if (accountData.type === 'Enterprise') {
         // Create Enterprise (Tenant with default organization)
+        const baseTenantSlug = slugify(accountData.name);
+        const uniqueTenantSlug = await getUniqueTenantSlug(baseTenantSlug);
+        const baseOrgSlug = slugify(`${accountData.name}-main`);
+        // New tenant has no orgs yet; baseOrgSlug is fine
+
         const { data, error } = await supabase.rpc('create_tenant_with_organization', {
           p_tenant_name: accountData.name,
-          p_tenant_slug: accountData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          p_tenant_slug: uniqueTenantSlug,
           p_org_name: `${accountData.name} - Main Office`,
-          p_org_slug: `${accountData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-main`,
+          p_org_slug: baseOrgSlug,
           p_org_type: mapCategoryToOrgType(accountData.category) as any,
           p_admin_email: accountData.primaryEmail,
           p_admin_name: `${accountData.name} Administrator`,
@@ -243,12 +291,16 @@ export const useAccounts = () => {
           return false;
         }
 
+        const tenantId = tenants[0].id as string;
+        const baseOrgSlug = slugify(accountData.name);
+        const uniqueOrgSlug = await getUniqueOrgSlug(tenantId, baseOrgSlug);
+
         const { error } = await supabase
           .from('organizations')
           .insert({
-            tenant_id: tenants[0].id,
+            tenant_id: tenantId,
             name: accountData.name,
-            slug: accountData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            slug: uniqueOrgSlug,
             organization_type: mapCategoryToOrgType(accountData.category) as any,
             contact_email: accountData.primaryEmail,
             contact_phone: accountData.primaryPhone,
@@ -271,11 +323,11 @@ export const useAccounts = () => {
       // Refresh the accounts list
       fetchAccounts();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating account:', error);
       toast({
         title: "Error",
-        description: "Failed to create account",
+        description: error?.message ? `Failed to create account: ${error.message}` : "Failed to create account",
         variant: "destructive"
       });
       return false;
