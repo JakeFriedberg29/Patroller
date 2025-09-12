@@ -131,7 +131,7 @@ export default function PlatformAdmins() {
       try {
         // Prefer a known platform tenant slug if it exists
         const { data: platformTenant } = await supabase
-          .from('tenants')
+          .from('enterprises')
           .select('id, slug')
           .eq('slug', 'missionlog-platform')
           .maybeSingle();
@@ -141,7 +141,7 @@ export default function PlatformAdmins() {
         } else {
           // Fallback: pick the first existing tenant
           const { data: anyTenant } = await supabase
-            .from('tenants')
+            .from('enterprises')
             .select('id, slug')
             .order('created_at', { ascending: true })
             .limit(1);
@@ -151,7 +151,7 @@ export default function PlatformAdmins() {
           } else {
             // If no tenants exist, create a platform tenant
             const { data: createdTenant, error: createTenantErr } = await supabase
-              .from('tenants')
+              .from('enterprises')
               .insert({
                 name: 'MissionLog Platform',
                 slug: 'missionlog-platform',
