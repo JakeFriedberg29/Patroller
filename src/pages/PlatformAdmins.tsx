@@ -273,21 +273,10 @@ export default function PlatformAdmins() {
             <p className="text-muted-foreground">Manage platform administrators and system access</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={createAuthUsers} 
-            disabled={isCreatingAuthUsers}
-            variant="outline" 
-            className="gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            {isCreatingAuthUsers ? 'Creating...' : 'Create Auth Users for Seed Data'}
-          </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Platform Admin
-          </Button>
-        </div>
+        <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Platform Admin
+        </Button>
       </div>
 
       {/* Search and Filters */}
