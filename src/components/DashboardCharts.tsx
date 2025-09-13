@@ -86,6 +86,75 @@ function SingleSelectFilter<T extends string>(props: {
   );
 }
 
+function CombinedSubtypesFilter(props: {
+  orgOptions: OrganizationSubtype[];
+  selectedOrg: Set<OrganizationSubtype>;
+  onToggleOrg: (v: OrganizationSubtype) => void;
+  enterpriseOptions: EnterpriseSubtype[];
+  selectedEnterprise: Set<EnterpriseSubtype>;
+  onToggleEnterprise: (v: EnterpriseSubtype) => void;
+}) {
+  const { orgOptions, selectedOrg, onToggleOrg, enterpriseOptions, selectedEnterprise, onToggleEnterprise } = props;
+  const orgAll = selectedOrg.size === 0;
+  const entAll = selectedEnterprise.size === 0;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          Subtypes
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-3">
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <div className="text-xs font-medium text-muted-foreground mb-2">Organization Subtypes</div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox checked={orgAll} onCheckedChange={() => {
+                  if (orgAll) {
+                    orgOptions.forEach(onToggleOrg);
+                  } else {
+                    Array.from(selectedOrg).forEach(onToggleOrg);
+                  }
+                }} />
+                <span>All</span>
+              </label>
+              {orgOptions.map((opt) => (
+                <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox checked={selectedOrg.has(opt)} onCheckedChange={() => onToggleOrg(opt)} />
+                  <span>{(opt as string).replace(/_/g, " ")}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs font-medium text-muted-foreground mb-2">Enterprise Subtypes</div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox checked={entAll} onCheckedChange={() => {
+                  if (entAll) {
+                    enterpriseOptions.forEach(onToggleEnterprise);
+                  } else {
+                    Array.from(selectedEnterprise).forEach(onToggleEnterprise);
+                  }
+                }} />
+                <span>All</span>
+              </label>
+              {enterpriseOptions.map((opt) => (
+                <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox checked={selectedEnterprise.has(opt)} onCheckedChange={() => onToggleEnterprise(opt)} />
+                  <span>{opt}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function AccountsOverTimeChart(props: {
   data: AccountsOverTimePoint[];
   accountType: AccountTypeFilter;
@@ -112,34 +181,13 @@ export function AccountsOverTimeChart(props: {
             options={[{ value: "all", label: "All" }, { value: "organizations", label: "Organizations" }, { value: "enterprises", label: "Enterprises" }]}
             onChange={onAccountTypeChange}
           />
-          <MultiSelectFilter
-            label="Organization Subtypes"
-            options={orgSubtypes}
-            selected={selectedOrgSubtypes}
-            onToggle={onToggleOrgSubtype}
-            renderOption={(t) => (t as string).replace(/_/g, " ")}
-            includeAll
-            onToggleAll={() => {
-              if (selectedOrgSubtypes.size === 0) {
-                orgSubtypes.forEach(onToggleOrgSubtype);
-              } else {
-                Array.from(selectedOrgSubtypes).forEach(onToggleOrgSubtype);
-              }
-            }}
-          />
-          <MultiSelectFilter
-            label="Enterprise Subtypes"
-            options={enterpriseSubtypes}
-            selected={selectedEnterpriseSubtypes}
-            onToggle={onToggleEnterpriseSubtype}
-            includeAll
-            onToggleAll={() => {
-              if (selectedEnterpriseSubtypes.size === 0) {
-                enterpriseSubtypes.forEach(onToggleEnterpriseSubtype);
-              } else {
-                Array.from(selectedEnterpriseSubtypes).forEach(onToggleEnterpriseSubtype);
-              }
-            }}
+          <CombinedSubtypesFilter
+            orgOptions={orgSubtypes}
+            selectedOrg={selectedOrgSubtypes}
+            onToggleOrg={onToggleOrgSubtype}
+            enterpriseOptions={enterpriseSubtypes}
+            selectedEnterprise={selectedEnterpriseSubtypes}
+            onToggleEnterprise={onToggleEnterpriseSubtype}
           />
         </div>
       </CardHeader>
