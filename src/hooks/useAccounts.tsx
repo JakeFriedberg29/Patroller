@@ -168,11 +168,9 @@ export const useAccounts = () => {
         return account;
       }).filter(Boolean) as Account[];
 
-      let combined = [...enterpriseAccounts, ...organizationAccounts];
-      if (isPlatformAdmin && assignments.length > 0) {
-        const allowedIds = new Set(assignments.map(a => a.account_id));
-        combined = combined.filter(acc => allowedIds.has(acc.id));
-      }
+      // Platform admins have global access; do not restrict by assignments here.
+      // Route-level enforcement is handled by ProtectedRoute.
+      const combined = [...enterpriseAccounts, ...organizationAccounts];
       console.log("Final accounts array (after assignment filter if platform admin):", combined);
       setAccounts(combined);
     } catch (error) {

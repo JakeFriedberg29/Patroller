@@ -84,6 +84,15 @@ export function AppSidebar() {
   const isInOrganization = currentPath.includes('/organization/') && currentPath.split('/').length > 2;
   const isInEnterprise = currentPath.includes('/enterprises/');
 
+  // Derive route id from the path if params are unavailable
+  const deriveRouteIdFromPath = (): string | undefined => {
+    const segments = currentPath.split('/').filter(Boolean);
+    const idx = segments.findIndex(seg => seg === 'organization' || seg === 'enterprises');
+    if (idx >= 0 && segments.length > idx + 1) return segments[idx + 1];
+    return undefined;
+  };
+  const routeId = id ?? deriveRouteIdFromPath();
+
   const isActive = (path: string) => {
     if (isInOrganization || isInEnterprise) {
       return currentPath.includes(path);
@@ -97,11 +106,12 @@ export function AppSidebar() {
       : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1";
 
   const handleSettingsClick = () => {
-    if (isInOrganization) {
-      navigate(`/organization/${id}/settings`);
-    } else if (isInEnterprise) {
-      navigate(`/enterprises/${id}/settings`);
+    if (isInOrganization && routeId) {
+      navigate(`/organization/${routeId}/settings`);
+    } else if (isInEnterprise && routeId) {
+      navigate(`/enterprises/${routeId}/settings`);
     } else {
+      // Fallback to user settings when we don't have an account id/context
       navigate('/settings');
     }
   };
@@ -178,7 +188,7 @@ export function AppSidebar() {
                   {enterpriseItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
-                        <NavLink to={`/enterprises/${id}${item.url}`} className={({ isActive }) => getNavCls({ isActive })}>
+                        <NavLink to={routeId ? `/enterprises/${routeId}${item.url}` : '/settings'} className={({ isActive }) => getNavCls({ isActive })}>
                           <item.icon className="mr-3 h-4 w-4" />
                           {!isCollapsed && <span>{item.title}</span>}
                         </NavLink>
@@ -222,7 +232,7 @@ export function AppSidebar() {
                   ).map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>
-                        <NavLink to={`/organization/${id}${item.url}`} className={({ isActive }) => getNavCls({ isActive })}>
+                        <NavLink to={routeId ? `/organization/${routeId}${item.url}` : '/settings'} className={({ isActive }) => getNavCls({ isActive })}>
                           <item.icon className="mr-3 h-4 w-4" />
                           {!isCollapsed && <span>{item.title}</span>}
                         </NavLink>

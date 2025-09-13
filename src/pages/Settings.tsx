@@ -16,6 +16,7 @@ import {
 import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Plus, Users, Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAccounts, Account } from "@/hooks/useAccounts";
+import { supabase } from "@/integrations/supabase/client";
 
 const mockAccountData = {
   id: 1,
@@ -116,19 +117,44 @@ export default function Settings() {
     zip: ""
   });
 
-  // Load account data
-  useEffect(() => {
-    console.log("Settings component - useEffect triggered");
-    console.log("ID from params:", id);
-    console.log("Accounts length:", accounts.length);
-    console.log("Accounts data:", accounts);
-    
-    if (id && accounts.length > 0) {
-      const account = accounts.find(acc => acc.id === id);
-      console.log("Found account:", account);
-      
-      if (account) {
-        console.log("Setting current account:", account);
+  // Map database organization types to UI categories (duplicate of internal map in useAccounts)
+  const mapOrgTypeToCategory = (orgType?: string): string => {
+    const typeMap: { [key: string]: string } = {
+      'search_and_rescue': 'Search & Rescue',
+      'lifeguard_service': 'Lifeguard Service',
+      'park_service': 'Park Service',
+      'event_medical': 'Event Medical',
+      'ski_patrol': 'Ski Patrol',
+      'harbor_master': 'Harbor Master',
+      'volunteer_emergency_services': 'Volunteer Emergency Services'
+    };
+    return orgType ? (typeMap[orgType] || 'Search & Rescue') : 'Search & Rescue';
+  };
+
+  const loadAccountById = async (accountId: string) => {
+    try {
+      // Try organization first
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', accountId)
+        .maybeSingle();
+      if (org) {
+        const account: Account = {
+          id: org.id,
+          name: org.name,
+          type: 'Organization',
+          category: mapOrgTypeToCategory(org.organization_type),
+          members: 0,
+          email: org.contact_email || 'N/A',
+          phone: org.contact_phone || 'N/A',
+          created: new Date(org.created_at).toLocaleDateString(),
+          tenant_id: org.tenant_id,
+          organization_type: org.organization_type,
+          is_active: org.is_active,
+          address: org.address,
+          settings: org.settings
+        };
         setCurrentAccount(account);
         setFormData({
           name: account.name,
@@ -145,8 +171,89 @@ export default function Settings() {
           state: "",
           zip: ""
         });
-      } else {
-        console.log("Account not found - ID:", id, "Available accounts:", accounts.map(a => a.id));
+        return true;
+      }
+
+      // Then try enterprise
+      const { data: tenant } = await supabase
+        .from('enterprises')
+        .select('*')
+        .eq('id', accountId)
+        .maybeSingle();
+      if (tenant) {
+        const account: Account = {
+          id: tenant.id,
+          name: tenant.name,
+          type: 'Enterprise',
+          category: 'Enterprise Management',
+          members: 0,
+          email: (tenant.settings as any)?.contact_email || 'N/A',
+          phone: (tenant.settings as any)?.contact_phone || 'N/A',
+          created: new Date(tenant.created_at).toLocaleDateString(),
+          tenant_id: tenant.id,
+          is_active: tenant.subscription_status === 'active',
+          settings: tenant.settings
+        };
+        setCurrentAccount(account);
+        setFormData({
+          name: account.name,
+          type: account.type,
+          category: account.category,
+          primaryEmail: account.email,
+          primaryPhone: account.phone,
+          primaryContact: "",
+          secondaryEmail: "",
+          secondaryPhone: "",
+          secondaryContact: "",
+          address: "",
+          city: "",
+          state: "",
+          zip: ""
+        });
+        return true;
+      }
+    } catch (e) {
+      // ignore; upstream handles not-found
+    }
+    return false;
+  };
+
+  // Load account data
+  useEffect(() => {
+    const run = async () => {
+      console.log("Settings component - useEffect triggered");
+      console.log("ID from params:", id);
+      console.log("Accounts length:", accounts.length);
+      if (!id) return;
+
+      // Try cache first when available
+      if (accounts.length > 0) {
+        const account = accounts.find(acc => acc.id === id);
+        console.log("Found account in cache:", account);
+        if (account) {
+          setCurrentAccount(account);
+          setFormData({
+            name: account.name,
+            type: account.type,
+            category: account.category,
+            primaryEmail: account.email,
+            primaryPhone: account.phone,
+            primaryContact: "",
+            secondaryEmail: "",
+            secondaryPhone: "",
+            secondaryContact: "",
+            address: "",
+            city: "",
+            state: "",
+            zip: ""
+          });
+          return;
+        }
+      }
+
+      // Fallback: fetch directly by id from DB before redirecting
+      const loaded = await loadAccountById(id);
+      if (!loaded) {
         toast({
           title: "Account Not Found",
           description: "The requested account could not be found.",
@@ -154,9 +261,8 @@ export default function Settings() {
         });
         navigate('/accounts');
       }
-    } else {
-      console.log("Waiting for data - ID:", id, "Accounts length:", accounts.length);
-    }
+    };
+    run();
   }, [id, accounts, navigate, toast]);
 
   const handleInputChange = (field: string, value: string) => {
