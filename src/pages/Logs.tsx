@@ -317,20 +317,19 @@ export default function Logs() {
                 <TableHead className="font-semibold">User</TableHead>
                 <TableHead className="font-semibold">Description</TableHead>
                 <TableHead className="font-semibold">Timestamp</TableHead>
-                <TableHead className="font-semibold">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12">
+                  <TableCell colSpan={5} className="text-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     <p className="text-muted-foreground mt-4">Loading audit logs...</p>
                   </TableCell>
                 </TableRow>
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12">
+                  <TableCell colSpan={5} className="text-center py-12">
                     <p className="text-destructive mb-4">Error: {error}</p>
                     <Button onClick={refetch} variant="outline">
                       Try Again
@@ -339,7 +338,7 @@ export default function Logs() {
                 </TableRow>
               ) : filteredLogs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12">
+                  <TableCell colSpan={5} className="text-center py-12">
                     <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">
                       {searchTerm || actionFilter !== "ALL" || resourceFilter !== "ALL" 
@@ -409,14 +408,6 @@ export default function Logs() {
                           {new Date(log.created_at).toLocaleString()}
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      {(log.metadata || log.new_values || log.old_values) && (
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">View details</span>
-                        </Button>
-                      )}
                     </TableCell>
                   </TableRow>
                 ))

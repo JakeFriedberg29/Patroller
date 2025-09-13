@@ -43,6 +43,10 @@ export const useAuditLogs = ({
     setError(null);
     
     try {
+      // Normalize filters to ensure consistent comparisons
+      const normalizedAction = (actionFilter || "ALL").toUpperCase();
+      const normalizedResource = (resourceFilter || "ALL").toLowerCase();
+
       let query = supabase
         .from('audit_logs')
         .select(`
@@ -64,12 +68,14 @@ export const useAuditLogs = ({
         .limit(limit);
 
       // Apply filters
-      if (actionFilter !== "ALL") {
-        query = query.eq('action', actionFilter);
+      if (normalizedAction !== "ALL") {
+        // action is stored uppercase in our UI options; ensure DB comparison matches regardless of case
+        query = query.ilike('action', normalizedAction);
       }
       
-      if (resourceFilter !== "ALL") {
-        query = query.eq('resource_type', resourceFilter);
+      if (normalizedResource !== "all") {
+        // resource_type is typically lowercase; use ilike for safety
+        query = query.ilike('resource_type', normalizedResource);
       }
 
       const { data, error } = await query;

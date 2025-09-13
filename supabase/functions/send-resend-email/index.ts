@@ -27,6 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     const canUseResend = !!resendApiKey;
+    const resendFrom = Deno.env.get('RESEND_FROM') || 'Platform Admin <onboarding@resend.dev>';
 
     const resend = canUseResend ? new Resend(resendApiKey as string) : null;
 
@@ -68,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Create activation URL
-    const baseUrl = origin || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.sandbox.lovable.dev';
+    const baseUrl = origin || 'https://response-chain.lovable.app';
     const activationUrl = `${baseUrl}/activate?token=${tokenData.activation_token}`;
 
     // Prepare email content
@@ -155,29 +156,64 @@ Need help? Contact your system administrator.
 © ${new Date().getFullYear()} ${orgName}. All rights reserved.
     `;
 
+    const sendSupabaseInviteFallback = async (): Promise<Response> => {
+      console.warn('Falling back to Supabase invite...');
+      const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
+        email,
+        {
+          data: {
+            full_name: fullName,
+            tenant_id: userData.tenant_id,
+            organization_id: userData.organization_id,
+            user_id: userId,
+            invited_by_admin: true
+          },
+          redirectTo: `${baseUrl}/reset-password`
+        }
+      );
+
+      if (inviteError) {
+        console.error('Supabase invite fallback error:', inviteError);
+        throw new Error(`Supabase invite fallback failed: ${inviteError.message}`);
+      }
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          profile_data: {
+            ...userData.profile_data,
+            activation_sent_at: new Date().toISOString(),
+            supabase_invite_sent: true
+          },
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Error updating user profile after fallback:', updateError);
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: `Invitation ${isResend ? 'resent' : 'sent'} via Supabase (fallback)`
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
+    };
+
     try {
       if (!canUseResend) {
-        console.warn('RESEND_API_KEY is not set. Dev fallback active.');
-        if (isDevOrigin) {
-          return new Response(JSON.stringify({
-            success: true,
-            message: 'Dev mode: Resend not configured. Use activationUrl to proceed.',
-            emailId: null,
-            activationUrl
-          }), {
-            status: 200,
-            headers: {
-              "Content-Type": "application/json",
-              ...corsHeaders,
-            },
-          });
-        }
-        throw new Error('RESEND_API_KEY environment variable is not set');
+        console.warn('RESEND_API_KEY is not set. Attempting Supabase invite fallback.');
+        return await sendSupabaseInviteFallback();
       }
 
       // Send email using Resend
       const emailResponse = await (resend as Resend).emails.send({
-        from: 'Platform Admin <onboarding@resend.dev>', // CHANGE THIS to your verified domain
+        from: resendFrom, // Use verified domain when configured
         to: [email],
         subject: `${isResend ? 'Reminder: ' : ''}Welcome to ${orgName} - Account Activation Required`,
         html: emailHtml,
@@ -246,14 +282,12 @@ Need help? Contact your system administrator.
         });
       }
 
-      if (msg.includes('You can only send testing emails')) {
-        throw new Error('Domain verification required. Please verify your domain at resend.com/domains and update the "from" address in the email function.');
+      // Production fallback to Supabase invite if Resend fails
+      try {
+        return await sendSupabaseInviteFallback();
+      } catch (fallbackError: any) {
+        throw new Error(`Failed to send via Resend and fallback failed: ${fallbackError.message || msg}`);
       }
-      if (msg.includes('Invalid from address')) {
-        throw new Error('Invalid from address. Please use an email address from your verified domain.');
-      }
-
-      throw new Error(`Failed to send email: ${msg}`);
     }
 
   } catch (error: any) {
