@@ -3,13 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bell, Search, Plus, Eye, Settings, Mail, Filter, Calendar, Building2, Users, Shield, Edit, Download } from "lucide-react";
+import { Bell, Search, Eye, Mail, Filter, Calendar, Building2, Users, Shield, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 const mockActivationNotifications = [{
@@ -54,97 +53,11 @@ MissionLog Platform Team
 
 ---
 This is an automated message. Please do not reply to this email.`
-}, {
-  id: "activation-002",
-  title: "Enterprise Admin Account Activation",
-  type: "activation_email",
-  recipientType: "Enterprise Admin",
-  recipient: "sarah.wilson@megacorp.com",
-  accountType: "Enterprise Admin",
-  organizationName: "MegaCorp Industries",
-  isEnabled: true,
-  status: "Sent",
-  createdDate: "2024-01-14T14:30:00Z",
-  lastSent: "2024-01-14T14:35:00Z",
-  emailTemplate: `Dear [RECIPIENT_NAME],
-
-Welcome to MissionLog!
-
-Your Enterprise Administrator account for [ORGANIZATION_NAME] has been created and is ready for activation.
-
-Account Details:
-- Email: [RECIPIENT_EMAIL]
-- Role: Enterprise Administrator
-- Organization: [ORGANIZATION_NAME]
-- Access Level: Enterprise Management
-
-To activate your account, please click the link below:
-[ACTIVATION_LINK]
-
-This link will expire in 24 hours for security purposes.
-
-As an Enterprise Administrator, you will have access to:
-- Management of all organizations within your enterprise
-- User management for your enterprise
-- Enterprise-wide analytics and reporting
-- Organization settings and configurations
-- Incident management and coordination
-
-If you have any questions or need assistance, please contact our support team.
-
-Best regards,
-MissionLog Platform Team
-
----
-This is an automated message. Please do not reply to this email.`
-}, {
-  id: "activation-003",
-  title: "Organization Admin Account Activation",
-  type: "activation_email",
-  recipientType: "Organization Admin",
-  recipient: "mike.johnson@cityrescue.org",
-  accountType: "Organization Admin",
-  organizationName: "City Emergency Services",
-  isEnabled: false,
-  status: "Disabled",
-  createdDate: "2024-01-13T11:20:00Z",
-  lastSent: null,
-  emailTemplate: `Dear [RECIPIENT_NAME],
-
-Welcome to MissionLog!
-
-Your Organization Administrator account for [ORGANIZATION_NAME] has been created and is ready for activation.
-
-Account Details:
-- Email: [RECIPIENT_EMAIL]
-- Role: Organization Administrator
-- Organization: [ORGANIZATION_NAME]
-- Access Level: Organization Management
-
-To activate your account, please click the link below:
-[ACTIVATION_LINK]
-
-This link will expire in 24 hours for security purposes.
-
-As an Organization Administrator, you will have access to:
-- Team and user management for your organization
-- Incident reporting and management
-- Equipment and location tracking
-- Organization analytics and reporting
-- Settings and configuration management
-
-If you have any questions or need assistance, please contact our support team.
-
-Best regards,
-MissionLog Platform Team
-
----
-This is an automated message. Please do not reply to this email.`
 }];
 export default function PlatformNotificationCenter() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [recipientTypeFilter, setRecipientTypeFilter] = useState("all");
+  // Removed type filter (always show all)
   const [rowsPerPage, setRowsPerPage] = useState("10");
   const [notifications, setNotifications] = useState(mockActivationNotifications);
   const [selectedNotification, setSelectedNotification] = useState<typeof mockActivationNotifications[0] | null>(null);
@@ -152,8 +65,7 @@ export default function PlatformNotificationCenter() {
   const filteredNotifications = notifications.filter(notif => {
     const matchesSearch = notif.title.toLowerCase().includes(searchTerm.toLowerCase()) || notif.recipient.toLowerCase().includes(searchTerm.toLowerCase()) || notif.organizationName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || notif.status.toLowerCase() === statusFilter;
-    const matchesRecipientType = recipientTypeFilter === "all" || notif.recipientType.toLowerCase() === recipientTypeFilter.toLowerCase();
-    return matchesSearch && matchesStatus && matchesRecipientType;
+    return matchesSearch && matchesStatus;
   });
   const handleToggleNotification = (id: string) => {
     setNotifications(prev => prev.map(notif => notif.id === id ? {
@@ -206,18 +118,11 @@ export default function PlatformNotificationCenter() {
             <Bell className="h-8 w-8 text-primary" />
             Platform Notification Center
           </h1>
-          <p className="text-muted-foreground">Manage platform-wide notification settings and activation emails</p>
+          <p className="text-muted-foreground">Manage platform-level notifications</p>
         </div>
         
       </div>
-
-      <Tabs defaultValue="activation-emails" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="activation-emails">Activation Emails</TabsTrigger>
-          <TabsTrigger value="settings">Notification Settings</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="activation-emails" className="space-y-6">
+      <div className="space-y-6">
           {/* Search and Filters */}
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-sm">
@@ -237,89 +142,58 @@ export default function PlatformNotificationCenter() {
                   <SelectItem value="disabled">Disabled</SelectItem>
                 </SelectContent>
               </Select>
-              
-              <Select value={recipientTypeFilter} onValueChange={setRecipientTypeFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Recipient Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="platform admin">Platform Admin</SelectItem>
-                  <SelectItem value="enterprise admin">Enterprise Admin</SelectItem>
-                  <SelectItem value="organization admin">Organization Admin</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
           {/* Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-semibold">Type</TableHead>
-                  <TableHead className="font-semibold">Recipient</TableHead>
-                  <TableHead className="font-semibold">Organization</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold">Last Sent</TableHead>
-                  <TableHead className="text-right font-semibold">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredNotifications.length > 0 ? filteredNotifications.slice(0, parseInt(rowsPerPage)).map(notif => <TableRow key={notif.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="p-1.5 rounded bg-primary/10 text-primary">
-                            {getRecipientTypeIcon(notif.recipientType)}
-                          </div>
-                          <div>
-                            <div className="font-medium">{notif.recipientType}</div>
-                            <div className="text-sm text-muted-foreground">{notif.title}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-mono text-sm">{notif.recipient}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          <span>{notif.organizationName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={getStatusVariant(notif.status)}>
-                            {notif.status}
-                          </Badge>
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader className="bg-muted/40 sticky top-0 z-10">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="font-semibold">Notification</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Last Sent</TableHead>
+                    <TableHead className="text-right font-semibold">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredNotifications.length > 0 ? filteredNotifications.slice(0, parseInt(rowsPerPage)).map(notif => <TableRow key={notif.id} className="even:bg-muted/20">
+                        <TableCell>
                           <div className="flex items-center gap-2">
-                            <Switch checked={notif.isEnabled} onCheckedChange={() => handleToggleNotification(notif.id)} />
+                            <div className="p-1.5 rounded bg-primary/10 text-primary">
+                              {getRecipientTypeIcon(notif.recipientType)}
+                            </div>
+                            <div>
+                              <div className="font-medium">{notif.title}</div>
+                              <div className="text-xs text-muted-foreground">{notif.recipientType}</div>
+                            </div>
                           </div>
-                        </div>
+                        </TableCell>
+                        <TableCell>
+                          <Switch checked={notif.isEnabled} onCheckedChange={() => handleToggleNotification(notif.id)} />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            {formatDate(notif.lastSent)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" onClick={() => handleViewNotification(notif)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Email
+                          </Button>
+                        </TableCell>
+                      </TableRow>) : <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        No notifications found matching your search criteria.
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          {formatDate(notif.lastSent)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="outline" size="sm" onClick={() => handleViewNotification(notif)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Email
-                        </Button>
-                      </TableCell>
-                    </TableRow>) : <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No notifications found matching your search criteria.
-                    </TableCell>
-                  </TableRow>}
-              </TableBody>
-            </Table>
-          </div>
+                    </TableRow>}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
           {/* Pagination */}
           <div className="flex items-center justify-between">
@@ -342,95 +216,7 @@ export default function PlatformNotificationCenter() {
               Showing {Math.min(parseInt(rowsPerPage), filteredNotifications.length)} of {filteredNotifications.length} results
             </div>
           </div>
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Global Notification Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-4">Activation Email Settings</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="font-medium">Auto-send activation emails</div>
-                        <div className="text-sm text-muted-foreground">Automatically send activation emails when accounts are created</div>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="font-medium">Email expiration time</div>
-                        <div className="text-sm text-muted-foreground">Time before activation links expire (24 hours)</div>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Configure
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="font-medium">Resend reminder emails</div>
-                        <div className="text-sm text-muted-foreground">Send reminder emails for unactivated accounts after 48 hours</div>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="font-medium mb-4">Email Delivery Settings</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="font-medium">Delivery tracking</div>
-                        <div className="text-sm text-muted-foreground">Track email delivery status and opens</div>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="font-medium">Failed delivery alerts</div>
-                        <div className="text-sm text-muted-foreground">Alert admins when activation emails fail to deliver</div>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-4">Security Settings</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="font-medium">Require email verification</div>
-                        <div className="text-sm text-muted-foreground">Require users to verify their email before account activation</div>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="font-medium">Rate limiting</div>
-                        <div className="text-sm text-muted-foreground">Limit activation email requests per user (3 per hour)</div>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Configure
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      </div>
 
       {/* View Email Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
