@@ -12,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
   Select,
   SelectContent,
@@ -30,6 +32,7 @@ import {
 import { Plus, Search, Building2, Mail, Phone, Users, Filter, Loader2, Copy, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAccounts, CreateAccountRequest, Account } from "@/hooks/useAccounts";
+import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 const typeColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -85,8 +88,36 @@ export default function Accounts() {
     address: "",
     city: "",
     state: "",
-    zip: ""
+    zip: "",
+    tenantId: undefined
   });
+
+  const [enterpriseSearchOpen, setEnterpriseSearchOpen] = useState(false);
+  const [enterpriseQuery, setEnterpriseQuery] = useState("");
+  const [enterprises, setEnterprises] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingEnterprises, setLoadingEnterprises] = useState(false);
+
+  const loadEnterprises = async (q: string) => {
+    try {
+      setLoadingEnterprises(true);
+      const query = supabase
+        .from('enterprises')
+        .select('id, name')
+        .order('name', { ascending: true })
+        .limit(20);
+      if (q) {
+        // Basic ILIKE match on name
+        // @ts-ignore - supabase-js supports ilike
+        query.ilike('name', `%${q}%`);
+      }
+      const { data } = await query;
+      setEnterprises((data || []).map((t: any) => ({ id: t.id, name: t.name })));
+    } catch (e) {
+      // silent fail; input shows empty list
+    } finally {
+      setLoadingEnterprises(false);
+    }
+  };
 
   const handleViewAccount = (accountId: string) => {
     console.log("handleViewAccount called with accountId:", accountId);
@@ -142,6 +173,15 @@ export default function Accounts() {
       return;
     }
 
+    if (formData.type === 'Organization' && !formData.tenantId) {
+      toast({
+        title: "Enterprise required",
+        description: "Please assign the organization to an enterprise.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCreating(true);
     try {
       const success = await createAccount(formData);
@@ -159,7 +199,8 @@ export default function Accounts() {
           address: "",
           city: "",
           state: "",
-          zip: ""
+          zip: "",
+          tenantId: undefined
         });
       }
     } catch (error) {
@@ -439,6 +480,8 @@ export default function Accounts() {
                 handleInputChange("type", value as 'Enterprise' | 'Organization');
                 // Reset category when type changes
                 handleInputChange("category", "");
+                // Reset selected enterprise when switching away from Organization
+                if (value === 'Enterprise') handleInputChange('tenantId', "");
               }}>
                 <SelectTrigger className="border-2">
                   <SelectValue />
@@ -562,6 +605,40 @@ export default function Accounts() {
                 onChange={(e) => handleInputChange("zip", e.target.value)}
               />
             </div>
+
+            {formData.type === 'Organization' && (
+              <div className="space-y-2 md:col-span-2">
+                <Label>Assign to Enterprise *</Label>
+                <Popover open={enterpriseSearchOpen} onOpenChange={setEnterpriseSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between">
+                      {formData.tenantId ? (enterprises.find(e => e.id === formData.tenantId)?.name || 'Selected enterprise') : 'Select enterprise...'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0">
+                    <Command>
+                      <CommandInput placeholder="Search enterprises..." value={enterpriseQuery} onValueChange={(v) => {
+                        setEnterpriseQuery(v);
+                        loadEnterprises(v);
+                      }} />
+                      <CommandList>
+                        <CommandEmpty>{loadingEnterprises ? 'Loading...' : 'No results found.'}</CommandEmpty>
+                        <CommandGroup>
+                          {enterprises.map((ent) => (
+                            <CommandItem key={ent.id} value={ent.name} onSelect={() => {
+                              handleInputChange('tenantId', ent.id);
+                              setEnterpriseSearchOpen(false);
+                            }}>
+                              {ent.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-between">

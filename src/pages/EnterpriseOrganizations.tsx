@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -11,311 +11,212 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Building2, 
-  Search, 
-  Plus, 
-  MoreHorizontal,
-  MapPin,
-  Users,
-  Activity,
-  Filter
-} from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Building2, Search, Users, Filter, Mail, Phone, Copy, ChevronRight } from "lucide-react";
+import { useEnterpriseData } from "@/hooks/useEnterpriseData";
+import { useParams, useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
-const mockOrganizations = [
-  {
-    id: "org-001",
-    name: "MegaCorp Manufacturing",
-    location: "Detroit, MI",
-    address: "1234 Industrial Blvd, Detroit, MI 48201",
-    users: 456,
-    status: "Active",
-    type: "Manufacturing",
-    lastActivity: "2 hours ago",
-    createdDate: "2023-03-15",
-    adminContact: "Sarah Johnson",
-    email: "sarah.johnson@megacorp.com"
-  },
-  {
-    id: "org-002",
-    name: "MegaCorp Logistics", 
-    location: "Atlanta, GA",
-    address: "5678 Freight Ave, Atlanta, GA 30309",
-    users: 203,
-    status: "Active",
-    type: "Logistics",
-    lastActivity: "30 minutes ago",
-    createdDate: "2023-05-22",
-    adminContact: "Mike Chen",
-    email: "mike.chen@megacorp.com"
-  },
-  {
-    id: "org-003",
-    name: "MegaCorp R&D",
-    location: "San Francisco, CA",
-    address: "910 Innovation Dr, San Francisco, CA 94102",
-    users: 189,
-    status: "Active", 
-    type: "Research",
-    lastActivity: "1 hour ago",
-    createdDate: "2023-01-10",
-    adminContact: "Dr. Emily Rodriguez",
-    email: "emily.rodriguez@megacorp.com"
-  },
-  {
-    id: "org-004",
-    name: "MegaCorp Energy",
-    location: "Houston, TX",
-    address: "2468 Energy Plaza, Houston, TX 77002",
-    users: 334,
-    status: "Warning",
-    type: "Energy",
-    lastActivity: "5 hours ago",
-    createdDate: "2023-07-03",
-    adminContact: "Robert Davis",
-    email: "robert.davis@megacorp.com"
-  },
-  {
-    id: "org-005",
-    name: "MegaCorp Healthcare",
-    location: "Boston, MA",
-    address: "1357 Medical Center Dr, Boston, MA 02101",
-    users: 267,
-    status: "Active",
-    type: "Healthcare",
-    lastActivity: "45 minutes ago",
-    createdDate: "2023-04-18",
-    adminContact: "Dr. Lisa Thompson",
-    email: "lisa.thompson@megacorp.com"
-  },
-  {
-    id: "org-006",
-    name: "MegaCorp Finance",
-    location: "New York, NY",
-    address: "7890 Wall Street, New York, NY 10005",
-    users: 145,
-    status: "Inactive",
-    type: "Finance",
-    lastActivity: "3 days ago",
-    createdDate: "2023-02-28",
-    adminContact: "James Wilson",
-    email: "james.wilson@megacorp.com"
-  }
-];
+const categoryColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  "Search & Rescue": "destructive",
+  "Lifeguard Service": "default",
+  "Park Service": "secondary",
+  "Event Medical": "outline",
+  "Ski Patrol": "secondary",
+  "Harbor Master": "default",
+  "Volunteer Emergency Services": "outline"
+};
 
 export default function EnterpriseOrganizations() {
+  const { id: tenantId } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { organizations, loading } = useEnterpriseData(tenantId);
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [rowsPerPage, setRowsPerPage] = useState("10");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("All Subtypes");
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredOrganizations = mockOrganizations.filter((org) => {
-    const matchesSearch = org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         org.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || org.status.toLowerCase() === statusFilter;
-    const matchesType = typeFilter === "all" || org.type.toLowerCase() === typeFilter;
-    
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active': return 'default';
-      case 'warning': return 'destructive';
-      case 'inactive': return 'secondary';
-      default: return 'secondary';
+  const handleCopyId = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id);
+      toast({ title: "Copied", description: "Organization ID copied to clipboard" });
+    } catch {
+      toast({ title: "Copy failed", description: "Unable to copy organization ID", variant: "destructive" });
     }
   };
 
+  const handleViewOrg = (orgId: string) => {
+    if (!orgId) return;
+    navigate(`/organization/${orgId}/mission-control`);
+  };
+
+  const filtered = useMemo(() => {
+    return organizations.filter((org) => {
+      const matchesSearch = org.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategoryFilter === "All Subtypes" ||
+        (org.organization_type && org.organization_type.toLowerCase().includes(selectedCategoryFilter.toLowerCase()));
+      return matchesSearch && matchesCategory;
+    });
+  }, [organizations, searchTerm, selectedCategoryFilter]);
+
+  const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginated = filtered.slice(startIndex, startIndex + rowsPerPage);
+
+  const categories = Array.from(new Set(organizations.map(o => o.organization_type))).filter(Boolean) as string[];
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center p-8">
+          <span className="text-muted-foreground">Loading organizations...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Building2 className="h-8 w-8" />
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+            <Building2 className="h-8 w-8 text-primary" />
             Organizations
           </h1>
-          <p className="text-muted-foreground">Manage all organizations within your enterprise</p>
+          <p className="text-muted-foreground mt-1">Organizations under this enterprise</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Organization
-        </Button>
       </div>
 
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search organizations by name..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+          <SelectTrigger className="w-[200px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All Subtypes">All Subtypes</SelectItem>
+            {categories.map(cat => (
+              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Organizations Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Organization Directory</CardTitle>
-          
-          {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search organizations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-32">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="warning">Warning</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                  <SelectItem value="logistics">Logistics</SelectItem>
-                  <SelectItem value="research">Research</SelectItem>
-                  <SelectItem value="energy">Energy</SelectItem>
-                  <SelectItem value="healthcare">Healthcare</SelectItem>
-                  <SelectItem value="finance">Finance</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Organization</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Users</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Activity</TableHead>
-                  <TableHead>Admin Contact</TableHead>
-                  <TableHead className="w-12"></TableHead>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-semibold">Name</TableHead>
+                <TableHead className="font-semibold">Subtype</TableHead>
+                <TableHead className="font-semibold">Team Members</TableHead>
+                <TableHead className="font-semibold">Contact</TableHead>
+                <TableHead className="w-12"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginated.map((org) => (
+                <TableRow key={org.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                        <Building2 className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <div className="font-semibold">{org.name}</div>
+                        <div className="text-sm text-muted-foreground">Created {org.created || "—"}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={categoryColors[org.organization_type] || "default"}>
+                      {org.organization_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{org.users}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        <span>{org.email || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
+                        <span>{org.phone || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleCopyId(org.id)}
+                            >
+                              <Copy className="h-4 w-4" />
+                              <span className="sr-only">Copy Organization ID</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Copy Organization ID
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleViewOrg(org.id)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">View More</span>
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredOrganizations.slice(0, parseInt(rowsPerPage)).map((org) => (
-                  <TableRow key={org.id}>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="font-medium">{org.name}</div>
-                        <div className="text-sm text-muted-foreground">ID: {org.id}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <div className="font-medium">{org.location}</div>
-                          <div className="text-sm text-muted-foreground">{org.address}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{org.type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        {org.users}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(org.status)}>
-                        {org.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Activity className="h-4 w-4 text-muted-foreground" />
-                        {org.lastActivity}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="font-medium">{org.adminContact}</div>
-                        <div className="text-sm text-muted-foreground">{org.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              // Navigate to organization dashboard
-                              window.location.href = `/organization/${org.id}/mission-control`;
-                            }}
-                          >
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              // Navigate to organization settings
-                              window.location.href = `/organization/${org.id}/settings`;
-                            }}
-                          >
-                            Edit Organization
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              // Navigate to team directory
-                              window.location.href = `/organization/${org.id}/team-directory`;
-                            }}
-                          >
-                            Manage Users
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              // Navigate to organization logs
-                              window.location.href = `/organization/${org.id}/logs`;
-                            }}
-                          >
-                            View Logs
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Deactivate
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          
+              ))}
+            </TableBody>
+          </Table>
+
           {/* Pagination */}
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center justify-between p-4 border-t">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Show</span>
-              <Select value={rowsPerPage} onValueChange={setRowsPerPage}>
-                <SelectTrigger className="w-20">
+              <span className="text-sm text-muted-foreground">Rows per page:</span>
+              <Select value={rowsPerPage.toString()} onValueChange={(value) => {
+                setRowsPerPage(Number(value));
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-16">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -324,13 +225,30 @@ export default function EnterpriseOrganizations() {
                   <SelectItem value="50">50</SelectItem>
                 </SelectContent>
               </Select>
-              <span className="text-sm text-muted-foreground">
-                of {filteredOrganizations.length} organizations
-              </span>
             </div>
             
-            <div className="text-sm text-muted-foreground">
-              Showing {Math.min(parseInt(rowsPerPage), filteredOrganizations.length)} of {filteredOrganizations.length} results
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {startIndex + 1}-{Math.min(startIndex + rowsPerPage, filtered.length)} of {filtered.length}
+              </span>
+              <div className="flex gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

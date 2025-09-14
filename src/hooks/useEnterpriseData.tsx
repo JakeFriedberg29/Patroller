@@ -7,10 +7,9 @@ export interface EnterpriseData {
   name: string;
   description?: string;
   totalOrganizations: number;
-  totalUsers: number;
-  activeIncidents: number;
-  resolvedToday: number;
-  complianceScore: number;
+  totalEnterpriseAdminsAndUsers: number;
+  totalOrganizationResponders: number;
+  reportsSubmittedToday: number;
 }
 
 export interface OrganizationSummary {
@@ -21,11 +20,21 @@ export interface OrganizationSummary {
   status: string;
   lastActivity: string;
   location?: any;
+  email?: string;
+  phone?: string;
+  created?: string;
+}
+
+export interface ReportsByOrganizationDatum {
+  orgId: string;
+  orgName: string;
+  count: number;
 }
 
 export const useEnterpriseData = (tenantId?: string) => {
   const [enterpriseData, setEnterpriseData] = useState<EnterpriseData | null>(null);
   const [organizations, setOrganizations] = useState<OrganizationSummary[]>([]);
+  const [reportsByOrganization, setReportsByOrganization] = useState<ReportsByOrganizationDatum[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -49,14 +58,44 @@ export const useEnterpriseData = (tenantId?: string) => {
       // Fetch organizations in this tenant
       const { data: orgsData } = await supabase
         .from('organizations')
-        .select('*')
+        .select('id, name, organization_type, address, contact_email, contact_phone, is_active, created_at')
         .eq('tenant_id', tenantId)
         .eq('is_active', true);
 
-      // Get user counts for each organization
+      const orgIds = (orgsData || []).map(o => o.id);
+
+      // Preload all users in this tenant (active)
+      const { data: tenantUsers } = await supabase
+        .from('users')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'active');
+
+      const userIds = (tenantUsers || []).map(u => u.id);
+
+      // Count enterprise admins + enterprise users across tenant
+      let totalEnterpriseAdminsAndUsers = 0;
+      let totalOrganizationResponders = 0;
+
+      if (userIds.length > 0) {
+        const { data: roleRows } = await supabase
+          .from('user_roles')
+          .select('user_id, role_type, is_active')
+          .in('user_id', userIds)
+          .eq('is_active', true);
+
+        const entSet = new Set<string>();
+        const respSet = new Set<string>();
+        (roleRows || []).forEach((r: any) => {
+          if (r.role_type === 'enterprise_admin' || r.role_type === 'enterprise_user') entSet.add(r.user_id);
+          if (r.role_type === 'responder') respSet.add(r.user_id);
+        });
+        totalEnterpriseAdminsAndUsers = entSet.size;
+        totalOrganizationResponders = respSet.size;
+      }
+
+      // Organization summaries with user counts per org
       const organizationSummaries: OrganizationSummary[] = [];
-      let totalUsers = 0;
-      
       for (const org of orgsData || []) {
         const { count: userCount } = await supabase
           .from('users')
@@ -64,62 +103,60 @@ export const useEnterpriseData = (tenantId?: string) => {
           .eq('organization_id', org.id)
           .eq('status', 'active');
 
-        // Get recent audit log to determine last activity (simplified approach)
-        const { data: recentActivity } = await supabase
-          .from('audit_logs')
-          .select('created_at')
-          .eq('resource_type', 'organization')
-          .eq('resource_id', org.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        const lastActivity = recentActivity?.[0]?.created_at 
-          ? getRelativeTime(new Date(recentActivity[0].created_at))
-          : 'No recent activity';
-
         organizationSummaries.push({
           id: org.id,
           name: org.name,
           organization_type: org.organization_type,
           users: userCount || 0,
-          status: 'Active', // Could be enhanced with real status logic
-          lastActivity,
+          status: 'Active',
+          lastActivity: '—',
           location: org.address,
+          email: (org as any).contact_email || 'N/A',
+          phone: (org as any).contact_phone || 'N/A',
+          created: org.created_at ? new Date(org.created_at as any).toLocaleDateString() : undefined,
         });
-
-        totalUsers += userCount || 0;
       }
 
-      // Fetch active incidents across all organizations
-      const { count: activeIncidents } = await supabase
-        .from('incidents')
-        .select('id', { count: 'exact' })
-        .in('organization_id', (orgsData || []).map(org => org.id))
-        .eq('status', 'open');
-
-      // Fetch resolved incidents today
+      // Reports Submitted Today (using incidents as reports)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
-      const { count: resolvedToday } = await supabase
+      const { count: reportsToday } = await supabase
         .from('incidents')
         .select('id', { count: 'exact' })
-        .in('organization_id', (orgsData || []).map(org => org.id))
-        .eq('status', 'resolved')
-        .gte('resolved_at', today.toISOString());
+        .in('organization_id', orgIds.length ? orgIds : ['00000000-0000-0000-0000-000000000000'])
+        .gte('created_at', today.toISOString());
+
+      // Reports by Organization over last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const { data: incidentsRows } = await supabase
+        .from('incidents')
+        .select('organization_id')
+        .in('organization_id', orgIds.length ? orgIds : ['00000000-0000-0000-0000-000000000000'])
+        .gte('created_at', thirtyDaysAgo.toISOString());
+
+      const countsByOrg = new Map<string, number>();
+      (incidentsRows || []).forEach((row: any) => {
+        countsByOrg.set(row.organization_id, (countsByOrg.get(row.organization_id) || 0) + 1);
+      });
+      const byOrg: ReportsByOrganizationDatum[] = (orgsData || []).map(org => ({
+        orgId: org.id,
+        orgName: org.name,
+        count: countsByOrg.get(org.id) || 0,
+      })).sort((a, b) => b.count - a.count);
 
       setEnterpriseData({
         id: tenant.id,
         name: tenant.name,
         description: (tenant.settings as any)?.description || 'Enterprise organization',
-        totalOrganizations: orgsData?.length || 0,
-        totalUsers,
-        activeIncidents: activeIncidents || 0,
-        resolvedToday: resolvedToday || 0,
-        complianceScore: 94, // Placeholder - could be calculated based on actual metrics
+        totalOrganizations: orgIds.length,
+        totalEnterpriseAdminsAndUsers,
+        totalOrganizationResponders,
+        reportsSubmittedToday: reportsToday || 0,
       });
 
       setOrganizations(organizationSummaries);
+      setReportsByOrganization(byOrg);
 
     } catch (error) {
       console.error('Error fetching enterprise data:', error);
@@ -133,24 +170,6 @@ export const useEnterpriseData = (tenantId?: string) => {
     }
   };
 
-  const getRelativeTime = (date: Date): string => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-
-    if (diffHours >= 24) {
-      const diffDays = Math.floor(diffHours / 24);
-      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    } else if (diffHours >= 1) {
-      return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    } else if (diffMinutes >= 1) {
-      return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-    } else {
-      return 'Just now';
-    }
-  };
-
   useEffect(() => {
     fetchEnterpriseData();
   }, [tenantId]);
@@ -158,6 +177,7 @@ export const useEnterpriseData = (tenantId?: string) => {
   return { 
     enterpriseData, 
     organizations, 
+    reportsByOrganization,
     loading, 
     refetch: fetchEnterpriseData 
   };

@@ -32,6 +32,7 @@ export interface CreateAccountRequest {
   city?: string;
   state?: string;
   zip?: string;
+  tenantId?: string; // Required when creating an Organization
 }
 
 // Map UI categories to database organization types
@@ -272,24 +273,17 @@ export const useAccounts = () => {
           description: `${accountData.name} has been created successfully`,
         });
       } else {
-        // Create standalone Organization
-        // First need to get a tenant to assign to
-        const { data: tenants } = await supabase
-          .from('enterprises')
-          .select('id')
-          .eq('subscription_tier', 'enterprise')
-          .limit(1);
-
-        if (!tenants || tenants.length === 0) {
+        // Create Organization under selected Enterprise
+        if (!accountData.tenantId) {
           toast({
-            title: "Error",
-            description: "No available enterprise tenant found",
+            title: "Missing Enterprise",
+            description: "Please assign this organization to an enterprise.",
             variant: "destructive"
           });
           return false;
         }
 
-        const tenantId = tenants[0].id as string;
+        const tenantId = accountData.tenantId as string;
         const baseOrgSlug = slugify(accountData.name);
         const uniqueOrgSlug = await getUniqueOrgSlug(tenantId, baseOrgSlug);
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,8 +27,6 @@ import {
   Mail,
   Phone,
   Filter,
-  Calendar,
-  MapPin,
   Edit, 
   Trash2,
   Download
@@ -35,8 +34,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserManagement } from "@/hooks/useUserManagement";
-import { ResendActivationButton } from "@/components/ResendActivationButton";
-import { UserStatusBadge } from "@/components/UserStatusBadge";
+// Removed status components to simplify table to Name, Role, Contact
 import { AddAdminModal } from "@/components/AddAdminModal";
 import { EditAdminModal } from "@/components/EditAdminModal";
 import { DeleteAdminModal } from "@/components/DeleteAdminModal";
@@ -73,7 +71,8 @@ export default function EnterpriseAdmins() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<EnterpriseAdmin | null>(null);
-  const [rowsPerPage, setRowsPerPage] = useState("10");
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Load enterprise admins from database
   useEffect(() => {
@@ -156,6 +155,9 @@ export default function EnterpriseAdmins() {
     
     return matchesSearch && matchesStatus && matchesDepartment;
   });
+  const totalPages = Math.ceil(filteredAdmins.length / rowsPerPage) || 1;
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedAdmins = filteredAdmins.slice(startIndex, startIndex + rowsPerPage);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -268,145 +270,137 @@ export default function EnterpriseAdmins() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Administrator</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Department & Location</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last Login</TableHead>
-              <TableHead className="w-12"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: parseInt(rowsPerPage) }).map((_, index) => (
-                <TableRow key={index}>
-                  <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
-                  <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
-                  <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
-                  <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
-                  <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
-                  <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
-                </TableRow>
-              ))
-            ) : (
-              filteredAdmins.slice(0, parseInt(rowsPerPage)).map((admin) => (
-                <TableRow key={admin.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={admin.avatar} alt={`${admin.firstName} ${admin.lastName}`} />
-                        <AvatarFallback>
-                          {admin.firstName[0]}{admin.lastName[0]}
-                        </AvatarFallback>
-                      </Avatar>
+      {/* Admins Table (Common design) */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-semibold">Name</TableHead>
+                <TableHead className="font-semibold">Role</TableHead>
+                <TableHead className="font-semibold">Contact</TableHead>
+                <TableHead className="w-12"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: rowsPerPage }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
+                    <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
+                    <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
+                    <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                paginatedAdmins.map((admin) => (
+                  <TableRow key={admin.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={admin.avatar} alt={`${admin.firstName} ${admin.lastName}`} />
+                          <AvatarFallback>
+                            {admin.firstName[0]}{admin.lastName[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-semibold">{admin.firstName} {admin.lastName}</div>
+                          <div className="text-sm text-muted-foreground">Joined {formatDate(admin.createdDate)}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
+                        {admin.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
                       <div className="space-y-1">
-                        <div className="font-medium">{admin.firstName} {admin.lastName}</div>
-                        <div className="text-sm text-muted-foreground">{admin.role}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        {admin.email}
-                      </div>
-                      {admin.phone && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Phone className="h-4 w-4" />
-                          {admin.phone}
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          {admin.email}
                         </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-2">
-                      <Badge variant="outline">{admin.department || 'Unassigned'}</Badge>
-                      {admin.location && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          {admin.location}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <UserStatusBadge status={admin.activation_status} />
-                      {admin.activation_status === 'pending' && (
-                        <ResendActivationButton
-                          userId={admin.user_id}
-                          email={admin.email}
-                          fullName={`${admin.firstName} ${admin.lastName}`}
-                          size="sm"
-                        />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="text-sm">{formatLastLogin(admin.lastLogin)}</div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        Joined {formatDate(admin.createdDate)}
+                        {admin.phone && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Phone className="h-4 w-4" />
+                            {admin.phone}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem onClick={() => handleEditAdmin(admin)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Administrator
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDeleteAdmin(admin)} className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete Administrator
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem onClick={() => handleEditAdmin(admin)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Administrator
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDeleteAdmin(admin)} className="text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Administrator
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between p-4 border-t">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows per page:</span>
+              <Select value={rowsPerPage.toString()} onValueChange={(value) => {
+                setRowsPerPage(Number(value));
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-16">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {startIndex + 1}-{Math.min(startIndex + rowsPerPage, filteredAdmins.length)} of {filteredAdmins.length}
+              </span>
+              <div className="flex gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Show</span>
-          <Select value={rowsPerPage} onValueChange={setRowsPerPage}>
-            <SelectTrigger className="w-20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="text-sm text-muted-foreground">
-            of {filteredAdmins.length} administrators
-          </span>
-        </div>
-        
-        <div className="text-sm text-muted-foreground">
-          Showing {Math.min(parseInt(rowsPerPage), filteredAdmins.length)} of {filteredAdmins.length} results
-        </div>
-      </div>
+      
 
       <AddAdminModal
         open={isAddModalOpen}
