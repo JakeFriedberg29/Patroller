@@ -75,7 +75,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { profile } = useUserProfile();
-  const { isResponder } = usePermissions();
+  const { isResponder, isOrgViewer } = usePermissions();
   const currentPath = location.pathname;
   
   const isCollapsed = state === "collapsed";
@@ -226,9 +226,10 @@ export function AppSidebar() {
               <SidebarGroupLabel>Organization</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {(isResponder 
-                    ? organizationItems.filter(i => ["Mission Control","Incidents","Reports","Logs"].includes(i.title)) 
-                    : organizationItems
+                  {(
+                    isResponder || isOrgViewer
+                      ? organizationItems.filter(i => ["Mission Control","Incidents","Reports","Logs"].includes(i.title))
+                      : organizationItems
                   ).map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>

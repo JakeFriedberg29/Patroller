@@ -9,9 +9,28 @@ enterprises can view organizations they're assigned to
 never return or expose data across tenants, even in admin queries
 
 #user rules
-the user types include: 
-##platform admin - has global access
-##enterprise admin - can edit their enterprise's settings and view all organizations
-##enterprise user - can view their enterprise's settings and view organizations they're assigned to
-#organization admin - can edit their organization's settings
-##organization user - can login and submit reports
+##Platform Admin
+Global system access.
+Permissions: full (create, edit, delete) or view-only.
+Can assign Platform Admins to accounts.
+Cannot see accounts they are not assigned to.
+##Enterprise Admin
+Access limited to their Enterprise + its Organizations.
+Permissions: full or view-only.
+Can assign Enterprise Admins within their Enterprise.
+Cannot see Organizations outside their Enterprise.
+##Enterprise User
+Read-only or limited access.
+Can view and contribute, but not manage users/accounts.
+##Organization Admin
+Access limited to their Organization.
+Permissions: full or view-only.
+Can assign Organization Users (Admin/User/Responder).
+Can manage Organization settings.
+##Organization User (View-only)
+Can log in and view Organization details.
+No ability to modify data or manage users.
+##Organization Responder
+Can log in and submit reports.
+No ability to manage users or settings.
+Ensure all UI and permissions reflect these rules at each level.

@@ -20,6 +20,8 @@ const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' 
     'Platform Admin': 'platform_admin',
     'Enterprise Admin': 'enterprise_admin', 
     'Organization Admin': 'organization_admin',
+    'Admin': 'organization_admin',
+    'User': 'observer',
     'Team Leader': 'team_leader',
     'Supervisor': 'supervisor',
     'Responder': 'responder',

@@ -33,7 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  role: z.enum(["Team Lead", "Responder", "Observer"], {
+  role: z.enum(["Admin", "User", "Responder"], {
     required_error: "Please select a role",
   }),
   email: z.string().email("Please enter a valid email address"),
@@ -83,23 +83,17 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
         throw new Error('No organization found');
       }
 
+      const roleTitle = values.role;
       const { error } = await supabase
-        .from('users')
-        .insert({
-          email: values.email,
-          full_name: `${values.firstName} ${values.lastName}`,
-          first_name: values.firstName,
-          last_name: values.lastName,
-          phone: values.phone,
-          organization_id: currentUser.organization_id,
-          tenant_id: currentUser.tenant_id,
-          status: 'active',
-          profile_data: {
-            role: values.role,
-            specialization: values.specialization,
-            certifications: values.certifications,
-            radio_call_sign: values.radioCallSign,
-          }
+        .rpc('create_user_with_activation', {
+          p_email: values.email,
+          p_full_name: `${values.firstName} ${values.lastName}`,
+          p_tenant_id: currentUser.tenant_id,
+          p_organization_id: currentUser.organization_id,
+          p_phone: values.phone,
+          p_department: null,
+          p_location: null,
+          p_role_type: roleTitle === 'Admin' ? 'organization_admin' : roleTitle === 'User' ? 'observer' : 'responder'
         });
 
       if (error) throw error;
@@ -183,9 +177,9 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Team Lead">Team Lead</SelectItem>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                      <SelectItem value="User">User</SelectItem>
                       <SelectItem value="Responder">Responder</SelectItem>
-                      <SelectItem value="Observer">Observer</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
