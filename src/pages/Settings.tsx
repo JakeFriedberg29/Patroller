@@ -156,11 +156,13 @@ export default function Settings() {
         .eq('id', accountId)
         .maybeSingle();
       if (tenant) {
+        const tenantSettings: any = tenant.settings || {};
+        const enterpriseSubtype: string = tenantSettings.enterprise_subtype || 'Municipality';
         const account: Account = {
           id: tenant.id,
           name: tenant.name,
           type: 'Enterprise',
-          category: 'Enterprise Management',
+          category: enterpriseSubtype,
           members: 0,
           email: (tenant.settings as any)?.contact_email || 'N/A',
           phone: (tenant.settings as any)?.contact_phone || 'N/A',
@@ -173,17 +175,17 @@ export default function Settings() {
         setFormData({
           name: account.name,
           type: account.type,
-          category: account.category,
-          primaryEmail: account.email,
-          primaryPhone: account.phone,
-          primaryContact: "",
+          category: enterpriseSubtype,
+          primaryEmail: (tenant.settings as any)?.contact_email || '',
+          primaryPhone: (tenant.settings as any)?.contact_phone || '',
+          primaryContact: tenantSettings.contact_primary_name || '',
           secondaryEmail: "",
           secondaryPhone: "",
           secondaryContact: "",
-          address: "",
-          city: "",
-          state: "",
-          zip: ""
+          address: (tenantSettings.address && tenantSettings.address.street) || '',
+          city: (tenantSettings.address && tenantSettings.address.city) || '',
+          state: (tenantSettings.address && tenantSettings.address.state) || '',
+          zip: (tenantSettings.address && tenantSettings.address.zip) || ''
         });
         return true;
       }
@@ -207,20 +209,21 @@ export default function Settings() {
         console.log("Found account in cache:", account);
         if (account) {
           setCurrentAccount(account);
+          const addr = (account.address || {}) as any;
           setFormData({
             name: account.name,
             type: account.type,
             category: account.category,
             primaryEmail: account.email,
             primaryPhone: account.phone,
-            primaryContact: "",
+            primaryContact: account.primaryContact || "",
             secondaryEmail: "",
             secondaryPhone: "",
             secondaryContact: "",
-            address: "",
-            city: "",
-            state: "",
-            zip: ""
+            address: addr.street || "",
+            city: addr.city || "",
+            state: addr.state || "",
+            zip: addr.zip || ""
           });
           return;
         }
@@ -263,6 +266,14 @@ export default function Settings() {
         category: formData.category,
         email: formData.primaryEmail,
         phone: formData.primaryPhone,
+        primaryContact: formData.primaryContact,
+        address: {
+          street: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zip: formData.zip,
+          country: 'USA'
+        } as any,
         // When editing an Organization, allow platform admins to set tenant
         ...(currentAccount.type === 'Organization' && pendingEnterpriseId ? { tenant_id: pendingEnterpriseId as any } : {})
       });
@@ -295,20 +306,21 @@ export default function Settings() {
     if (!currentAccount) return;
     
     // Reset form data to original values
+    const addr = (currentAccount.address || {}) as any;
     setFormData({
       name: currentAccount.name,
       type: currentAccount.type,
       category: currentAccount.category,
       primaryEmail: currentAccount.email,
       primaryPhone: currentAccount.phone,
-      primaryContact: "",
+      primaryContact: currentAccount.primaryContact || "",
       secondaryEmail: "",
       secondaryPhone: "",
       secondaryContact: "",
-      address: "",
-      city: "",
-      state: "",
-      zip: ""
+      address: addr.street || "",
+      city: addr.city || "",
+      state: addr.state || "",
+      zip: addr.zip || ""
     });
     // Reset any pending enterprise assignment edits
     setPendingEnterpriseId(null);

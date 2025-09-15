@@ -16,6 +16,7 @@ export interface Account {
   tenant_id?: string;
   organization_type?: string;
   is_active: boolean;
+  primaryContact?: string;
   address?: any;
   settings?: any;
 }
@@ -121,17 +122,21 @@ export const useAccounts = () => {
           return null;
         }
         
+        const settings: any = tenant.settings || {};
+        const enterpriseSubtype = settings.enterprise_subtype || 'Municipality';
         const account = {
           id: tenant.id,
           name: tenant.name,
           type: 'Enterprise' as const,
-          category: 'Enterprise Management',
+          category: enterpriseSubtype,
           members: memberCount,
           email: (tenant.settings as any)?.contact_email || 'N/A',
           phone: (tenant.settings as any)?.contact_phone || 'N/A',
           created: new Date(tenant.created_at).toLocaleDateString(),
           tenant_id: tenant.id,
           is_active: tenant.subscription_status === 'active',
+          primaryContact: settings.contact_primary_name || '',
+          address: settings.address || undefined,
           settings: tenant.settings
         };
         
@@ -348,16 +353,21 @@ export const useAccounts = () => {
       }
 
       if (account.type === 'Enterprise') {
-        // Update tenant
+        // Update enterprise settings and profile fields
+        const nextSettings: any = {
+          ...(account.settings || {}),
+          contact_email: updates.email ?? (account.settings as any)?.contact_email,
+          contact_phone: updates.phone ?? (account.settings as any)?.contact_phone,
+          contact_primary_name: updates.primaryContact ?? (account.settings as any)?.contact_primary_name,
+          enterprise_subtype: updates.category ?? (account.settings as any)?.enterprise_subtype,
+          address: updates.address ?? (account.settings as any)?.address,
+        };
+
         const { error } = await supabase
           .from('enterprises')
           .update({
             name: updates.name,
-            settings: {
-              ...account.settings,
-              contact_email: updates.email,
-              contact_phone: updates.phone
-            }
+            settings: nextSettings
           })
           .eq('id', id);
 

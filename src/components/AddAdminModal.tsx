@@ -35,6 +35,7 @@ const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   department: z.string().min(1, "Department is required"),
   location: z.string().min(1, "Location is required"),
+  role: z.string().optional(),
 });
 
 interface AddAdminModalProps {
@@ -60,11 +61,12 @@ export function AddAdminModal({
       email: "",
       department: "",
       location: "",
+      role: "Enterprise Admin",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const roleTitle = accountType === "enterprise" ? "Enterprise Admin" : "Organization Admin";
+    const roleTitle = accountType === "enterprise" ? (values.role || "Enterprise Admin") : "Organization Admin";
 
     // Resolve tenant id correctly when creating users for an organization
     let tenantIdToUse: string | undefined = accountId;
@@ -183,6 +185,30 @@ export function AddAdminModal({
                   </FormControl>
                   <FormMessage />
                 </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                accountType === "enterprise" ? (
+                  <FormItem>
+                    <FormLabel>Role *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Enterprise Admin">Enterprise Admin (Edit permissions)</SelectItem>
+                        <SelectItem value="Enterprise User">Enterprise User (View-only)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                ) : null
               )}
             />
 

@@ -27,6 +27,7 @@ import {
   Mail,
   Phone,
   Filter,
+  Send,
   Edit, 
   Trash2
 } from "lucide-react";
@@ -38,6 +39,8 @@ import { AddAdminModal } from "@/components/AddAdminModal";
 import { EditAdminModal } from "@/components/EditAdminModal";
 import { DeleteAdminModal } from "@/components/DeleteAdminModal";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useEmailService } from "@/hooks/useEmailService";
 
 interface EnterpriseAdmin {
   id: string;
@@ -72,6 +75,9 @@ export default function EnterpriseAdmins() {
   const [selectedAdmin, setSelectedAdmin] = useState<EnterpriseAdmin | null>(null);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedAdmins, setSelectedAdmins] = useState<string[]>([]);
+  const [isResending, setIsResending] = useState(false);
+  const { sendActivationEmail } = useEmailService();
 
   // Load enterprise admins from database
   useEffect(() => {
@@ -205,6 +211,41 @@ export default function EnterpriseAdmins() {
     setSelectedAdmin(null);
   };
 
+  const handleSelectAdmin = (adminId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedAdmins(prev => [...prev, adminId]);
+    } else {
+      setSelectedAdmins(prev => prev.filter(id => id !== adminId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedAdmins(paginatedAdmins.map(a => a.id));
+    } else {
+      setSelectedAdmins([]);
+    }
+  };
+
+  const handleBulkResend = async () => {
+    if (selectedAdmins.length === 0) return;
+    setIsResending(true);
+    try {
+      const selected = admins.filter(a => selectedAdmins.includes(a.id));
+      for (const admin of selected) {
+        await sendActivationEmail({
+          userId: admin.user_id,
+          email: admin.email,
+          fullName: `${admin.firstName} ${admin.lastName}`,
+          isResend: true,
+          organizationName: 'Emergency Management Platform'
+        });
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -233,7 +274,7 @@ export default function EnterpriseAdmins() {
             className="pl-10"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-32">
               <Filter className="mr-2 h-4 w-4" />
@@ -246,8 +287,16 @@ export default function EnterpriseAdmins() {
               <SelectItem value="suspended">Suspended</SelectItem>
             </SelectContent>
           </Select>
-          
-          
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={handleBulkResend}
+            disabled={selectedAdmins.length === 0 || isResending}
+          >
+            <Send className="h-4 w-4" />
+            {isResending ? 'Resending...' : `Resend Activation Email${selectedAdmins.length ? ` (${selectedAdmins.length})` : ''}`}
+          </Button>
         </div>
       </div>
 
@@ -257,6 +306,12 @@ export default function EnterpriseAdmins() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedAdmins.length === paginatedAdmins.length && paginatedAdmins.length > 0}
+                    onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                  />
+                </TableHead>
                 <TableHead className="font-semibold">Name</TableHead>
                 <TableHead className="font-semibold">Role</TableHead>
                 <TableHead className="font-semibold">Contact</TableHead>
@@ -276,6 +331,12 @@ export default function EnterpriseAdmins() {
               ) : (
                 paginatedAdmins.map((admin) => (
                   <TableRow key={admin.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedAdmins.includes(admin.id)}
+                        onCheckedChange={(checked) => handleSelectAdmin(admin.id, !!checked)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
@@ -381,6 +442,16 @@ export default function EnterpriseAdmins() {
         </CardContent>
       </Card>
       
+      {/* Bulk Actions */}
+      {selectedAdmins.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleBulkResend} disabled={isResending}>
+            <Send className="h-4 w-4" />
+            {isResending ? 'Resending...' : `Resend Activation Email (${selectedAdmins.length})`}
+          </Button>
+        </div>
+      )}
+
       
 
       <AddAdminModal

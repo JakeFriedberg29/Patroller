@@ -19,6 +19,7 @@ import { UserStatusBadge } from "@/components/UserStatusBadge";
 import { EditAdminModal } from "@/components/EditAdminModal";
 import { DeleteAdminModal } from "@/components/DeleteAdminModal";
 import { useSeedData } from "@/hooks/useSeedData";
+import { useEmailService } from "@/hooks/useEmailService";
 // import { DeleteAdminModal } from "@/components/DeleteAdminModal";
 // import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
 // import { AdminAuditLog } from "@/components/AdminAuditLog";
@@ -55,6 +56,8 @@ export default function PlatformAdmins() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAdmins, setSelectedAdmins] = useState<string[]>([]);
+  const [isResending, setIsResending] = useState(false);
+  const { sendActivationEmail } = useEmailService();
   const [currentAdmin, setCurrentAdmin] = useState<PlatformAdmin | null>(null);
   const [newAdmin, setNewAdmin] = useState({
     firstName: "",
@@ -226,6 +229,24 @@ export default function PlatformAdmins() {
     setCurrentAdmin(null);
     setSelectedAdmins([]);
   };
+  const handleBulkResend = async () => {
+    if (selectedAdmins.length === 0) return;
+    setIsResending(true);
+    try {
+      const selected = admins.filter(a => selectedAdmins.includes(a.id));
+      for (const admin of selected) {
+        await sendActivationEmail({
+          userId: admin.user_id,
+          email: admin.email,
+          fullName: `${admin.firstName} ${admin.lastName}`,
+          isResend: true,
+          organizationName: 'Emergency Management Platform'
+        });
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
   const handleSelectAdmin = (adminId: string, checked: boolean) => {
     if (checked) {
       setSelectedAdmins([...selectedAdmins, adminId]);
@@ -285,18 +306,30 @@ export default function PlatformAdmins() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search platform admins by name or email..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
         </div>
-        <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-          <SelectTrigger className="w-[180px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Status">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectContent>
-        </Select>
+        <div className="flex gap-2 items-center">
+          <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+            <SelectTrigger className="w-[180px]">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All Status">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="suspended">Suspended</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={handleBulkResend}
+            disabled={selectedAdmins.length === 0 || isResending}
+          >
+            <Send className="h-4 w-4" />
+            {isResending ? 'Resending...' : `Resend Activation Email${selectedAdmins.length ? ` (${selectedAdmins.length})` : ''}`}
+          </Button>
+        </div>
       </div>
 
       {/* Admin List */}
@@ -392,19 +425,7 @@ export default function PlatformAdmins() {
                   <SelectItem value="50">50</SelectItem>
                 </SelectContent>
               </Select>
-              {selectedAdmins.length > 0 && <div className="flex gap-2 ml-4">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Send className="h-4 w-4" />
-                    Resend Activation Email ({selectedAdmins.length})
-                  </Button>
-                  {/* Delete functionality coming soon */}
-                  {/*
-                  <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="gap-2">
-                    <Trash2 className="h-4 w-4" />
-                    Delete Selected ({selectedAdmins.length})
-                  </Button>
-                  */}
-                </div>}
+              {/* Bulk actions moved to top controls */}
             </div>
             
             <div className="flex items-center gap-2">
