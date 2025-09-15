@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from '@/integrations/supabase/client';
+import { useUserManagement } from "@/hooks/useUserManagement";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +54,7 @@ interface AddMemberModalProps {
 export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createUser } = useUserManagement();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -84,19 +86,18 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
       }
 
       const roleTitle = values.role;
-      const { error } = await supabase
-        .rpc('create_user_with_activation', {
-          p_email: values.email,
-          p_full_name: `${values.firstName} ${values.lastName}`,
-          p_tenant_id: currentUser.tenant_id,
-          p_organization_id: currentUser.organization_id,
-          p_phone: values.phone,
-          p_department: null,
-          p_location: null,
-          p_role_type: roleTitle === 'Admin' ? 'organization_admin' : roleTitle === 'User' ? 'observer' : 'responder'
-        });
+      const result = await createUser({
+        email: values.email,
+        fullName: `${values.firstName} ${values.lastName}`,
+        role: roleTitle,
+        tenantId: currentUser.tenant_id,
+        organizationId: currentUser.organization_id,
+        phone: values.phone
+      });
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create user');
+      }
       
       toast({
         title: "Member Added",

@@ -1149,6 +1149,10 @@ export type Database = {
         Args: { p_activation_token: string }
         Returns: Json
       }
+      activate_user_account_with_password: {
+        Args: { p_activation_token: string; p_password: string }
+        Returns: Json
+      }
       assert_record_matches_org_tenant: {
         Args: { p_org_id: string; p_tenant_id: string }
         Returns: undefined

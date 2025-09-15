@@ -151,14 +151,24 @@ export const useUserManagement = () => {
     }
   };
 
-  const activateUser = async (activationToken: string) => {
+  const activateUser = async (activationToken: string, newPassword?: string) => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase
-        .rpc('activate_user_account', {
-          p_activation_token: activationToken
-        });
+      let data;
+      let error;
+      if (newPassword && newPassword.length > 0) {
+        ({ data, error } = await supabase
+          .rpc('activate_user_account_with_password', {
+            p_activation_token: activationToken,
+            p_password: newPassword
+          }));
+      } else {
+        ({ data, error } = await supabase
+          .rpc('activate_user_account', {
+            p_activation_token: activationToken
+          }));
+      }
 
       if (error) {
         console.error('Error activating user:', error);

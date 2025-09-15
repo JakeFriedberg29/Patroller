@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useUserManagement } from '@/hooks/useUserManagement';
 import { usePermissions } from '@/hooks/usePermissions';
 
 export interface TeamMember {
@@ -24,6 +25,7 @@ export const useTeamMembers = () => {
   const params = useParams();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const { createUser } = useUserManagement();
 
   const fetchTeamMembers = async () => {
     try {
@@ -154,26 +156,17 @@ export const useTeamMembers = () => {
         throw new Error('No organization context found');
       }
 
-      const { error } = await supabase
-        .from('users')
-        .insert({
-          email: memberData.email,
-          full_name: memberData.full_name,
-          first_name: memberData.first_name,
-          last_name: memberData.last_name,
-          phone: memberData.phone,
-          organization_id: organizationId,
-          tenant_id: tenantId,
-          status: 'active',
-          profile_data: {
-            role: memberData.role,
-            specialization: memberData.specialization,
-            certifications: memberData.certifications,
-            radio_call_sign: memberData.radio_call_sign,
-          }
-        });
+      const roleTitle = memberData.role === 'Admin' ? 'Organization Admin' : memberData.role === 'User' ? 'User' : 'Responder';
+      const result = await createUser({
+        email: memberData.email,
+        fullName: memberData.full_name,
+        role: roleTitle,
+        tenantId,
+        organizationId,
+        phone: memberData.phone
+      });
 
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error || 'Failed to create member');
 
       toast({
         title: "Team Member Added",

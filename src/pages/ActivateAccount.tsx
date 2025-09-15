@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { useUserManagement } from "@/hooks/useUserManagement";
 
@@ -11,29 +12,32 @@ const ActivateAccount = () => {
   const [searchParams] = useSearchParams();
   const { activateUser } = useUserManagement();
   
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'form' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
   const [credentials, setCredentials] = useState<{email: string, password: string} | null>(null);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    
-    if (!token) {
+    const t = searchParams.get('token');
+    setToken(t);
+    if (!t) {
       setStatus('error');
       setMessage('Invalid activation link. No token provided.');
       return;
     }
-
-    activateAccount(token);
+    setStatus('form');
   }, [searchParams]);
 
   const activateAccount = async (token: string) => {
     try {
-      const result = await activateUser(token);
+      const useChosenPassword = password && confirmPassword && password === confirmPassword;
+      const result = await activateUser(token, useChosenPassword ? password : undefined);
       
       if (result.success) {
         setStatus('success');
-        setMessage('Your account has been activated successfully! Use the credentials below to sign in.');
+        setMessage('Your account has been activated successfully!');
         if (result.credentials) {
           setCredentials(result.credentials);
         }
@@ -64,6 +68,27 @@ const ActivateAccount = () => {
               <p className="text-center text-muted-foreground">
                 Activating your account...
               </p>
+            </div>
+          )}
+
+          {status === 'form' && (
+            <div className="space-y-4">
+              <Alert>
+                <AlertDescription>
+                  Create your password to activate your account. Your password must meet your organization's policy.
+                </AlertDescription>
+              </Alert>
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium">Password</label>
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter a password" />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="confirm-password" className="text-sm font-medium">Confirm Password</label>
+                <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter your password" />
+              </div>
+              <Button className="w-full" onClick={() => token && activateAccount(token)} disabled={!token}>
+                Activate Account
+              </Button>
             </div>
           )}
 

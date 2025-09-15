@@ -62,7 +62,7 @@ const handler = async (req: Request): Promise<Response> => {
             user_id: userId,
             invited_by_admin: true
           },
-          redirectTo: `${baseUrl}/`
+          redirectTo: `${baseUrl}/auth`
         }
       );
 

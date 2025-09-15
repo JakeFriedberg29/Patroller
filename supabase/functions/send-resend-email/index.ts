@@ -168,7 +168,7 @@ Need help? Contact your system administrator.
             user_id: userId,
             invited_by_admin: true
           },
-          redirectTo: `${baseUrl}/reset-password`
+          redirectTo: `${baseUrl}/auth`
         }
       );
 
