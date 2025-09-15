@@ -420,7 +420,7 @@ export default function Settings() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
+              <Label htmlFor="category">Subtype *</Label>
               <Select 
                 value={formData.category} 
                 onValueChange={(value) => handleInputChange("category", value)}

@@ -40,7 +40,7 @@ const Index = () => {
   const [selectedReportTypes, setSelectedReportTypes] = useState<Set<ReportTypeFilter>>(new Set(["incident"]));
   const [selectedReportsOrgSubtypes, setSelectedReportsOrgSubtypes] = useState<Set<OrganizationSubtype>>(new Set());
 
-  const toggleSetValue = <T extends string>(setter: (s: Set<T>) => void) => (value: T) => {
+  const toggleSetValue = <T extends string>(setter: React.Dispatch<React.SetStateAction<Set<T>>>) => (value: T) => {
     setter(prev => {
       const next = new Set(prev);
       if (next.has(value)) next.delete(value); else next.add(value);
@@ -48,7 +48,7 @@ const Index = () => {
     });
   };
 
-  const orgSubtypeOptions = Constants.public.Enums.organization_type as OrganizationSubtype[];
+  const orgSubtypeOptions = [...Constants.public.Enums.organization_type] as OrganizationSubtype[];
   const userRoleOptions: UserRoleFilter[] = ["responder", "enterprise_user", "organization_user"];
   const reportTypeOptions: ReportTypeFilter[] = ["incident"]; // Extend when report instances exist
 
