@@ -430,12 +430,23 @@ export default function Settings() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Search & Rescue">Search & Rescue</SelectItem>
-                  <SelectItem value="Lifeguard Service">Lifeguard Service</SelectItem>
-                  <SelectItem value="Park Service">Park Service</SelectItem>
-                  <SelectItem value="Event Medical">Event Medical</SelectItem>
-                  <SelectItem value="Ski Patrol">Ski Patrol</SelectItem>
-                  <SelectItem value="Harbor Master">Harbor Master</SelectItem>
+                  {isEnterprise ? (
+                    <>
+                      <SelectItem value="Resort Chain">Resort Chain</SelectItem>
+                      <SelectItem value="Municipality">Municipality</SelectItem>
+                      <SelectItem value="Park Agency">Park Agency</SelectItem>
+                      <SelectItem value="Event Management">Event Management</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="Search & Rescue">Search & Rescue</SelectItem>
+                      <SelectItem value="Lifeguard Service">Lifeguard Service</SelectItem>
+                      <SelectItem value="Park Service">Park Service</SelectItem>
+                      <SelectItem value="Event Medical">Event Medical</SelectItem>
+                      <SelectItem value="Ski Patrol">Ski Patrol</SelectItem>
+                      <SelectItem value="Harbor Master">Harbor Master</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
