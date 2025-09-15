@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -33,8 +33,6 @@ import { supabase } from "@/integrations/supabase/client";
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  department: z.string().min(1, "Department is required"),
-  location: z.string().min(1, "Location is required"),
   role: z.string().optional(),
 });
 
@@ -59,8 +57,6 @@ export function AddAdminModal({
     defaultValues: {
       fullName: "",
       email: "",
-      department: "",
-      location: "",
       role: "Enterprise Admin",
     },
   });
@@ -88,8 +84,6 @@ export function AddAdminModal({
       role: roleTitle,
       tenantId: tenantIdToUse,
       organizationId: accountType === "organization" ? accountId : undefined,
-      department: values.department,
-      location: values.location,
     });
 
     if (result.success) {
@@ -108,45 +102,7 @@ export function AddAdminModal({
     return `Add a new administrator to your ${type}. They will receive an activation email with password setup instructions.`;
   };
 
-  const getDepartmentOptions = () => {
-    if (accountType === "enterprise") {
-      return [
-        "Operations",
-        "Logistics", 
-        "Research & Development",
-        "Energy Division",
-        "Healthcare",
-        "Finance",
-        "Human Resources",
-        "Legal",
-        "Information Technology"
-      ];
-    } else {
-      // Organization departments vary by organization type
-      return [
-        "Operations",
-        "Training",
-        "Equipment",
-        "Communications", 
-        "Medical",
-        "Search & Rescue",
-        "Emergency Services",
-        "Administration"
-      ];
-    }
-  };
-
-  const getLocationOptions = () => {
-    return [
-      "Headquarters",
-      "Field Office - North",
-      "Field Office - South", 
-      "Field Office - East",
-      "Field Office - West",
-      "Mobile Unit",
-      "Remote"
-    ];
-  };
+  
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -212,55 +168,7 @@ export function AddAdminModal({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="department"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Department *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {getDepartmentOptions().map((dept) => (
-                        <SelectItem key={dept} value={dept}>
-                          {dept}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select location" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {getLocationOptions().map((location) => (
-                        <SelectItem key={location} value={location}>
-                          {location}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            
 
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
               <h4 className="font-medium text-sm">Account Creation Process</h4>
