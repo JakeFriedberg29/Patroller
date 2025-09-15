@@ -364,16 +364,46 @@ export const useAccounts = () => {
         if (error) throw error;
       } else {
         // Update organization
+        // If tenant assignment is changing, ensure slug uniqueness for new tenant
+        let nextSlug: string | undefined = undefined;
+        let nextTenantId: string | undefined = undefined;
+        if (updates.tenant_id && updates.tenant_id !== account.tenant_id) {
+          nextTenantId = updates.tenant_id;
+          const baseOrgSlug = (account.settings?.slug as string) || (account.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          // Ensure unique slug under new tenant
+          const uniqueOrgSlug = await (async () => {
+            let attempt = baseOrgSlug || 'organization';
+            let counter = 2;
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+              const { data } = await supabase
+                .from('organizations')
+                .select('id')
+                .eq('tenant_id', updates.tenant_id as string)
+                .eq('slug', attempt)
+                .limit(1);
+              if (!data || data.length === 0) return attempt;
+              attempt = `${baseOrgSlug}-${counter++}`;
+              if (counter > 1000) return `${baseOrgSlug}-${crypto.randomUUID().slice(0, 8)}`;
+            }
+          })();
+          nextSlug = uniqueOrgSlug;
+        }
+
+        const payload: any = {
+          name: updates.name,
+          contact_email: updates.email,
+          contact_phone: updates.phone,
+          organization_type: updates.category ? (mapCategoryToOrgType(updates.category) as any) : undefined,
+          is_active: updates.is_active,
+          address: updates.address,
+        };
+        if (nextTenantId) payload.tenant_id = nextTenantId;
+        if (nextSlug) payload.slug = nextSlug;
+
         const { error } = await supabase
           .from('organizations')
-          .update({
-            name: updates.name,
-            contact_email: updates.email,
-            contact_phone: updates.phone,
-            organization_type: updates.category ? (mapCategoryToOrgType(updates.category) as any) : undefined,
-            is_active: updates.is_active,
-            address: updates.address
-          })
+          .update(payload)
           .eq('id', id);
 
         if (error) throw error;

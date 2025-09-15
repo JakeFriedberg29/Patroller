@@ -28,8 +28,7 @@ import {
   Phone,
   Filter,
   Edit, 
-  Trash2,
-  Download
+  Trash2
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,7 +65,7 @@ export default function EnterpriseAdmins() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
+  
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -151,9 +150,8 @@ export default function EnterpriseAdmins() {
       admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.department.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || admin.activation_status.toLowerCase() === statusFilter;
-    const matchesDepartment = departmentFilter === "all" || admin.department.toLowerCase().includes(departmentFilter);
     
-    return matchesSearch && matchesStatus && matchesDepartment;
+    return matchesSearch && matchesStatus;
   });
   const totalPages = Math.ceil(filteredAdmins.length / rowsPerPage) || 1;
   const startIndex = (currentPage - 1) * rowsPerPage;
@@ -249,24 +247,7 @@ export default function EnterpriseAdmins() {
             </SelectContent>
           </Select>
           
-          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Department" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Departments</SelectItem>
-              <SelectItem value="operations">Operations</SelectItem>
-              <SelectItem value="logistics">Logistics</SelectItem>
-              <SelectItem value="research">Research & Development</SelectItem>
-              <SelectItem value="energy">Energy Division</SelectItem>
-              <SelectItem value="healthcare">Healthcare</SelectItem>
-            </SelectContent>
-          </Select>
           
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
         </div>
       </div>
 

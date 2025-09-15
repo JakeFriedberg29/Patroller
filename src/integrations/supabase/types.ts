@@ -66,6 +66,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "audit_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -163,6 +170,124 @@ export type Database = {
             columns: ["head_user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_notification_logs: {
+        Row: {
+          error_message: string | null
+          id: string
+          notification_key: string
+          provider: string | null
+          provider_message_id: string | null
+          recipient_email: string
+          sent_at: string
+          status: string
+          tenant_id: string
+          user_id: string | null
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          notification_key: string
+          provider?: string | null
+          provider_message_id?: string | null
+          recipient_email: string
+          sent_at?: string
+          status: string
+          tenant_id: string
+          user_id?: string | null
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          notification_key?: string
+          provider?: string | null
+          provider_message_id?: string | null
+          recipient_email?: string
+          sent_at?: string
+          status?: string
+          tenant_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_notification_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_notification_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_notification_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_notification_templates: {
+        Row: {
+          body_html: string | null
+          body_text: string | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          last_sent_at: string | null
+          last_sent_to: string | null
+          notification_key: string
+          subject: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          body_html?: string | null
+          body_text?: string | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_sent_at?: string | null
+          last_sent_to?: string | null
+          notification_key: string
+          subject?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string | null
+          body_text?: string | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_sent_at?: string | null
+          last_sent_to?: string | null
+          notification_key?: string | null
+          subject?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_notification_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_notification_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -306,6 +431,8 @@ export type Database = {
           organization_id: string
           priority: Database["public"]["Enums"]["incident_priority"]
           reported_by: string
+          requires_hospitalization: boolean
+          requires_legal: boolean
           resolved_at: string | null
           resolved_by: string | null
           status: string
@@ -323,6 +450,8 @@ export type Database = {
           organization_id: string
           priority?: Database["public"]["Enums"]["incident_priority"]
           reported_by: string
+          requires_hospitalization?: boolean
+          requires_legal?: boolean
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
@@ -340,6 +469,8 @@ export type Database = {
           organization_id?: string
           priority?: Database["public"]["Enums"]["incident_priority"]
           reported_by?: string
+          requires_hospitalization?: boolean
+          requires_legal?: boolean
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
@@ -467,10 +598,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -527,6 +658,13 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organizations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -618,6 +756,81 @@ export type Database = {
           },
         ]
       }
+      reports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          incident_id: string | null
+          metadata: Json | null
+          organization_id: string
+          report_type: string
+          submitted_at: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          incident_id?: string | null
+          metadata?: Json | null
+          organization_id: string
+          report_type: string
+          submitted_at?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          incident_id?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          report_type?: string
+          submitted_at?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_events: {
         Row: {
           created_at: string
@@ -674,6 +887,13 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
           {
@@ -864,11 +1084,65 @@ export type Database = {
             referencedRelation: "enterprises"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "users_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      tenants: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          max_organizations: number | null
+          max_users: number | null
+          name: string | null
+          settings: Json | null
+          slug: string | null
+          subscription_expires_at: string | null
+          subscription_status: string | null
+          subscription_tier:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          max_organizations?: number | null
+          max_users?: number | null
+          name?: string | null
+          settings?: Json | null
+          slug?: string | null
+          subscription_expires_at?: string | null
+          subscription_status?: string | null
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          max_organizations?: number | null
+          max_users?: number | null
+          name?: string | null
+          settings?: Json | null
+          slug?: string | null
+          subscription_expires_at?: string | null
+          subscription_status?: string | null
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       activate_user_account: {

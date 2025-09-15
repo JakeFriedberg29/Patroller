@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+// Removed unused Dialog components for dummy add-org flow
 import {
   Select,
   SelectContent,
@@ -13,92 +13,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Plus, Users, Search, Loader2 } from "lucide-react";
+import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Users, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAccounts, Account } from "@/hooks/useAccounts";
+import { useEnterpriseData } from "@/hooks/useEnterpriseData";
 import { supabase } from "@/integrations/supabase/client";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
-const mockAccountData = {
-  id: 1,
-  name: "Mountain Rescue Team Alpha",
-  type: "Organization",
-  category: "Search & Rescue",
-  status: "Active",
-  primaryEmail: "dispatch@mrt-alpha.org",
-  primaryPhone: "(555) 123-4567",
-  secondaryEmail: "backup@mrt-alpha.org",
-  secondaryPhone: "(555) 123-4568",
-  address: "123 Mountain View Drive",
-  city: "Alpine Valley",
-  state: "Colorado",
-  zip: "80424",
-  created: "2024-08-26",
-  members: 15,
-  parentEnterprise: {
-    id: 2,
-    name: "Rocky Mountain Emergency Services",
-    type: "Enterprise"
-  }
-};
-
-const mockOrganizations = [
-  { id: 3, name: "Mountain Rescue Team Bravo", category: "Search & Rescue", status: "Active", members: 12 },
-  { id: 4, name: "Alpine Medical Response", category: "Event Medical", status: "Active", members: 8 },
-  { id: 5, name: "Summit Park Rangers", category: "Park Service", status: "Inactive", members: 6 }
-];
-
-// Available organizations that can be added to the enterprise
-const availableOrganizations = [
-  {
-    id: "org-005",
-    name: "City Emergency Response",
-    location: "New York, NY",
-    users: 89,
-    category: "Search & Rescue",
-    description: "Urban emergency response and rescue operations"
-  },
-  {
-    id: "org-006",
-    name: "Coastal Lifeguard Services",
-    location: "Miami, FL",
-    users: 156,
-    category: "Lifeguard Service",
-    description: "Beach and coastal water safety operations"
-  },
-  {
-    id: "org-007",
-    name: "Mountain Rescue Team",
-    location: "Denver, CO",
-    users: 67,
-    category: "Search & Rescue",
-    description: "High altitude and wilderness rescue operations"
-  },
-  {
-    id: "org-008",
-    name: "Park Emergency Services",
-    location: "Sacramento, CA",
-    users: 134,
-    category: "Park Service",
-    description: "National and state park emergency services"
-  },
-  {
-    id: "org-009",
-    name: "Event Medical Response",
-    location: "Las Vegas, NV",
-    users: 78,
-    category: "Event Medical",
-    description: "Large event and concert medical support"
-  }
-];
+// Removed legacy mock data and dummy lists
 
 export default function Settings() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { accounts, loading, updateAccount, deleteAccount } = useAccounts();
-  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [organizations, setOrganizations] = useState(mockOrganizations);
+  const { isPlatformAdmin } = usePermissions();
+  // Removed dummy add-org modal state and mock organizations
   const [isEditing, setIsEditing] = useState(false);
   const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
   const [formData, setFormData] = useState({
@@ -116,6 +48,40 @@ export default function Settings() {
     state: "",
     zip: ""
   });
+
+  // Parent Enterprise assign/search state
+  const [enterpriseSearchOpen, setEnterpriseSearchOpen] = useState(false);
+  const [enterpriseQuery, setEnterpriseQuery] = useState("");
+  const [enterprises, setEnterprises] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingEnterprises, setLoadingEnterprises] = useState(false);
+  const [currentEnterprise, setCurrentEnterprise] = useState<{ id: string; name: string } | null>(null);
+  const [pendingEnterpriseId, setPendingEnterpriseId] = useState<string | null>(null);
+
+  const loadEnterprises = async (q: string) => {
+    try {
+      setLoadingEnterprises(true);
+      const query = supabase
+        .from('enterprises')
+        .select('id, name')
+        .order('name', { ascending: true })
+        .limit(20);
+      // @ts-ignore - supabase-js supports ilike
+      if (q) query.ilike('name', `%${q}%`);
+      const { data } = await query;
+      setEnterprises((data || []).map((t: any) => ({ id: t.id, name: t.name })));
+    } catch (e) {
+      // no-op
+    } finally {
+      setLoadingEnterprises(false);
+    }
+  };
+
+  // Enterprise organizations (for Enterprise Settings listing)
+  const {
+    organizations: enterpriseOrganizations,
+    loading: loadingEnterpriseOrgs,
+    refetch: refetchEnterpriseData
+  } = useEnterpriseData((currentAccount?.type === 'Enterprise' ? currentAccount?.id : undefined) as string | undefined);
 
   // Map database organization types to UI categories (duplicate of internal map in useAccounts)
   const mapOrgTypeToCategory = (orgType?: string): string => {
@@ -156,6 +122,15 @@ export default function Settings() {
           settings: org.settings
         };
         setCurrentAccount(account);
+        // Preload current enterprise
+        if (org.tenant_id) {
+          const { data: ent } = await supabase
+            .from('enterprises')
+            .select('id, name')
+            .eq('id', org.tenant_id)
+            .maybeSingle();
+          if (ent) setCurrentEnterprise({ id: ent.id, name: ent.name });
+        }
         setFormData({
           name: account.name,
           type: account.type,
@@ -265,6 +240,12 @@ export default function Settings() {
     run();
   }, [id, accounts, navigate, toast]);
 
+  // When the currentEnterprise changes (e.g., after save), ensure Enterprise-related pages show new orgs
+  useEffect(() => {
+    // No direct action here; relevant pages read live from Supabase on mount.
+    // This effect is a placeholder to indicate dependency and potential future refetch hooks.
+  }, [currentEnterprise]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -281,11 +262,21 @@ export default function Settings() {
         type: formData.type as 'Enterprise' | 'Organization',
         category: formData.category,
         email: formData.primaryEmail,
-        phone: formData.primaryPhone
+        phone: formData.primaryPhone,
+        // When editing an Organization, allow platform admins to set tenant
+        ...(currentAccount.type === 'Organization' && pendingEnterpriseId ? { tenant_id: pendingEnterpriseId as any } : {})
       });
       
       if (success) {
         setIsEditing(false);
+        if (pendingEnterpriseId) {
+          setCurrentEnterprise(enterprises.find(e => e.id === pendingEnterpriseId) || currentEnterprise);
+          setPendingEnterpriseId(null);
+          // If we're in Enterprise Settings, refresh enterprise orgs list so the new org appears
+          if (currentAccount.type === 'Enterprise') {
+            refetchEnterpriseData();
+          }
+        }
         toast({
           title: "Settings Updated Successfully",
           description: "Your changes have been saved.",
@@ -319,6 +310,10 @@ export default function Settings() {
       state: "",
       zip: ""
     });
+    // Reset any pending enterprise assignment edits
+    setPendingEnterpriseId(null);
+    setEnterpriseSearchOpen(false);
+    setEnterpriseQuery("");
     setIsEditing(false);
   };
 
@@ -344,38 +339,7 @@ export default function Settings() {
     }
   };
 
-  const handleAddOrganization = (org: typeof availableOrganizations[0]) => {
-    try {
-      const newOrg = {
-        id: parseInt(org.id.split('-')[1]),
-        name: org.name,
-        category: org.category,
-        status: "Active" as const,
-        members: org.users
-      };
-      setOrganizations([...organizations, newOrg]);
-      setIsAddOrgModalOpen(false);
-      setSearchTerm("");
-      
-      toast({
-        title: "Organization Added Successfully",
-        description: `${org.name} has been added to the enterprise.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error Adding Organization",
-        description: "Failed to add the organization. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Filter available organizations based on search term
-  const filteredOrganizations = availableOrganizations.filter(org =>
-    org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Removed legacy add-organization handlers and filters
 
   const isEnterprise = formData.type === "Enterprise";
   const isOrganization = formData.type === "Organization";
@@ -480,7 +444,7 @@ export default function Settings() {
       </Card>
 
       {/* Parent Enterprise - Only for Organizations */}
-      {isOrganization && mockAccountData.parentEnterprise && (
+      {isOrganization && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -489,124 +453,86 @@ export default function Settings() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold">{mockAccountData.parentEnterprise.name}</h3>
-                  <p className="text-sm text-muted-foreground">This organization is part of the above enterprise</p>
-                </div>
-                <Badge variant="secondary">{mockAccountData.parentEnterprise.type}</Badge>
+            {isPlatformAdmin && isEditing ? (
+              <div className="space-y-2">
+                <Label>Assign to Enterprise</Label>
+                <Popover open={enterpriseSearchOpen} onOpenChange={setEnterpriseSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between">
+                      {pendingEnterpriseId
+                        ? (enterprises.find(e => e.id === pendingEnterpriseId)?.name || 'Selected enterprise')
+                        : (currentEnterprise?.name || 'Select enterprise...')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0">
+                    <Command>
+                      <CommandInput placeholder="Search enterprises..." value={enterpriseQuery} onValueChange={(v) => {
+                        setEnterpriseQuery(v);
+                        loadEnterprises(v);
+                      }} />
+                      <CommandList>
+                        <CommandEmpty>{loadingEnterprises ? 'Loading...' : 'No results found.'}</CommandEmpty>
+                        <CommandGroup>
+                          {enterprises.map((ent) => (
+                            <CommandItem key={ent.id} value={ent.name} onSelect={() => {
+                              setPendingEnterpriseId(ent.id);
+                              setEnterpriseSearchOpen(false);
+                            }}>
+                              {ent.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                {pendingEnterpriseId && (
+                  <p className="text-xs text-muted-foreground">Pending change. Click Save to apply.</p>
+                )}
               </div>
-            </div>
+            ) : (
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">{currentEnterprise?.name || 'Unassigned'}</h3>
+                    <p className="text-sm text-muted-foreground">{isPlatformAdmin ? 'Click Edit Settings to change the parent enterprise.' : 'Only platform admins can change the parent enterprise.'}</p>
+                  </div>
+                  <Badge variant="secondary">Enterprise</Badge>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Organizations Management - Only for Enterprises */}
+      {/* Organizations Management - Only for Enterprises (real data only) */}
       {isEnterprise && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Organizations
-              </div>
-              <Dialog open={isAddOrgModalOpen} onOpenChange={setIsAddOrgModalOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add Organization
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      Add Organization to Enterprise
-                    </DialogTitle>
-                  </DialogHeader>
-                  
-                  <div className="space-y-4 py-4">
-                    {/* Search Bar */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        placeholder="Search organizations by name, location, or category..."
-                        className="pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-
-                    {/* Search Results */}
-                    <div className="space-y-3">
-                      {filteredOrganizations.length > 0 ? (
-                        filteredOrganizations.map((org) => (
-                          <div key={org.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                                  <Building2 className="h-4 w-4 text-primary" />
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold">{org.name}</h3>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <MapPin className="h-3 w-3" />
-                                    <span>{org.location}</span>
-                                    <span>•</span>
-                                    <span>{org.category}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <p className="text-sm text-muted-foreground ml-11">
-                                {org.description}
-                              </p>
-                              <div className="flex items-center gap-2 mt-2 ml-11">
-                                <Users className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">{org.users} users</span>
-                              </div>
-                            </div>
-                            <Button 
-                              onClick={() => handleAddOrganization(org)}
-                              className="ml-4"
-                            >
-                              Add to Enterprise
-                            </Button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-12">
-                          <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">No organizations found</h3>
-                          <p className="text-muted-foreground">
-                            {searchTerm ? "Try adjusting your search terms." : "No organizations available to add."}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Organizations
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {organizations.map((org) => (
+              {(enterpriseOrganizations || []).map((org) => (
                 <div key={org.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h3 className="font-semibold">{org.name}</h3>
-                    <p className="text-sm text-muted-foreground">{org.category} • {org.members} members</p>
+                    <p className="text-sm text-muted-foreground">{org.organization_type} • {org.users} members</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={org.status === "Active" ? "default" : "secondary"}>
-                      {org.status}
-                    </Badge>
-                    <Button variant="outline" size="sm">
+                    <Badge variant="default">Active</Badge>
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/organization/${org.id}/mission-control`)}>
                       Manage
                     </Button>
                   </div>
                 </div>
               ))}
+              {(!enterpriseOrganizations || enterpriseOrganizations.length === 0) && (
+                <div className="text-sm text-muted-foreground">No organizations assigned to this enterprise.</div>
+              )}
             </div>
           </CardContent>
         </Card>

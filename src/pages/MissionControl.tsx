@@ -3,13 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Monitor, AlertTriangle, Users, MapPin, Package, FileText, Shield, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
+import { Monitor, AlertTriangle, Users, MapPin, Package, FileText, Shield, RefreshCw, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { MetricCard } from "@/components/ui/metric-card";
 import { format } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import { useMissionControlData } from "@/hooks/useMissionControlData";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 export default function MissionControl() {
   const { id } = useParams();
@@ -18,7 +20,7 @@ export default function MissionControl() {
     to: new Date()
   });
   
-  const { data, loading, refetch } = useMissionControlData(id);
+  const { data, loading, refetch } = useMissionControlData(id, dateRange);
 
   return (
     <div className="space-y-6">
@@ -106,25 +108,18 @@ export default function MissionControl() {
             variant={data.activeIncidents > 0 ? "warning" : "success"}
           />
           <MetricCard
-            title="Reports Filed (Pending)"
-            value={data.reportsPending.toString()}
-            description="Awaiting review"
+            title="Total Reports Submitted"
+            value={data.totalReportsSubmitted.toString()}
+            description="Within selected range"
             icon={FileText}
-            variant="warning"
+            variant="info"
           />
           <MetricCard
-            title="Reports Filed (Approved)"
-            value={data.reportsApproved.toString()}
-            description="Last 30 days"
-            icon={FileText}
-            variant="success"
-          />
-          <MetricCard
-            title="Reports Filed (Rejected)"
-            value={data.reportsRejected.toString()}
-            description="Last 30 days"
-            icon={FileText}
-            variant="critical"
+            title="Avg Time to Report (hrs)"
+            value={data.avgTimeToReportHours.toString()}
+            description="Incident → report submission"
+            icon={Clock}
+            variant="info"
           />
           <MetricCard
             title="Total Logins"
@@ -136,17 +131,76 @@ export default function MissionControl() {
         </div>
       )}
 
-      {/* Active Operations */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Operations</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            No active operations at this time
-          </div>
-        </CardContent>
-      </Card>
+      {/* Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Reports by Type</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={{ count: { label: "Reports", color: "hsl(var(--primary))" } }} className="h-[300px]">
+              <BarChart data={data.reportsByType}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="type" />
+                <YAxis allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" fill="var(--color-count)" />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Common Incident Types</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={{ count: { label: "Incidents", color: "hsl(var(--success))" } }} className="h-[300px]">
+              <BarChart data={data.incidentsByType}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="type" />
+                <YAxis allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" fill="var(--color-count)" />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Incidents Requiring Legal Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={{ count: { label: "Incidents", color: "hsl(var(--warning))" } }} className="h-[300px]">
+              <BarChart data={data.incidentsRequiresLegal}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="category" />
+                <YAxis allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" fill="var(--color-count)" />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Accidents Requiring Hospitalization</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={{ count: { label: "Incidents", color: "hsl(var(--destructive))" } }} className="h-[300px]">
+              <BarChart data={data.incidentsRequiresHospitalization}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="category" />
+                <YAxis allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" fill="var(--color-count)" />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
