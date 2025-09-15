@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Monitor, AlertTriangle, Users, MapPin, Package, FileText, Shield, RefreshCw, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { Monitor, FileText, RefreshCw, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { MetricCard } from "@/components/ui/metric-card";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -72,41 +72,13 @@ export default function MissionControl() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(7)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...Array(2)].map((_, i) => (
             <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard
-            title="Total Users"
-            value={data.totalUsers.toString()}
-            description="Active account users"
-            icon={Users}
-            variant="info"
-          />
-          <MetricCard
-            title="Total Locations"
-            value={data.totalLocations.toString()}
-            description="Monitored locations"
-            icon={MapPin}
-            variant="success"
-          />
-          <MetricCard
-            title="Total Equipment"
-            value={data.totalEquipment.toString()}
-            description="Equipment units"
-            icon={Package}
-            variant="success"
-          />
-          <MetricCard
-            title="Active Incidents"
-            value={data.activeIncidents.toString()}
-            description="Open incidents"
-            icon={AlertTriangle}
-            variant={data.activeIncidents > 0 ? "warning" : "success"}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MetricCard
             title="Total Reports Submitted"
             value={data.totalReportsSubmitted.toString()}
@@ -119,13 +91,6 @@ export default function MissionControl() {
             value={data.avgTimeToReportHours.toString()}
             description="Incident → report submission"
             icon={Clock}
-            variant="info"
-          />
-          <MetricCard
-            title="Total Logins"
-            value={data.totalLogins.toString()}
-            description="Last 30 days"
-            icon={Shield}
             variant="info"
           />
         </div>
