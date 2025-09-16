@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { FileText, AlertTriangle, Heart, Flame, Users, Truck, Shield, UserX, FileSpreadsheet, Scale, MoreHorizontal } from "lucide-react";
+import { FileText, AlertTriangle, Heart, Flame, Users, Truck, Shield, UserX, FileSpreadsheet, Scale, MoreHorizontal, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const reportTemplates = [
   {
@@ -68,6 +69,7 @@ const reportTemplates = [
 ];
 
 const Reports = () => {
+  const navigate = useNavigate();
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -119,7 +121,10 @@ const Reports = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Template</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/reports/${template.id}`)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Report
+                          </DropdownMenuItem>
                           <DropdownMenuItem>Download</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

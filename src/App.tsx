@@ -26,6 +26,7 @@ const Incidents = lazy(() => import("./pages/Incidents"));
 const OrganizationReports = lazy(() => import("./pages/OrganizationReports"));
 const OrganizationLogs = lazy(() => import("./pages/OrganizationLogs"));
 const CreateReport = lazy(() => import("./pages/CreateReport"));
+const ReportDetail = lazy(() => import("./pages/ReportDetail"));
 const Settings = lazy(() => import("./pages/Settings"));
 const UserSettings = lazy(() => import("./pages/UserSettings"));
 const EnterpriseView = lazy(() => import("./pages/EnterpriseView"));
@@ -84,6 +85,7 @@ const App = () => (
                       <Route path="/enterprises/:id/logs" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseLogs /></ProtectedRoute>} />
                       <Route path="/enterprises/:id/settings" element={<ProtectedRoute requireAssignment accountType="Enterprise"><Settings /></ProtectedRoute>} />
                       <Route path="/reports" element={<Reports />} />
+                      <Route path="/reports/:templateId" element={<ReportDetail />} />
                       <Route path="/admins" element={<PlatformAdmins />} />
                       <Route path="/notifications" element={<PlatformNotificationCenter />} />
                       <Route path="/logs" element={<Logs />} />

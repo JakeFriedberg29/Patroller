@@ -10,7 +10,7 @@ import { FileText, ArrowLeft, Save, Send, ChevronLeft, ChevronRight } from "luci
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 
-const reportTemplates = [
+export const reportTemplates = [
   {
     id: 1,
     name: "Incident Report",

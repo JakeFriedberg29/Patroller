@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, BarChart3, FileIcon, Upload, Download, Plus, MoreHorizontal, Folder, FolderOpen } from "lucide-react";
+import { FileText, BarChart3, FileIcon, Upload, Download, Plus, MoreHorizontal, Folder, FolderOpen, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -211,6 +211,10 @@ export default function OrganizationReports() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem onClick={() => navigate(`/reports/${template.id}`)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Report
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDownloadTemplate(template)}>
                               <Download className="mr-2 h-4 w-4" />
                               Download Template
