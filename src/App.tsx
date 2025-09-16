@@ -35,6 +35,11 @@ const EnterpriseNotificationCenter = lazy(() => import("./pages/EnterpriseNotifi
 const EnterpriseLogs = lazy(() => import("./pages/EnterpriseLogs"));
 const PlatformNotificationCenter = lazy(() => import("./pages/PlatformNotificationCenter"));
 const ResponderDashboard = lazy(() => import("./pages/ResponderDashboard"));
+const Landing = lazy(() => import("./pages/Landing"));
+const About = lazy(() => import("./pages/About"));
+const Product = lazy(() => import("./pages/Product"));
+const Customers = lazy(() => import("./pages/Customers"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 
 const queryClient = new QueryClient();
 
@@ -47,6 +52,11 @@ const App = () => (
         <AuthProvider>
           <Suspense fallback={null}>
             <Routes>
+              <Route path="/landing" element={<Landing />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/product" element={<Product />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/activate" element={<ActivateAccount />} />
               <Route path="/reset-password" element={<ResetPassword />} />
