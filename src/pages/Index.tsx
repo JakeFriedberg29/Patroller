@@ -14,18 +14,10 @@ import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useGlobalDashboardData } from "@/hooks/useGlobalDashboardData";
 import type { OrganizationSubtype, ReportTypeFilter, UserRoleFilter, AccountTypeFilter, EnterpriseSubtype } from "@/hooks/useGlobalDashboardData";
 import { Constants } from "@/integrations/supabase/types";
-
-const ENTERPRISE_SUBTYPE_OPTIONS: EnterpriseSubtype[] = [
-  "Resort Chain",
-  "Municipality",
-  "Park Agency",
-  "Event Management",
-];
-
+const ENTERPRISE_SUBTYPE_OPTIONS: EnterpriseSubtype[] = ["Resort Chain", "Municipality", "Park Agency", "Event Management"];
 const Index = () => {
   // Redirect users to their tenant/organization dashboards based on role and profile
   useAuthRedirect();
-
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().getFullYear(), 0, 1),
     to: new Date()
@@ -39,30 +31,32 @@ const Index = () => {
   const [selectedUserRoles, setSelectedUserRoles] = useState<Set<UserRoleFilter>>(new Set());
   const [selectedReportTypes, setSelectedReportTypes] = useState<Set<ReportTypeFilter>>(new Set(["incident"]));
   const [selectedReportsOrgSubtypes, setSelectedReportsOrgSubtypes] = useState<Set<OrganizationSubtype>>(new Set());
-
-  const toggleSetValue = <T extends string>(setter: React.Dispatch<React.SetStateAction<Set<T>>>) => (value: T) => {
+  const toggleSetValue = <T extends string,>(setter: React.Dispatch<React.SetStateAction<Set<T>>>) => (value: T) => {
     setter(prev => {
       const next = new Set(prev);
-      if (next.has(value)) next.delete(value); else next.add(value);
+      if (next.has(value)) next.delete(value);else next.add(value);
       return next;
     });
   };
-
   const orgSubtypeOptions = [...Constants.public.Enums.organization_type] as OrganizationSubtype[];
   const userRoleOptions: UserRoleFilter[] = ["responder", "enterprise_user", "organization_user"];
   const reportTypeOptions: ReportTypeFilter[] = ["incident"]; // Extend when report instances exist
 
-  const { kpis, accountsOverTime, usersOverTime, reportsByType, loading } = useGlobalDashboardData(dateRange, {
+  const {
+    kpis,
+    accountsOverTime,
+    usersOverTime,
+    reportsByType,
+    loading
+  } = useGlobalDashboardData(dateRange, {
     accountType,
     accountsOrgSubtypes: Array.from(selectedAccountOrgSubtypes),
     accountsEnterpriseSubtypes: Array.from(selectedEnterpriseSubtypes),
     usersRoleFilters: Array.from(selectedUserRoles),
     reportsTypeFilters: Array.from(selectedReportTypes),
-    reportsOrgSubtypes: Array.from(selectedReportsOrgSubtypes),
+    reportsOrgSubtypes: Array.from(selectedReportsOrgSubtypes)
   });
-
   const headerDate = useMemo(() => new Date(), []);
-
   return <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -88,61 +82,29 @@ const Index = () => {
               <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={2} className={cn("p-3 pointer-events-auto")} />
             </PopoverContent>
           </Popover>
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setDateRange({ ...dateRange })}>
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </Button>
+          
           <CleanupDataButton />
         </div>
       </div>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          <>
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
-            ))}
-          </>
-        ) : (
-          <>
+        {loading ? <>
+            {[...Array(3)].map((_, i) => <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />)}
+          </> : <>
             <MetricCard title="Total Accounts" value={kpis.totalAccounts.toLocaleString()} description="Enterprises + Organizations" icon={Building2} variant="neutral" />
             <MetricCard title="Total Users" value={kpis.totalUsers.toLocaleString()} description="Includes responders" icon={Users} variant="neutral" />
             <MetricCard title="Total Reports Submitted" value={kpis.totalReports.toLocaleString()} description="All report types" icon={FileText} variant="neutral" />
-          </>
-        )}
+          </>}
       </div>
 
       {/* Core Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AccountsOverTimeChart
-          data={accountsOverTime}
-          accountType={accountType}
-          onAccountTypeChange={setAccountType}
-          orgSubtypes={orgSubtypeOptions}
-          selectedOrgSubtypes={selectedAccountOrgSubtypes}
-          onToggleOrgSubtype={toggleSetValue(setSelectedAccountOrgSubtypes)}
-          enterpriseSubtypes={ENTERPRISE_SUBTYPE_OPTIONS}
-          selectedEnterpriseSubtypes={selectedEnterpriseSubtypes}
-          onToggleEnterpriseSubtype={toggleSetValue(setSelectedEnterpriseSubtypes)}
-        />
+        <AccountsOverTimeChart data={accountsOverTime} accountType={accountType} onAccountTypeChange={setAccountType} orgSubtypes={orgSubtypeOptions} selectedOrgSubtypes={selectedAccountOrgSubtypes} onToggleOrgSubtype={toggleSetValue(setSelectedAccountOrgSubtypes)} enterpriseSubtypes={ENTERPRISE_SUBTYPE_OPTIONS} selectedEnterpriseSubtypes={selectedEnterpriseSubtypes} onToggleEnterpriseSubtype={toggleSetValue(setSelectedEnterpriseSubtypes)} />
 
-        <UsersOverTimeChart
-          data={usersOverTime}
-          roleOptions={userRoleOptions}
-          selectedRoles={selectedUserRoles}
-          onToggleRole={toggleSetValue(setSelectedUserRoles)}
-        />
+        <UsersOverTimeChart data={usersOverTime} roleOptions={userRoleOptions} selectedRoles={selectedUserRoles} onToggleRole={toggleSetValue(setSelectedUserRoles)} />
 
-        <ReportsByTypeChart
-          data={reportsByType}
-          typeOptions={reportTypeOptions}
-          selectedTypes={selectedReportTypes}
-          onToggleType={toggleSetValue(setSelectedReportTypes)}
-          orgSubtypes={orgSubtypeOptions}
-          selectedOrgSubtypes={selectedReportsOrgSubtypes}
-          onToggleOrgSubtype={toggleSetValue(setSelectedReportsOrgSubtypes)}
-        />
+        <ReportsByTypeChart data={reportsByType} typeOptions={reportTypeOptions} selectedTypes={selectedReportTypes} onToggleType={toggleSetValue(setSelectedReportTypes)} orgSubtypes={orgSubtypeOptions} selectedOrgSubtypes={selectedReportsOrgSubtypes} onToggleOrgSubtype={toggleSetValue(setSelectedReportsOrgSubtypes)} />
       </div>
     </div>;
 };
