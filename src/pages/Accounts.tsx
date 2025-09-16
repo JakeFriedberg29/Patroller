@@ -229,7 +229,7 @@ export default function Accounts() {
   const paginatedAccounts = filteredAccounts.slice(startIndex, startIndex + rowsPerPage);
 
   const accountTypes = [...new Set(accounts.map(account => account.type))];
-  const accountCategories = [...new Set(accounts.map(account => account.category))];
+  const accountCategories = [...new Set(accounts.map(account => account.category))].filter(cat => cat !== 'Root Account');
 
   // Show loading state
   if (loading) {

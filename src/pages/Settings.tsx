@@ -157,7 +157,8 @@ export default function Settings() {
         .maybeSingle();
       if (tenant) {
         const tenantSettings: any = tenant.settings || {};
-        const enterpriseSubtype: string = tenantSettings.enterprise_subtype || 'Municipality';
+        const isPlatformRoot = tenant.slug === 'missionlog-platform' || tenant.name === 'MissionLog Platform';
+        const enterpriseSubtype: string = isPlatformRoot ? 'Root Account' : (tenantSettings.enterprise_subtype || 'Municipality');
         const account: Account = {
           id: tenant.id,
           name: tenant.name,
@@ -355,6 +356,7 @@ export default function Settings() {
 
   const isEnterprise = formData.type === "Enterprise";
   const isOrganization = formData.type === "Organization";
+  const isRootEnterprise = isEnterprise && (formData.name === 'MissionLog Platform' || formData.name === 'MissionLog');
 
   // Show loading state
   if (loading || !currentAccount) {
@@ -433,34 +435,38 @@ export default function Settings() {
 
             <div className="space-y-2">
               <Label htmlFor="category">Subtype *</Label>
-              <Select 
-                value={formData.category} 
-                onValueChange={(value) => handleInputChange("category", value)}
-                disabled={!isEditing}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {isEnterprise ? (
-                    <>
-                      <SelectItem value="Resort Chain">Resort Chain</SelectItem>
-                      <SelectItem value="Municipality">Municipality</SelectItem>
-                      <SelectItem value="Park Agency">Park Agency</SelectItem>
-                      <SelectItem value="Event Management">Event Management</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="Search & Rescue">Search & Rescue</SelectItem>
-                      <SelectItem value="Lifeguard Service">Lifeguard Service</SelectItem>
-                      <SelectItem value="Park Service">Park Service</SelectItem>
-                      <SelectItem value="Event Medical">Event Medical</SelectItem>
-                      <SelectItem value="Ski Patrol">Ski Patrol</SelectItem>
-                      <SelectItem value="Harbor Master">Harbor Master</SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
+              {isEnterprise && isRootEnterprise ? (
+                <div className="p-2 border rounded-md bg-muted/50 text-sm">Root Account</div>
+              ) : (
+                <Select 
+                  value={formData.category} 
+                  onValueChange={(value) => handleInputChange("category", value)}
+                  disabled={!isEditing}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {isEnterprise ? (
+                      <>
+                        <SelectItem value="Resort Chain">Resort Chain</SelectItem>
+                        <SelectItem value="Municipality">Municipality</SelectItem>
+                        <SelectItem value="Park Agency">Park Agency</SelectItem>
+                        <SelectItem value="Event Management">Event Management</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="Search & Rescue">Search & Rescue</SelectItem>
+                        <SelectItem value="Lifeguard Service">Lifeguard Service</SelectItem>
+                        <SelectItem value="Park Service">Park Service</SelectItem>
+                        <SelectItem value="Event Medical">Event Medical</SelectItem>
+                        <SelectItem value="Ski Patrol">Ski Patrol</SelectItem>
+                        <SelectItem value="Harbor Master">Harbor Master</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         </CardContent>
@@ -694,6 +700,7 @@ export default function Settings() {
       </Card>
 
       {/* Account Management */}
+      {!isRootEnterprise && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -738,6 +745,7 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
