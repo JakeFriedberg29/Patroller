@@ -8,49 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-const reportTemplates = [{
-  id: 1,
-  name: "Incident Report",
-  description: "Standard incident reporting form for emergency response situations"
-}, {
-  id: 2,
-  name: "Patient Care Report",
-  description: "Medical care documentation for patient treatment and transport"
-}, {
-  id: 3,
-  name: "NFIRS Report",
-  description: "National Fire Incident Reporting System documentation"
-}, {
-  id: 4,
-  name: "Injury/Exposure Report",
-  description: "Report form for personnel injuries or hazardous exposures"
-}, {
-  id: 5,
-  name: "EMS Patient Care Report",
-  description: "Emergency Medical Services patient care documentation"
-}, {
-  id: 6,
-  name: "Rescue Report",
-  description: "Technical rescue operations documentation and analysis"
-}, {
-  id: 7,
-  name: "Medical/First Aid Report",
-  description: "Basic medical assistance and first aid treatment record"
-}, {
-  id: 8,
-  name: "Incident Report (Behavioral/Crisis)",
-  description: "Specialized reporting for behavioral health and crisis situations"
-}, {
-  id: 9,
-  name: "Medical Logs",
-  description: "Ongoing medical activity and equipment status logs"
-}, {
-  id: 10,
-  name: "Law Enforcement",
-  description: "Law enforcement coordination and incident documentation"
-}];
+import { useOrganizationReportTemplates } from "@/hooks/useReportTemplates";
 
 const mockFolders = [
   {
@@ -90,12 +50,13 @@ export default function OrganizationReports() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { templates, loading: loadingTemplates } = useOrganizationReportTemplates(id);
   const [folders, setFolders] = useState(mockFolders);
   const [selectedFolder, setSelectedFolder] = useState<typeof mockFolders[0] | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [isFolderContentOpen, setIsFolderContentOpen] = useState(false);
-  const handleDownloadTemplate = (template: typeof reportTemplates[0]) => {
+  const handleDownloadTemplate = (template: { id: number; name: string; description: string }) => {
     try {
       // Create a simple Word document template download
       const content = `${template.name}\n\n${template.description}\n\n[Template fields would be here]`;
@@ -123,8 +84,8 @@ export default function OrganizationReports() {
       });
     }
   };
-  const handleCreateReport = (template: typeof reportTemplates[0]) => {
-    navigate(`/accounts/${id}/reports/create/${template.id}`);
+  const handleCreateReport = (template: { id: number; name: string }) => {
+    navigate(`/organization/${id}/reports/create/${template.id}`);
   };
 
   const handleCreateFolder = () => {
@@ -190,7 +151,15 @@ export default function OrganizationReports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reportTemplates.map(template => <TableRow key={template.id} className="hover:bg-muted/50">
+                  {loadingTemplates ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-sm text-muted-foreground">Loading report templates…</TableCell>
+                    </TableRow>
+                  ) : templates.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-sm text-muted-foreground">No report templates available.</TableCell>
+                    </TableRow>
+                  ) : templates.map(template => <TableRow key={template.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">

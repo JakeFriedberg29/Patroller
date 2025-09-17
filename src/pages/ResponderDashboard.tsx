@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,20 +9,45 @@ import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { useIncidents } from "@/hooks/useIncidents";
 import { useToast } from "@/components/ui/use-toast";
 
-const REPORT_TYPES = [
-  { id: 'incident', name: 'Incident Report', description: 'Report an incident or emergency' },
-  { id: 'medical', name: 'Medical/First Aid Report', description: 'Report medical assistance provided' },
-  { id: 'rescue', name: 'Rescue Report', description: 'Report rescue operations' },
-  { id: 'patrol', name: 'Patrol Report', description: 'Report patrol activities' }
-];
+import { useOrganizationReportTemplates } from "@/hooks/useReportTemplates";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ResponderDashboard() {
   const { profile } = useUserProfile();
   const { createIncident } = useIncidents();
   const { toast } = useToast();
+  const { templates, loading: loadingTemplates } = useOrganizationReportTemplates();
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState("");
+  const [organizationName, setOrganizationName] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const fetchOrganizationName = async () => {
+      const orgId = profile?.profileData?.organization_id;
+      const tenantId = profile?.profileData?.tenant_id;
+      if (!orgId || !tenantId) {
+        setOrganizationName(null);
+        return;
+      }
+      const { data } = await supabase
+        .from('organizations')
+        .select('name')
+        .eq('id', orgId)
+        .eq('tenant_id', tenantId)
+        .single();
+      if (!isCancelled) {
+        setOrganizationName(data?.name ?? null);
+      }
+    };
+    fetchOrganizationName();
+    return () => { isCancelled = true; };
+  }, [profile?.profileData?.organization_id, profile?.profileData?.tenant_id]);
+
+  const REPORT_TYPES = useMemo(() => {
+    return templates.map(t => ({ id: String(t.id), name: t.name, description: t.description }));
+  }, [templates]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -88,6 +113,11 @@ export default function ResponderDashboard() {
         <p className="text-muted-foreground">
           Ready to submit a report or log an incident
         </p>
+        {organizationName && (
+          <p className="text-sm text-muted-foreground">
+            Account: <span className="font-semibold text-foreground">{organizationName}</span>
+          </p>
+        )}
       </div>
 
       {/* Quick Stats */}
@@ -135,7 +165,11 @@ export default function ResponderDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {REPORT_TYPES.map((report) => (
+                {loadingTemplates ? (
+                  <div className="col-span-2 text-sm text-muted-foreground">Loading report templates…</div>
+                ) : REPORT_TYPES.length === 0 ? (
+                  <div className="col-span-2 text-sm text-muted-foreground">No report templates available.</div>
+                ) : REPORT_TYPES.map((report) => (
                   <Card 
                     key={report.id} 
                     className="cursor-pointer hover:bg-muted/50 transition-colors"
