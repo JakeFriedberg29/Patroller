@@ -9,6 +9,8 @@ export interface ReportRecord {
   tenant_id: string;
   account_id: string;
   account_type: 'enterprise' | 'organization';
+  template_id?: string | null;
+  template_version?: number | null;
   title: string | null;
   description: string | null;
   report_type: string;
@@ -89,6 +91,8 @@ export const useReports = () => {
     report_type: string;
     incident_id?: string | null;
     metadata?: any | null;
+    template_id?: string | null;
+    template_version?: number | null;
     account_scope?: { type: 'organization' | 'enterprise'; id: string };
   }): Promise<boolean> => {
     try {
@@ -140,6 +144,8 @@ export const useReports = () => {
         tenant_id: currentUser.tenant_id,
         account_id: accountId!,
         account_type: accountType,
+        template_id: payload.template_id ?? null,
+        template_version: payload.template_version ?? null,
         title: payload.title ?? null,
         description: payload.description ?? null,
         report_type: payload.report_type,

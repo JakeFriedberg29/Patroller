@@ -6,6 +6,8 @@ export interface ReportTemplateSummary {
   id: string;
   name: string;
   description: string;
+  // Optional future: versioning
+  // version?: number;
 }
 
 /**

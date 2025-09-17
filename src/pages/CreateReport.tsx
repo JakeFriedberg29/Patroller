@@ -196,6 +196,7 @@ export default function CreateReport() {
       description: formData.description || null,
       report_type: template.name,
       metadata: formData,
+      template_id: String(template.id),
       account_scope: orgId ? { type: 'organization', id: orgId } : undefined,
     });
 
