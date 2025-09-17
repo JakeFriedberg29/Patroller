@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
@@ -90,8 +90,6 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
         console.warn('Falling back to default report templates:', err?.message || err);
         setError(null);
       } finally {
-        // If nothing resolved above, show none
-        setTemplates([]);
         setLoading(false);
       }
     };

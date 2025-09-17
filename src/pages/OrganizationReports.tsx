@@ -8,9 +8,11 @@ import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganizationReportTemplates } from "@/hooks/useReportTemplates";
+import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/integrations/supabase/client";
 
 const mockFolders = [
   {
@@ -51,6 +53,7 @@ export default function OrganizationReports() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { templates, loading: loadingTemplates } = useOrganizationReportTemplates(id);
+  const [visibilityByTemplate, setVisibilityByTemplate] = useState<Record<string, boolean>>({});
   const [folders, setFolders] = useState(mockFolders);
   const [selectedFolder, setSelectedFolder] = useState<typeof mockFolders[0] | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
@@ -121,6 +124,74 @@ export default function OrganizationReports() {
     setSelectedFolder(folder);
     setIsFolderContentOpen(true);
   };
+
+  
+
+  useEffect(() => {
+    const fetchVisibility = async () => {
+      if (!id || !templates.length) return;
+      const { data: orgRow, error: orgErr } = await supabase
+        .from('organizations')
+        .select('tenant_id')
+        .eq('id', id)
+        .single();
+      if (orgErr) return;
+      const tenantId = orgRow?.tenant_id as string | undefined;
+      const { data } = await supabase
+        .from('organization_report_settings')
+        .select('template_id, visible_to_responders')
+        .eq('organization_id', id)
+        .eq('tenant_id', tenantId || '');
+      const map: Record<string, boolean> = {};
+      templates.forEach(t => { map[t.id] = true; });
+      (data || []).forEach(r => { map[r.template_id as any] = !!r.visible_to_responders; });
+      setVisibilityByTemplate(map);
+    };
+    fetchVisibility();
+  }, [id, templates]);
+
+  const toggleVisibility = async (templateId: string, next: boolean) => {
+    try {
+      if (!id) return;
+      const { data: orgRow, error: orgErr } = await supabase
+        .from('organizations')
+        .select('tenant_id')
+        .eq('id', id)
+        .single();
+      if (orgErr) throw orgErr;
+      const tenantId = orgRow?.tenant_id as string;
+      setVisibilityByTemplate(prev => ({ ...prev, [templateId]: next }));
+      const { data: existing } = await supabase
+        .from('organization_report_settings')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('organization_id', id)
+        .eq('template_id', templateId)
+        .maybeSingle();
+      if (existing?.id) {
+        const { error } = await supabase
+          .from('organization_report_settings')
+          .update({ visible_to_responders: next })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('organization_report_settings')
+          .insert({ tenant_id: tenantId, organization_id: id, template_id: templateId, visible_to_responders: next });
+        if (error) throw error;
+      }
+      const templateName = templates.find(t => t.id === templateId)?.name || 'Report';
+      toast({
+        title: "Settings Updated Successfully",
+        description: next
+          ? `“${templateName}” is now visible to responders.`
+          : `“${templateName}” is now hidden from responders.`,
+      });
+    } catch (e) {
+      setVisibilityByTemplate(prev => ({ ...prev, [templateId]: !next }));
+      toast({ title: 'Update failed', description: 'Could not update visibility.', variant: 'destructive' });
+    }
+  };
   return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -147,7 +218,8 @@ export default function OrganizationReports() {
                   <TableRow>
                     <TableHead className="font-semibold">Report Name</TableHead>
                     <TableHead className="font-semibold">Description</TableHead>
-                    <TableHead className="w-12"></TableHead>
+                  <TableHead className="font-semibold">Display to Responders</TableHead>
+                  <TableHead className="w-12"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -170,6 +242,12 @@ export default function OrganizationReports() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {template.description}
+                      </TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={!!visibilityByTemplate[template.id]}
+                          onCheckedChange={(checked) => toggleVisibility(template.id, Boolean(checked))}
+                        />
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>

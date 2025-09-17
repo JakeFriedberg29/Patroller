@@ -62,13 +62,17 @@ export default function Settings() {
       setLoadingEnterprises(true);
       const query = supabase
         .from('enterprises')
-        .select('id, name')
+        .select('id, name, slug')
         .order('name', { ascending: true })
         .limit(20);
       // @ts-ignore - supabase-js supports ilike
       if (q) query.ilike('name', `%${q}%`);
       const { data } = await query;
-      setEnterprises((data || []).map((t: any) => ({ id: t.id, name: t.name })));
+      setEnterprises(
+        (data || [])
+          .filter((t: any) => t.slug !== 'missionlog-platform' && t.name !== 'MissionLog Platform')
+          .map((t: any) => ({ id: t.id, name: t.name }))
+      );
     } catch (e) {
       // no-op
     } finally {
@@ -126,10 +130,21 @@ export default function Settings() {
         if (org.tenant_id) {
           const { data: ent } = await supabase
             .from('enterprises')
-            .select('id, name')
+            .select('id, name, slug')
             .eq('id', org.tenant_id)
             .maybeSingle();
-          if (ent) setCurrentEnterprise({ id: ent.id, name: ent.name });
+          if (ent) {
+            const isPlatformRoot = (ent as any).slug === 'missionlog-platform' || ent.name === 'MissionLog Platform';
+            if (isPlatformRoot) {
+              setCurrentEnterprise(null);
+            } else {
+              setCurrentEnterprise({ id: ent.id, name: ent.name });
+            }
+          } else {
+            setCurrentEnterprise(null);
+          }
+        } else {
+          setCurrentEnterprise(null);
         }
         setFormData({
           name: account.name,

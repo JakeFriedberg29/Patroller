@@ -282,17 +282,36 @@ export const useAccounts = () => {
           description: `${accountData.name} has been created successfully`,
         });
       } else {
-        // Create Organization under selected Enterprise
-        if (!accountData.tenantId) {
+        // Create Organization; if no enterprise selected, default to platform enterprise
+        let tenantId = accountData.tenantId as string | undefined;
+
+        if (!tenantId) {
+          const { data: platformBySlug } = await supabase
+            .from('enterprises')
+            .select('id, slug, name')
+            .eq('slug', 'missionlog-platform')
+            .maybeSingle();
+          if (platformBySlug?.id) {
+            tenantId = platformBySlug.id as string;
+          } else {
+            const { data: platformByName } = await supabase
+              .from('enterprises')
+              .select('id')
+              .eq('name', 'MissionLog Platform')
+              .maybeSingle();
+            if (platformByName?.id) tenantId = platformByName.id as string;
+          }
+        }
+
+        if (!tenantId) {
           toast({
-            title: "Missing Enterprise",
-            description: "Please assign this organization to an enterprise.",
+            title: "Enterprise required",
+            description: "No default enterprise found. Please select an enterprise.",
             variant: "destructive"
           });
           return false;
         }
 
-        const tenantId = accountData.tenantId as string;
         const baseOrgSlug = slugify(accountData.name);
         const uniqueOrgSlug = await getUniqueOrgSlug(tenantId, baseOrgSlug);
 

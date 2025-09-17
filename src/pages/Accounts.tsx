@@ -173,15 +173,6 @@ export default function Accounts() {
       return;
     }
 
-    if (formData.type === 'Organization' && !formData.tenantId) {
-      toast({
-        title: "Enterprise required",
-        description: "Please assign the organization to an enterprise.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsCreating(true);
     try {
       const success = await createAccount(formData);
@@ -608,7 +599,7 @@ export default function Accounts() {
 
             {formData.type === 'Organization' && (
               <div className="space-y-2 md:col-span-2">
-                <Label>Assign to Enterprise *</Label>
+                <Label>Assign to Enterprise</Label>
                 <Popover open={enterpriseSearchOpen} onOpenChange={setEnterpriseSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between">

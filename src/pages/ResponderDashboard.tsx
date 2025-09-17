@@ -17,6 +17,7 @@ export default function ResponderDashboard() {
   const { createIncident } = useIncidents();
   const { toast } = useToast();
   const { templates, loading: loadingTemplates } = useOrganizationReportTemplates();
+  const [visibilityByTemplate, setVisibilityByTemplate] = useState<Record<string, boolean>>({});
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState("");
@@ -45,9 +46,32 @@ export default function ResponderDashboard() {
     return () => { isCancelled = true; };
   }, [profile?.profileData?.organization_id, profile?.profileData?.tenant_id]);
 
+  useEffect(() => {
+    let isCancelled = false;
+    const fetchVisibility = async () => {
+      const orgId = profile?.profileData?.organization_id;
+      const tenantId = profile?.profileData?.tenant_id;
+      if (!orgId || !tenantId) return;
+      const { data } = await supabase
+        .from('organization_report_settings')
+        .select('template_id, visible_to_responders')
+        .eq('organization_id', orgId)
+        .eq('tenant_id', tenantId);
+      if (isCancelled) return;
+      const map: Record<string, boolean> = {};
+      templates.forEach(t => { map[t.id] = true; });
+      (data || []).forEach(r => { map[r.template_id as any] = !!r.visible_to_responders; });
+      setVisibilityByTemplate(map);
+    };
+    fetchVisibility();
+    return () => { isCancelled = true; };
+  }, [templates, profile?.profileData?.organization_id, profile?.profileData?.tenant_id]);
+
   const REPORT_TYPES = useMemo(() => {
-    return templates.map(t => ({ id: String(t.id), name: t.name, description: t.description }));
-  }, [templates]);
+    return templates
+      .filter(t => visibilityByTemplate[t.id] !== false)
+      .map(t => ({ id: String(t.id), name: t.name, description: t.description }));
+  }, [templates, visibilityByTemplate]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
