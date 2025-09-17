@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { reportTemplates as DEFAULT_REPORT_TEMPLATES } from "@/pages/CreateReport";
 
 export interface ReportTemplateSummary {
   id: number;
@@ -27,39 +26,59 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
   const orgId = organizationId || profile?.profileData?.organization_id;
   const tId = tenantId || profile?.profileData?.tenant_id;
 
-  const defaultTemplates: ReportTemplateSummary[] = useMemo(() => {
-    return (DEFAULT_REPORT_TEMPLATES || []).map(t => ({
-      id: t.id,
-      name: t.name,
-      description: t.description,
-    }));
-  }, []);
+  // No fallback to static/dummy templates. Only show repository-created assignments.
 
   useEffect(() => {
     const fetchTemplates = async () => {
       setLoading(true);
       setError(null);
       try {
-        // If we have org/tenant context, attempt to fetch assignments.
+        // If we have org/tenant context, attempt to fetch templates assigned by org and by org_type
         if (orgId && tId) {
-          // Try to read assigned template IDs for this organization and tenant.
-          const { data: assignments, error: assignmentError } = await supabase
-            .from('organization_report_templates')
-            .select('template_id')
-            .eq('organization_id', orgId)
-            .eq('tenant_id', tId);
+          // Determine this organization's type
+          const { data: org, error: orgErr } = await supabase
+            .from('organizations')
+            .select('organization_type')
+            .eq('id', orgId)
+            .single();
+          if (orgErr) throw orgErr;
+          const orgType = org?.organization_type as string | undefined;
 
-          // If table doesn't exist or any error, fall back silently
-          if (!assignmentError && assignments && assignments.length > 0) {
-            const templateIds = assignments.map(a => a.template_id);
-            const { data: assignedTemplates, error: tmplError } = await supabase
+          // 1) Direct org assignments (legacy) -> optional table; ignore errors
+          let directTemplateIds: string[] = [];
+          try {
+            const { data: assignments, error: assignmentError } = await supabase
+              .from('organization_report_templates')
+              .select('template_id')
+              .eq('organization_id', orgId)
+              .eq('tenant_id', tId);
+            if (!assignmentError && assignments) {
+              directTemplateIds = assignments.map(a => a.template_id);
+            }
+          } catch {}
+
+          // 2) Subtype-based assignments via platform_assignments
+          let typeTemplateIds: string[] = [];
+          if (orgType) {
+            const { data: typeAssignments } = await supabase
+              .from('platform_assignments')
+              .select('element_id')
+              .eq('tenant_id', tId)
+              .eq('element_type', 'report_template')
+              .eq('target_type', 'organization_type')
+              .eq('target_organization_type', orgType);
+            typeTemplateIds = (typeAssignments || []).map((r: any) => r.element_id);
+          }
+
+          const allIds = [...new Set([...directTemplateIds, ...typeTemplateIds])];
+          if (allIds.length > 0) {
+            const { data: templatesData } = await supabase
               .from('report_templates')
               .select('id, name, description, tenant_id')
-              .in('id', templateIds)
+              .in('id', allIds)
               .eq('tenant_id', tId);
-
-            if (!tmplError && assignedTemplates && assignedTemplates.length > 0) {
-              setTemplates(assignedTemplates.map(t => ({ id: t.id, name: t.name, description: t.description })));
+            if (templatesData && templatesData.length > 0) {
+              setTemplates(templatesData.map(t => ({ id: t.id as any, name: t.name as any, description: (t.description as any) || '' })));
               setLoading(false);
               return;
             }
@@ -70,8 +89,8 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
         console.warn('Falling back to default report templates:', err?.message || err);
         setError(null);
       } finally {
-        // Always provide a sensible default
-        setTemplates(defaultTemplates);
+        // If nothing resolved above, show none
+        setTemplates([]);
         setLoading(false);
       }
     };
