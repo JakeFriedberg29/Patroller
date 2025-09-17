@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,17 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 export default function Repository() {
   const { profile, loading: profileLoading } = useUserProfile();
   const { isPlatformAdmin } = usePermissions();
-  const navigate = useNavigate();
   const tenantId = profile?.profileData?.tenant_id as string | undefined;
 
   const [platformTemplates, setPlatformTemplates] = useState<Array<{ id: string; name: string; description: string | null }>>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    if (!profileLoading && !isPlatformAdmin) {
-      navigate('/');
-    }
-  }, [isPlatformAdmin, profileLoading]);
+  // No navigation here: let visibility be controlled by nav and server RLS.
 
   useEffect(() => {
     const loadTemplates = async () => {
