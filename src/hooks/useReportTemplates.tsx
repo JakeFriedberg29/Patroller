@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 export interface ReportTemplateSummary {
-  id: number;
+  id: string;
   name: string;
   description: string;
 }
@@ -24,7 +24,7 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
   const [error, setError] = useState<string | null>(null);
 
   const orgId = organizationId || profile?.profileData?.organization_id;
-  const tId = tenantId || profile?.profileData?.tenant_id;
+  const viewerTenantId = tenantId || profile?.profileData?.tenant_id;
 
   // No fallback to static/dummy templates. Only show repository-created assignments.
 
@@ -34,15 +34,16 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
       setError(null);
       try {
         // If we have org/tenant context, attempt to fetch templates assigned by org and by org_type
-        if (orgId && tId) {
+        if (orgId) {
           // Determine this organization's type
           const { data: org, error: orgErr } = await supabase
             .from('organizations')
-            .select('organization_type')
+            .select('organization_type, tenant_id')
             .eq('id', orgId)
             .single();
           if (orgErr) throw orgErr;
           const orgType = org?.organization_type as string | undefined;
+          const resolvedTenantId = org?.tenant_id as string | undefined || viewerTenantId;
 
           // 1) Direct org assignments (legacy) -> optional table; ignore errors
           let directTemplateIds: string[] = [];
@@ -51,7 +52,7 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
               .from('organization_report_templates')
               .select('template_id')
               .eq('organization_id', orgId)
-              .eq('tenant_id', tId);
+              .eq('tenant_id', resolvedTenantId as string);
             if (!assignmentError && assignments) {
               directTemplateIds = assignments.map(a => a.template_id);
             }
@@ -59,11 +60,11 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
 
           // 2) Subtype-based assignments via platform_assignments
           let typeTemplateIds: string[] = [];
-          if (orgType) {
+          if (orgType && resolvedTenantId) {
             const { data: typeAssignments } = await supabase
               .from('platform_assignments')
               .select('element_id')
-              .eq('tenant_id', tId)
+              .eq('tenant_id', resolvedTenantId)
               .eq('element_type', 'report_template')
               .eq('target_type', 'organization_type')
               .eq('target_organization_type', orgType);
@@ -76,7 +77,7 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
               .from('report_templates')
               .select('id, name, description, tenant_id')
               .in('id', allIds)
-              .eq('tenant_id', tId);
+              .eq('tenant_id', resolvedTenantId as string);
             if (templatesData && templatesData.length > 0) {
               setTemplates(templatesData.map(t => ({ id: t.id as any, name: t.name as any, description: (t.description as any) || '' })));
               setLoading(false);
@@ -97,7 +98,7 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
 
     fetchTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgId, tId]);
+  }, [orgId, viewerTenantId]);
 
   return { templates, loading, error };
 };
