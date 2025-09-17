@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layers, Plus, Trash2, Loader2, Pencil, Lock, Unlock, Layers as LayersIcon, ChevronRight, ChevronLeft } from "lucide-react";
+import { Layers, Plus, Trash2, Loader2, Layers as LayersIcon, ChevronRight, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Constants } from "@/integrations/supabase/types";
 
 export default function Repository() {
+  const navigate = useNavigate();
   const { profile, loading: profileLoading } = useUserProfile();
   const { isPlatformAdmin } = usePermissions();
   const tenantId = profile?.profileData?.tenant_id as string | undefined;
@@ -88,41 +90,7 @@ export default function Repository() {
     }
   };
 
-  // Edit Report dialog state
-  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
-  const [editLocked, setEditLocked] = useState<boolean>(true);
-  const [editTemplateId, setEditTemplateId] = useState<string | null>(null);
-  const [editName, setEditName] = useState<string>("");
-  const [editDescription, setEditDescription] = useState<string>("");
-  const [editFieldRows, setEditFieldRows] = useState<FieldRow[]>([]);
-  const [isUpdating, setIsUpdating] = useState<boolean>(false);
-
-  const loadTemplateForEdit = async (templateId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('report_templates')
-        .select('id,name,description,template_schema')
-        .eq('id', templateId)
-        .maybeSingle();
-      if (error) throw error;
-      if (!data) {
-        toast({ title: 'Not found', description: 'Template not found', variant: 'destructive' });
-        return;
-      }
-      setEditTemplateId(data.id);
-      setEditName(data.name || "");
-      setEditDescription((data.description as string) || "");
-      const schema = (data as any).template_schema as any;
-      const rows: FieldRow[] = Array.isArray(schema?.fields)
-        ? schema.fields.map((f: any) => ({ id: crypto.randomUUID(), name: String(f.name || ''), type: (f.type === 'date' ? 'date' : 'text') as 'text' | 'date' }))
-        : [];
-      setEditFieldRows(rows);
-      setEditLocked(true);
-      setIsEditOpen(true);
-    } catch (e: any) {
-      toast({ title: 'Error', description: 'Failed to load template', variant: 'destructive' });
-    }
-  };
+  // Edit moved to full-page Report Builder
 
   // Assign Subtypes dialog state
   const allOrgTypes = Constants.public.Enums.organization_type as readonly string[];
@@ -303,46 +271,7 @@ export default function Repository() {
     }
   };
 
-  const updateEditFieldRow = (id: string, patch: Partial<FieldRow>) => {
-    setEditFieldRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
-  };
-  const addEditFieldRow = () => {
-    setEditFieldRows(prev => [...prev, { id: crypto.randomUUID(), name: "", type: 'text' }]);
-  };
-  const removeEditFieldRow = (id: string) => {
-    setEditFieldRows(prev => prev.filter(r => r.id !== id));
-  };
-
-  const handleUpdateReport = async () => {
-    if (!editTemplateId) return;
-    if (!editName.trim()) {
-      toast({ title: 'Name required', description: 'Please provide a report name.', variant: 'destructive' });
-      return;
-    }
-    const schema = {
-      fields: editFieldRows.map(r => ({ name: r.name.trim(), type: r.type }))
-    };
-    setIsUpdating(true);
-    try {
-      const { error } = await supabase
-        .from('report_templates')
-        .update({
-          name: editName.trim(),
-          description: editDescription.trim() || null,
-          template_schema: schema as any,
-        })
-        .eq('id', editTemplateId);
-      if (error) throw error;
-      // Update local list for name/description
-      setPlatformTemplates(prev => prev.map(t => t.id === editTemplateId ? { ...t, name: editName.trim(), description: editDescription.trim() || null } : t).sort((a, b) => a.name.localeCompare(b.name)));
-      setIsEditOpen(false);
-      toast({ title: 'Report updated', description: 'Changes saved successfully.' });
-    } catch (e: any) {
-      toast({ title: 'Update failed', description: 'Could not update the report.', variant: 'destructive' });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  // (Removed inline edit modal/state)
 
   // No navigation here: let visibility be controlled by nav and server RLS.
 
@@ -404,9 +333,9 @@ export default function Repository() {
                             <LayersIcon className="h-4 w-4" />
                             <span className="sr-only">Assign Subtypes</span>
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => loadTemplateForEdit(t.id)}>
-                            <Pencil className="h-4 w-4" />
-                            <span className="sr-only">Edit Report</span>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => navigate(`/repository/reports/${t.id}`)}>
+                            <ChevronRight className="h-4 w-4" />
+                            <span className="sr-only">View More</span>
                           </Button>
                         </div>
                       </TableCell>
@@ -490,78 +419,7 @@ export default function Repository() {
             </DialogContent>
           </Dialog>
 
-          {/* Edit Report Dialog */}
-          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  Edit Report
-                  <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setEditLocked(l => !l)}>
-                    {editLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                  </Button>
-                </DialogTitle>
-                <DialogDescription>
-                  {editLocked ? 'Fields are locked. Click the lock to enable editing.' : 'Editing enabled.'}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <Label>Report Name</Label>
-                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Incident Report" disabled={editLocked} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea rows={3} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="Describe this report template" disabled={editLocked} />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Fields</Label>
-                    <Button variant="outline" size="sm" className="gap-2" onClick={addEditFieldRow} disabled={editLocked}>
-                      <Plus className="h-4 w-4" /> Add Field
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {editFieldRows.length === 0 && (
-                      <div className="text-sm text-muted-foreground">No fields configured.</div>
-                    )}
-                    {editFieldRows.map(row => (
-                      <div key={row.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
-                        <div className="md:col-span-3">
-                          <Input placeholder="Field name" value={row.name} onChange={(e) => updateEditFieldRow(row.id, { name: e.target.value })} disabled={editLocked} />
-                        </div>
-                        <div className="md:col-span-2">
-                          <Select value={row.type} onValueChange={(v) => updateEditFieldRow(row.id, { type: v as 'text' | 'date' })} disabled={editLocked}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="date">Date Selector</SelectItem>
-                              <SelectItem value="text">Input Field</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="md:col-span-1 flex justify-end">
-                          <Button variant="ghost" size="icon" onClick={() => removeEditFieldRow(row.id)} disabled={editLocked}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <DialogFooter className="gap-2">
-                <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={isUpdating}>Close</Button>
-                <Button onClick={handleUpdateReport} disabled={isUpdating || editLocked} className="gap-2">
-                  {isUpdating && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Save Changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          {/* Edit moved to full-page Report Builder */}
 
           {/* Assign Subtypes Dialog */}
           <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
@@ -579,7 +437,7 @@ export default function Repository() {
                         <input type="checkbox" className="accent-primary" checked={leftSelected.includes(item)} onChange={(e) => {
                           setLeftSelected(prev => e.target.checked ? [...prev, item] : prev.filter(i => i !== item));
                         }} />
-                        <span>{item.replaceAll('_', ' ')}</span>
+                        <span>{item.split('_').join(' ')}</span>
                       </label>
                     ))}
                     {leftList.length === 0 && (
@@ -617,7 +475,7 @@ export default function Repository() {
                         <input type="checkbox" className="accent-primary" checked={rightSelected.includes(item)} onChange={(e) => {
                           setRightSelected(prev => e.target.checked ? [...prev, item] : prev.filter(i => i !== item));
                         }} />
-                        <span>{item.replaceAll('_', ' ')}</span>
+                        <span>{item.split('_').join(' ')}</span>
                       </label>
                     ))}
                     {rightList.length === 0 && (
