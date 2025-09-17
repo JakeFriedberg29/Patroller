@@ -419,6 +419,95 @@ export type Database = {
           },
         ]
       }
+      incidents: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          incident_type: string
+          location_id: string | null
+          metadata: Json | null
+          occurred_at: string
+          organization_id: string
+          priority: Database["public"]["Enums"]["incident_priority"]
+          reported_by: string
+          requires_hospitalization: boolean
+          requires_legal: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          incident_type: string
+          location_id?: string | null
+          metadata?: Json | null
+          occurred_at: string
+          organization_id: string
+          priority?: Database["public"]["Enums"]["incident_priority"]
+          reported_by: string
+          requires_hospitalization?: boolean
+          requires_legal?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          incident_type?: string
+          location_id?: string | null
+          metadata?: Json | null
+          occurred_at?: string
+          organization_id?: string
+          priority?: Database["public"]["Enums"]["incident_priority"]
+          reported_by?: string
+          requires_hospitalization?: boolean
+          requires_legal?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           address: Json | null
@@ -828,6 +917,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          incident_id: string | null
           metadata: Json | null
           report_type: string
           submitted_at: string
@@ -842,6 +932,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          incident_id?: string | null
           metadata?: Json | null
           report_type: string
           submitted_at?: string
@@ -856,6 +947,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          incident_id?: string | null
           metadata?: Json | null
           report_type?: string
           submitted_at?: string
@@ -869,6 +961,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
             referencedColumns: ["id"]
           },
           {
@@ -1496,12 +1595,12 @@ export type CompositeTypes<
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
