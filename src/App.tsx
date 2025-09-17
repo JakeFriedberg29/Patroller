@@ -35,6 +35,7 @@ const EnterpriseAdmins = lazy(() => import("./pages/EnterpriseAdmins"));
 const EnterpriseNotificationCenter = lazy(() => import("./pages/EnterpriseNotificationCenter"));
 const EnterpriseLogs = lazy(() => import("./pages/EnterpriseLogs"));
 const PlatformNotificationCenter = lazy(() => import("./pages/PlatformNotificationCenter"));
+const Repository = lazy(() => import("./pages/Repository"));
 const ResponderDashboard = lazy(() => import("./pages/ResponderDashboard"));
 const Landing = lazy(() => import("./pages/Landing"));
 const About = lazy(() => import("./pages/About"));
@@ -65,7 +66,7 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <Routes>
-                      <Route path="/" element={<Index />} />
+                      <Route index element={<Index />} />
                       <Route path="/accounts" element={<Accounts />} />
                       <Route path="/organization/:id" element={<ProtectedRoute requireAssignment accountType="Organization"><AccountDetail /></ProtectedRoute>} />
                       <Route path="/organization/:id/mission-control" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
@@ -87,6 +88,7 @@ const App = () => (
                       <Route path="/reports" element={<Reports />} />
                       <Route path="/reports/:templateId" element={<ReportDetail />} />
                       <Route path="/admins" element={<PlatformAdmins />} />
+                      <Route path="/repository" element={<Repository />} />
                       <Route path="/notifications" element={<PlatformNotificationCenter />} />
                       <Route path="/logs" element={<Logs />} />
                       <Route path="/settings" element={<UserSettings />} />

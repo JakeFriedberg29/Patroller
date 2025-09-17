@@ -705,6 +705,80 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_assignments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          element_id: string
+          element_type: Database["public"]["Enums"]["platform_element_type"]
+          id: string
+          target_organization_id: string | null
+          target_organization_type:
+            | Database["public"]["Enums"]["organization_type"]
+            | null
+          target_type: Database["public"]["Enums"]["platform_assignment_target_type"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          element_id: string
+          element_type: Database["public"]["Enums"]["platform_element_type"]
+          id?: string
+          target_organization_id?: string | null
+          target_organization_type?:
+            | Database["public"]["Enums"]["organization_type"]
+            | null
+          target_type: Database["public"]["Enums"]["platform_assignment_target_type"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          element_id?: string
+          element_type?: Database["public"]["Enums"]["platform_element_type"]
+          id?: string
+          target_organization_id?: string | null
+          target_organization_type?:
+            | Database["public"]["Enums"]["organization_type"]
+            | null
+          target_type?: Database["public"]["Enums"]["platform_assignment_target_type"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_assignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_assignments_target_organization_id_fkey"
+            columns: ["target_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_templates: {
         Row: {
           created_at: string
@@ -713,8 +787,9 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
-          organization_id: string
+          organization_id: string | null
           template_schema: Json
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -724,8 +799,9 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
-          organization_id: string
+          organization_id?: string | null
           template_schema: Json
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -735,8 +811,9 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
-          organization_id?: string
+          organization_id?: string | null
           template_schema?: Json
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -1301,6 +1378,8 @@ export type Database = {
         | "ski_patrol"
         | "harbor_master"
         | "volunteer_emergency_services"
+      platform_assignment_target_type: "organization" | "organization_type"
+      platform_element_type: "report_template"
       role_type:
         | "platform_admin"
         | "enterprise_admin"
@@ -1468,6 +1547,8 @@ export const Constants = {
         "harbor_master",
         "volunteer_emergency_services",
       ],
+      platform_assignment_target_type: ["organization", "organization_type"],
+      platform_element_type: ["report_template"],
       role_type: [
         "platform_admin",
         "enterprise_admin",

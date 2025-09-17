@@ -13,7 +13,8 @@ import {
   User,
   MoreHorizontal,
   MapPin,
-  LogOut
+  LogOut,
+  Layers
 } from "lucide-react";
 import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,6 +45,7 @@ const mainItems = [
 const adminItems = [
   { title: "Accounts", url: "/accounts", icon: Building2 },
   { title: "Platform Admins", url: "/admins", icon: Shield },
+  { title: "Repository", url: "/repository", icon: Layers },
   { title: "Notification Center", url: "/notifications", icon: Bell },
   { title: "Logs", url: "/logs", icon: BarChart3 },
 ];
@@ -75,7 +77,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { profile } = useUserProfile();
-  const { isResponder, isOrgViewer } = usePermissions();
+  const { isResponder, isOrgViewer, isPlatformAdmin } = usePermissions();
   const currentPath = location.pathname;
   
   const isCollapsed = state === "collapsed";
@@ -258,7 +260,9 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
-                {adminItems.map((item) => (
+                {adminItems
+                  .filter(item => item.title !== 'Repository' || isPlatformAdmin)
+                  .map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} end className={({ isActive }) => getNavCls({ isActive })}>
