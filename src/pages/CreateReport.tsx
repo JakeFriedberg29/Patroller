@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, ArrowLeft, Save, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { useReports } from "@/hooks/useReports";
 
 export const reportTemplates = [
   {
@@ -112,9 +113,10 @@ export const reportTemplates = [
 ];
 
 export default function CreateReport() {
-  const { accountId, templateId } = useParams();
+  const { id: orgId, templateId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { createReport, canSubmitReports } = useReports();
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(0);
   
@@ -168,7 +170,7 @@ export default function CreateReport() {
     });
   };
 
-  const handleSubmitReport = () => {
+  const handleSubmitReport = async () => {
     // Validate all required fields across all sections
     const allFields = sections.flatMap(section => section.fields);
     const missingFields = allFields
@@ -184,12 +186,22 @@ export default function CreateReport() {
       return;
     }
 
-    toast({
-      title: "Report Submitted",
-      description: "Your report has been successfully submitted.",
+    if (!canSubmitReports) {
+      toast({ title: "Permission Denied", description: "You cannot submit reports.", variant: "destructive" });
+      return;
+    }
+
+    const success = await createReport({
+      title: formData.incidentId ? `${template.name} ${formData.incidentId}` : template.name,
+      description: formData.description || null,
+      report_type: template.name,
+      metadata: formData,
+      account_scope: orgId ? { type: 'organization', id: orgId } : undefined,
     });
-    
-    navigate(`/accounts/${accountId}/reports`);
+
+    if (success) {
+      navigate(`/organization/${orgId}/reports`);
+    }
   };
 
   const renderField = (field: any) => {
@@ -273,7 +285,7 @@ export default function CreateReport() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(`/accounts/${accountId}/reports`)}
+            onClick={() => navigate(`/organization/${orgId}/reports`)}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

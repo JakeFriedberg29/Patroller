@@ -89,7 +89,7 @@ export default function MissionControl() {
           <MetricCard
             title="Avg Time to Report (hrs)"
             value={data.avgTimeToReportHours.toString()}
-            description="Incident → report submission"
+            description="Submission timing"
             icon={Clock}
             variant="info"
           />
@@ -115,56 +115,7 @@ export default function MissionControl() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Common Incident Types</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={{ count: { label: "Incidents", color: "hsl(var(--success))" } }} className="h-[300px]">
-              <BarChart data={data.incidentsByType}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="type" />
-                <YAxis allowDecimals={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="count" fill="var(--color-count)" />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Incidents Requiring Legal Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={{ count: { label: "Incidents", color: "hsl(var(--warning))" } }} className="h-[300px]">
-              <BarChart data={data.incidentsRequiresLegal}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="category" />
-                <YAxis allowDecimals={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="count" fill="var(--color-count)" />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Accidents Requiring Hospitalization</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={{ count: { label: "Incidents", color: "hsl(var(--destructive))" } }} className="h-[300px]">
-              <BarChart data={data.incidentsRequiresHospitalization}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="category" />
-                <YAxis allowDecimals={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="count" fill="var(--color-count)" />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        {/* Incident charts removed */}
       </div>
     </div>
   );

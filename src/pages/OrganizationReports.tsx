@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useOrganizationReportTemplates } from "@/hooks/useReportTemplates";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { useReports } from "@/hooks/useReports";
 
 const mockFolders = [
   {
@@ -53,6 +54,7 @@ export default function OrganizationReports() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { templates, loading: loadingTemplates } = useOrganizationReportTemplates(id);
+  const { reports, loading: loadingReports } = useReports();
   const [visibilityByTemplate, setVisibilityByTemplate] = useState<Record<string, boolean>>({});
   const [folders, setFolders] = useState(mockFolders);
   const [selectedFolder, setSelectedFolder] = useState<typeof mockFolders[0] | null>(null);
@@ -205,8 +207,9 @@ export default function OrganizationReports() {
       </div>
 
       <Tabs defaultValue="templates" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="submissions">Submissions</TabsTrigger>
           <TabsTrigger value="files">Files</TabsTrigger>
         </TabsList>
         
@@ -274,6 +277,43 @@ export default function OrganizationReports() {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>)}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="submissions">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-semibold">Title</TableHead>
+                    <TableHead className="font-semibold">Type</TableHead>
+                    <TableHead className="font-semibold">Submitted</TableHead>
+                    <TableHead className="font-semibold">Account</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loadingReports ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-sm text-muted-foreground">Loading submissions…</TableCell>
+                    </TableRow>
+                  ) : reports.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-sm text-muted-foreground">No submissions yet.</TableCell>
+                    </TableRow>
+                  ) : (
+                    reports.map(r => (
+                      <TableRow key={r.id}>
+                        <TableCell className="font-medium">{r.title || r.report_type}</TableCell>
+                        <TableCell className="text-muted-foreground">{r.report_type}</TableCell>
+                        <TableCell className="text-muted-foreground">{new Date(r.submitted_at).toLocaleString()}</TableCell>
+                        <TableCell className="text-muted-foreground">{r.account_type}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

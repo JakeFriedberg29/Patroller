@@ -117,27 +117,30 @@ export const useEnterpriseData = (tenantId?: string) => {
         });
       }
 
-      // Reports Submitted Today (using incidents as reports)
+      // Reports Submitted Today (actual reports)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const { count: reportsToday } = await supabase
-        .from('incidents')
+        .from('reports')
         .select('id', { count: 'exact' })
-        .in('organization_id', orgIds.length ? orgIds : ['00000000-0000-0000-0000-000000000000'])
-        .gte('created_at', today.toISOString());
+        .in('account_id', orgIds.length ? orgIds : ['00000000-0000-0000-0000-000000000000'])
+        .eq('account_type', 'organization')
+        .gte('submitted_at', today.toISOString());
 
       // Reports by Organization over last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const { data: incidentsRows } = await supabase
-        .from('incidents')
-        .select('organization_id')
-        .in('organization_id', orgIds.length ? orgIds : ['00000000-0000-0000-0000-000000000000'])
-        .gte('created_at', thirtyDaysAgo.toISOString());
+      const { data: reportRows } = await supabase
+        .from('reports')
+        .select('account_id, account_type')
+        .in('account_id', orgIds.length ? orgIds : ['00000000-0000-0000-0000-000000000000'])
+        .eq('account_type', 'organization')
+        .gte('submitted_at', thirtyDaysAgo.toISOString());
 
       const countsByOrg = new Map<string, number>();
-      (incidentsRows || []).forEach((row: any) => {
-        countsByOrg.set(row.organization_id, (countsByOrg.get(row.organization_id) || 0) + 1);
+      (reportRows || []).forEach((row: any) => {
+        const orgId = row.account_id;
+        countsByOrg.set(orgId, (countsByOrg.get(orgId) || 0) + 1);
       });
       const byOrg: ReportsByOrganizationDatum[] = (orgsData || []).map(org => ({
         orgId: org.id,

@@ -911,39 +911,48 @@ export type Database = {
       }
       reports: {
         Row: {
+          account_id: string
+          account_type: string
           created_at: string
           created_by: string | null
+          description: string | null
           id: string
           incident_id: string | null
           metadata: Json | null
-          organization_id: string
           report_type: string
           submitted_at: string
           tenant_id: string
+          title: string | null
           updated_at: string
         }
         Insert: {
+          account_id: string
+          account_type: string
           created_at?: string
           created_by?: string | null
+          description?: string | null
           id?: string
           incident_id?: string | null
           metadata?: Json | null
-          organization_id: string
           report_type: string
           submitted_at?: string
           tenant_id: string
+          title?: string | null
           updated_at?: string
         }
         Update: {
+          account_id?: string
+          account_type?: string
           created_at?: string
           created_by?: string | null
+          description?: string | null
           id?: string
           incident_id?: string | null
           metadata?: Json | null
-          organization_id?: string
           report_type?: string
           submitted_at?: string
           tenant_id?: string
+          title?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -959,13 +968,6 @@ export type Database = {
             columns: ["incident_id"]
             isOneToOne: false
             referencedRelation: "incidents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reports_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {

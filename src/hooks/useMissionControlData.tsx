@@ -10,12 +10,8 @@ export interface MissionControlData {
   totalReportsSubmitted: number;
   avgTimeToReportHours: number;
   totalLogins: number;
-  activeIncidents: number;
   // Charts
   reportsByType: { type: string; count: number }[];
-  incidentsByType: { type: string; count: number }[];
-  incidentsRequiresLegal: { category: string; count: number }[];
-  incidentsRequiresHospitalization: { category: string; count: number }[];
 }
 
 export const useMissionControlData = (organizationId?: string, dateRange?: DateRange) => {
@@ -26,11 +22,7 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
     totalReportsSubmitted: 0,
     avgTimeToReportHours: 0,
     totalLogins: 0,
-    activeIncidents: 0,
     reportsByType: [],
-    incidentsByType: [],
-    incidentsRequiresLegal: [],
-    incidentsRequiresHospitalization: [],
   });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -66,13 +58,6 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
         .select('id', { count: 'exact' })
         .eq('organization_id', organizationId);
 
-      // Fetch incidents count
-      const { count: activeIncidentsCount } = await supabase
-        .from('incidents')
-        .select('id', { count: 'exact' })
-        .eq('organization_id', organizationId)
-        .eq('status', 'open');
-
       // Fetch recent logins (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -86,8 +71,9 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
       // Reports submitted in date range
       const { data: reportRows, count: reportsCount } = await supabase
         .from('reports')
-        .select('id, report_type, submitted_at, incident_id', { count: 'exact' })
-        .eq('organization_id', organizationId)
+        .select('id, report_type, submitted_at, incident_id, account_id, account_type', { count: 'exact' })
+        .eq('account_type', 'organization')
+        .eq('account_id', organizationId)
         .gte('submitted_at', fromIso)
         .lte('submitted_at', toIso);
 
@@ -99,53 +85,11 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
       });
       const reportsByType = Array.from(reportsByTypeMap.entries()).map(([type, count]) => ({ type, count }));
 
-      // Incidents in date range
-      const { data: incidentRows } = await supabase
-        .from('incidents')
-        .select('id, incident_type, occurred_at, requires_legal, requires_hospitalization')
-        .eq('organization_id', organizationId)
-        .gte('occurred_at', fromIso)
-        .lte('occurred_at', toIso);
-
-      // Aggregate incidents by type
-      const incidentsByTypeMap = new Map<string, number>();
-      (incidentRows || []).forEach((i: any) => {
-        const key = i.incident_type || 'Unknown';
-        incidentsByTypeMap.set(key, (incidentsByTypeMap.get(key) || 0) + 1);
-      });
-      const incidentsByType = Array.from(incidentsByTypeMap.entries()).map(([type, count]) => ({ type, count }));
-
-      // Legal and Hospitalization counts
-      const legalCount = (incidentRows || []).filter((i: any) => i.requires_legal).length;
-      const nonLegalCount = (incidentRows || []).length - legalCount;
-      const hospCount = (incidentRows || []).filter((i: any) => i.requires_hospitalization).length;
-      const nonHospCount = (incidentRows || []).length - hospCount;
-
-      const incidentsRequiresLegal = [
-        { category: 'Requires Legal', count: legalCount },
-        { category: 'No Legal', count: nonLegalCount },
-      ];
-      const incidentsRequiresHospitalization = [
-        { category: 'Hospitalization', count: hospCount },
-        { category: 'No Hospitalization', count: nonHospCount },
-      ];
-
-      // Average time to report (in hours) for reports linked to incidents
+      // Average time to report (in hours) for reports linked to incidents (skip if incidents removed)
       const reportsWithIncidents = (reportRows || []).filter((r: any) => !!r.incident_id);
       let avgTimeToReportHours = 0;
       if (reportsWithIncidents.length > 0) {
-        const incidentIds = Array.from(new Set(reportsWithIncidents.map((r: any) => r.incident_id)));
-        const { data: relatedIncidents } = await supabase
-          .from('incidents')
-          .select('id, occurred_at')
-          .in('id', incidentIds);
-        const incidentMap = new Map<string, string>();
-        (relatedIncidents || []).forEach((i: any) => incidentMap.set(i.id, i.occurred_at));
-        const diffsMs: number[] = reportsWithIncidents
-          .map((r: any) => ({ submitted_at: r.submitted_at, occurred_at: incidentMap.get(r.incident_id) }))
-          .filter((x: any) => !!x.submitted_at && !!x.occurred_at)
-          .map((x: any) => new Date(x.submitted_at).getTime() - new Date(x.occurred_at).getTime())
-          .filter((ms: number) => ms >= 0);
+        const diffsMs: number[] = [];
         if (diffsMs.length > 0) {
           avgTimeToReportHours = Math.round((diffsMs.reduce((a, b) => a + b, 0) / diffsMs.length) / (1000 * 60 * 60));
         }
@@ -158,11 +102,7 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
         totalReportsSubmitted: reportsCount || 0,
         avgTimeToReportHours,
         totalLogins: loginsCount || 0,
-        activeIncidents: activeIncidentsCount || 0,
         reportsByType,
-        incidentsByType,
-        incidentsRequiresLegal,
-        incidentsRequiresHospitalization,
       });
 
     } catch (error) {
