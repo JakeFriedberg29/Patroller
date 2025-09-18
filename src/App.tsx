@@ -95,6 +95,7 @@ const App = () => (
                       <Route path="reports" element={<Reports />} />
                       <Route path="reports/:templateId" element={<ReportDetail />} />
                       <Route path="repository/reports/:templateId" element={<ReportBuilder />} />
+                      <Route path="repository/reports/new" element={<ReportBuilder />} />
                       <Route path="admins" element={<PlatformAdmins />} />
                       <Route path="repository" element={<Repository />} />
                       <Route path="notifications" element={<PlatformNotificationCenter />} />

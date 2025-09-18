@@ -21,6 +21,7 @@ export default function ReportBuilder() {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const [status, setStatus] = useState<'draft' | 'ready' | 'published' | 'unpublished'>("draft");
 
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -29,9 +30,17 @@ export default function ReportBuilder() {
   const loadTemplate = async () => {
     try {
       setLoading(true);
+      if (!templateId || templateId === 'new') {
+        // Create mode
+        setName("");
+        setDescription("");
+        setFieldRows([]);
+        setLoading(false);
+        return;
+      }
       const { data, error } = await supabase
         .from('report_templates')
-        .select('id,name,description,template_schema')
+        .select('id,name,description,template_schema,status')
         .eq('id', templateId)
         .maybeSingle();
       if (error) throw error;
@@ -42,6 +51,7 @@ export default function ReportBuilder() {
       }
       setName(data.name || "");
       setDescription((data.description as string) || "");
+      setStatus((data as any).status || 'draft');
       const schema = (data as any).template_schema as any;
       const rows: FieldRow[] = Array.isArray(schema?.fields)
         ? schema.fields.map((f: any) => ({ id: crypto.randomUUID(), name: String(f.name || ''), type: (f.type === 'date' ? 'date' : 'text') as 'text' | 'date' }))
@@ -78,17 +88,58 @@ export default function ReportBuilder() {
     const schema = { fields: fieldRows.map(r => ({ name: r.name.trim(), type: r.type })) };
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('report_templates')
-        .update({ name: name.trim(), description: description.trim() || null, template_schema: schema as any })
-        .eq('id', templateId);
-      if (error) throw error;
+      if (templateId === 'new') {
+        // Insert new template in current tenant
+        const { data: prof } = await supabase
+          .from('users')
+          .select('id, tenant_id')
+          .eq('id', profile?.profileData?.user_id || '')
+          .maybeSingle();
+        const tenantId = prof?.tenant_id || profile?.profileData?.tenant_id;
+        const createdBy = profile?.profileData?.user_id || null;
+        const { error } = await supabase
+          .from('report_templates')
+          .insert({
+            name: name.trim(),
+            description: description.trim() || null,
+            template_schema: schema as any,
+            is_active: true,
+            status: status,
+            tenant_id: tenantId,
+            organization_id: null,
+            created_by: createdBy,
+          });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('report_templates')
+          .update({ name: name.trim(), description: description.trim() || null, template_schema: schema as any, status: status })
+          .eq('id', templateId);
+        if (error) throw error;
+      }
       toast({ title: 'Report updated', description: 'Changes saved successfully.' });
       navigate('/repository');
     } catch (e: any) {
       toast({ title: 'Update failed', description: 'Could not update the report.', variant: 'destructive' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleStatusChange = async (next: 'draft' | 'ready' | 'published' | 'unpublished') => {
+    try {
+      setStatus(next);
+      if (templateId && templateId !== 'new') {
+        const { data, error } = await supabase.rpc('set_report_template_status' as any, {
+          p_template_id: templateId,
+          p_status: next,
+        });
+        const ok = (data as any)?.success !== false;
+        if (error || !ok) throw error || new Error((data as any)?.error || 'update_failed');
+        toast({ title: 'Status updated', description: `Report set to ${next}.` });
+      }
+    } catch (e: any) {
+      toast({ title: 'Update failed', description: 'Could not update status.', variant: 'destructive' });
     }
   };
 
@@ -101,7 +152,16 @@ export default function ReportBuilder() {
             Back to Repository
           </Button>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <Select value={status} onValueChange={(v) => handleStatusChange(v as any)}>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="ready">Ready</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="unpublished">Unpublished</SelectItem>
+            </SelectContent>
+          </Select>
           <Button variant="outline" onClick={() => navigate('/repository')} disabled={saving}>Cancel</Button>
           <Button onClick={handleSave} disabled={saving} className="gap-2">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}

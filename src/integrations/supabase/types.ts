@@ -775,6 +775,7 @@ export type Database = {
           is_active: boolean
           name: string
           organization_id: string | null
+          status: Database["public"]["Enums"]["report_template_status"]
           template_schema: Json
           tenant_id: string
           updated_at: string
@@ -787,6 +788,7 @@ export type Database = {
           is_active?: boolean
           name: string
           organization_id?: string | null
+          status?: Database["public"]["Enums"]["report_template_status"]
           template_schema: Json
           tenant_id: string
           updated_at?: string
@@ -799,6 +801,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           organization_id?: string | null
+          status?: Database["public"]["Enums"]["report_template_status"]
           template_schema?: Json
           tenant_id?: string
           updated_at?: string
@@ -1478,6 +1481,7 @@ export type Database = {
         | "inactive"
         | "suspended"
         | "deactivated"
+      report_template_status: "draft" | "ready" | "published" | "unpublished"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1650,6 +1654,7 @@ export const Constants = {
         "suspended",
         "deactivated",
       ],
+      report_template_status: ["draft", "ready", "published", "unpublished"],
     },
   },
 } as const
