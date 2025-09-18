@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layers, Plus, Loader2, Layers as LayersIcon, ChevronRight, ChevronLeft } from "lucide-react";
+import { Layers, Plus, Loader2, Layers as LayersIcon, ChevronRight, ChevronLeft, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,16 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Constants } from "@/integrations/supabase/types";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Repository() {
   const navigate = useNavigate();
@@ -39,6 +49,10 @@ export default function Repository() {
   const [leftSelected, setLeftSelected] = useState<string[]>([]);
   const [rightSelected, setRightSelected] = useState<string[]>([]);
   const [savingAssign, setSavingAssign] = useState<boolean>(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
+  const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
+  const [deleteTemplateName, setDeleteTemplateName] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const openAssignModal = async (templateId: string) => {
     try {
@@ -107,6 +121,71 @@ export default function Repository() {
     setLeftList(prev => [...prev, ...toMove].sort());
     setRightList(prev => prev.filter(i => !toMove.includes(i)));
     setRightSelected([]);
+  };
+
+  const openDeleteDialog = (templateId: string, templateName: string) => {
+    setDeleteTemplateId(templateId);
+    setDeleteTemplateName(templateName);
+    setIsDeleteOpen(true);
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!tenantId || !deleteTemplateId) return;
+    setIsDeleting(true);
+    try {
+      // 1) Remove subtype/platform assignments for this template in this tenant
+      await supabase
+        .from('platform_assignments')
+        .delete()
+        .eq('tenant_id', tenantId)
+        .eq('element_type', 'report_template' as any)
+        .eq('target_type', 'organization_type' as any)
+        .eq('element_id', deleteTemplateId);
+
+      // 2) Remove any direct organization assignments (legacy), if table exists
+      try {
+        await supabase
+          .from('organization_report_templates' as any)
+          .delete()
+          .eq('tenant_id', tenantId)
+          .eq('template_id', deleteTemplateId);
+      } catch {}
+
+      // 3) Delete the template itself (reports keep visibility; template_id will be set NULL by FK)
+      const { error: delErr } = await supabase
+        .from('report_templates')
+        .delete()
+        .eq('tenant_id', tenantId)
+        .eq('id', deleteTemplateId);
+      if (delErr) throw delErr;
+
+      // 4) Audit log
+      const userId = profile?.profileData?.user_id || null;
+      await supabase.from('audit_logs').insert({
+        tenant_id: tenantId,
+        user_id: userId as any,
+        action: 'DELETE_REPORT_TEMPLATE',
+        resource_type: 'report_template',
+        resource_id: deleteTemplateId,
+        metadata: { name: deleteTemplateName } as any,
+      } as any);
+
+      // 5) Update UI state
+      setPlatformTemplates(prev => prev.filter(t => t.id !== deleteTemplateId));
+      setAssignedOrgCounts(prev => {
+        const { [deleteTemplateId]: _omit, ...rest } = prev;
+        return rest;
+      });
+      toast({ title: 'Report deleted', description: `“${deleteTemplateName}” was permanently removed.` });
+    } catch (e: any) {
+      console.error('Failed to delete template', e);
+      toast({ title: 'Delete failed', description: 'Could not delete report. Please try again.', variant: 'destructive' });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteOpen(false);
+      setDeleteTemplateId(null);
+      setDeleteTemplateName("");
+    }
   };
 
   const saveAssignments = async () => {
@@ -368,6 +447,10 @@ export default function Repository() {
                             <LayersIcon className="h-4 w-4" />
                             <span className="sr-only">Assign Subtypes</span>
                           </Button>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openDeleteDialog(t.id, t.name)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => navigate(`/repository/reports/${t.id}`)}>
                             <ChevronRight className="h-4 w-4" />
                             <span className="sr-only">View More</span>
@@ -464,6 +547,27 @@ export default function Repository() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete report template?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently remove “{deleteTemplateName}” from all assigned organization subtypes and delete it from the repository. Submitted reports will remain visible in accounts.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteTemplate}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={isDeleting}
+                >
+                  {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </TabsContent>
         <TabsContent value="equipment"></TabsContent>
       </Tabs>

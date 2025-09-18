@@ -80,7 +80,6 @@ export default function ReportBuilder() {
   };
 
   const handleSave = async () => {
-    if (!templateId) return;
     if (!name.trim()) {
       toast({ title: 'Name required', description: 'Please provide a report name.', variant: 'destructive' });
       return;
@@ -88,7 +87,7 @@ export default function ReportBuilder() {
     const schema = { fields: fieldRows.map(r => ({ name: r.name.trim(), type: r.type })) };
     setSaving(true);
     try {
-      if (templateId === 'new') {
+      if (!templateId || templateId === 'new') {
         // Insert new template in current tenant
         const { data: prof } = await supabase
           .from('users')
@@ -146,8 +145,9 @@ export default function ReportBuilder() {
   return (
     <div className="p-4 space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate('/repository')}>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold">Report Builder</h1>
+          <Button variant="ghost" size="sm" className="gap-2 w-fit" onClick={() => navigate('/repository')}>
             <ChevronLeft className="h-4 w-4" />
             Back to Repository
           </Button>
