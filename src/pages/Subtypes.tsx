@@ -33,6 +33,8 @@ export default function Subtypes() {
 
   const orgEnumValues = useMemo(() => Constants.public.Enums.organization_type as readonly string[], []);
 
+  const isValidOrgSubtypeName = (value: string) => value.trim().length > 0;
+
   useEffect(() => {
     const load = async () => {
       if (!tenantId || !isPlatformAdmin) {
@@ -94,17 +96,59 @@ export default function Subtypes() {
     }
     try {
       if (activeTab === "enterprise") {
-        const { error } = await supabase
+        const { error: updErr } = await supabase
           .from("enterprise_subtypes")
           .update({ name: newName })
           .eq("tenant_id", tenantId)
           .eq("name", originalValue);
-        if (error) throw error;
-        setEnterpriseRows(prev => prev.map(r => r.name === originalValue ? { ...r, name: newName } : r).sort((a, b) => a.name.localeCompare(b.name)));
+        if (updErr && (updErr as any).code === "23505") {
+          // Name already exists; remove the old row to avoid duplicates
+          await supabase
+            .from("enterprise_subtypes")
+            .delete()
+            .eq("tenant_id", tenantId)
+            .eq("name", originalValue);
+        } else if (updErr) {
+          throw updErr;
+        }
+        setEnterpriseRows(prev => {
+          const withoutOld = prev.filter(r => r.name !== originalValue);
+          const existsNew = withoutOld.some(r => r.name === newName);
+          return (existsNew ? withoutOld : [...withoutOld, { id: crypto.randomUUID(), name: newName, is_active: true }]).sort((a, b) => a.name.localeCompare(b.name));
+        });
       } else {
-        const { error } = await supabase.rpc("rename_organization_subtype" as any, { p_old_name: originalValue, p_new_name: newName });
-        if (error) throw error;
-        setOrganizationRows(prev => prev.map(r => r.name === originalValue ? { ...r, name: newName } : r).sort((a, b) => a.name.localeCompare(b.name)));
+        if (!isValidOrgSubtypeName(newName)) {
+          toast({ title: "Invalid name", description: "Use lowercase letters, numbers, and underscores only.", variant: "destructive" });
+          return;
+        }
+
+        // If the target name is already one of the enum values, try direct update.
+        const targetExistsInEnum = orgEnumValues.includes(newName as any);
+        if (targetExistsInEnum) {
+          const { error: updErr } = await supabase
+            .from("organization_subtypes")
+            .update({ name: newName as any })
+            .eq("tenant_id", tenantId)
+            .eq("name", originalValue);
+          if (updErr && (updErr as any).code === "23505") {
+            // Unique violation: row for newName already exists; just remove the old one
+            await supabase.from("organization_subtypes").delete().eq("tenant_id", tenantId).eq("name", originalValue);
+          } else if (updErr) {
+            throw updErr;
+          }
+        } else {
+          // Ensure enum label exists and create tenant row, then remove the old row
+          const { error: addErr } = await supabase.rpc("add_organization_subtype" as any, { p_name: newName });
+          if (addErr) throw addErr;
+          await supabase.from("organization_subtypes").delete().eq("tenant_id", tenantId).eq("name", originalValue);
+        }
+
+        setOrganizationRows(prev => {
+          // Ensure a single entry with newName exists
+          const withoutOld = prev.filter(r => r.name !== originalValue);
+          const existsNew = withoutOld.some(r => r.name === newName);
+          return (existsNew ? withoutOld : [...withoutOld, { id: crypto.randomUUID(), name: newName, is_active: true }]).sort((a, b) => a.name.localeCompare(b.name));
+        });
       }
       setIsEditOpen(false);
       toast({ title: "Updated", description: "Subtype name updated." });
@@ -206,7 +250,7 @@ export default function Subtypes() {
           </DialogHeader>
           <div className="space-y-2">
             <Input
-              placeholder={activeTab === "enterprise" ? "e.g. Resort Chain" : "e.g. ski_patrol"}
+              placeholder={activeTab === "enterprise" ? "e.g. Resort Chain" : "e.g. Ski Patrol"}
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               list={activeTab === "organization" ? "org-subtypes-enum" : undefined}
@@ -215,6 +259,9 @@ export default function Subtypes() {
               <datalist id="org-subtypes-enum">
                 {orgEnumValues.map(v => <option key={v} value={v} />)}
               </datalist>
+            )}
+            {activeTab === "organization" && (
+              <p className="text-xs text-muted-foreground">Letters, numbers, spaces, and special characters are allowed.</p>
             )}
           </div>
           <DialogFooter>
@@ -232,10 +279,13 @@ export default function Subtypes() {
           </DialogHeader>
           <div className="space-y-2">
             <Input
-              placeholder={activeTab === "enterprise" ? "e.g. Resort Chain" : "e.g. ski_patrol"}
+              placeholder={activeTab === "enterprise" ? "e.g. Resort Chain" : "e.g. Ski Patrol"}
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
             />
+            {activeTab === "organization" && (
+              <p className="text-xs text-muted-foreground">Letters, numbers, spaces, and special characters are allowed.</p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>

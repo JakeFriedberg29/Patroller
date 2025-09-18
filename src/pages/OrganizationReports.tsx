@@ -221,7 +221,7 @@ export default function OrganizationReports() {
                   <TableRow>
                     <TableHead className="font-semibold">Report Name</TableHead>
                     <TableHead className="font-semibold">Description</TableHead>
-                  <TableHead className="font-semibold">Display to Responders</TableHead>
+                  <TableHead className="font-semibold">Publish</TableHead>
                   <TableHead className="w-12"></TableHead>
                   </TableRow>
                 </TableHeader>
