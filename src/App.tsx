@@ -16,6 +16,7 @@ const Accounts = lazy(() => import("./pages/Accounts"));
 const AccountDetail = lazy(() => import("./pages/AccountDetail"));
 const Reports = lazy(() => import("./pages/Reports"));
 const PlatformAdmins = lazy(() => import("./pages/PlatformAdmins"));
+const Subtypes = lazy(() => import("./pages/Subtypes"));
 const Logs = lazy(() => import("./pages/Logs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const MissionControl = lazy(() => import("./pages/MissionControl"));
@@ -97,6 +98,7 @@ const App = () => (
                       <Route path="repository/reports/:templateId" element={<ReportBuilder />} />
                       <Route path="repository/reports/new" element={<ReportBuilder />} />
                       <Route path="admins" element={<PlatformAdmins />} />
+                      <Route path="subtypes" element={<Subtypes />} />
                       <Route path="repository" element={<Repository />} />
                       <Route path="notifications" element={<PlatformNotificationCenter />} />
                       <Route path="logs" element={<Logs />} />

@@ -30,7 +30,7 @@ export default function Repository() {
   // Edit moved to full-page Report Builder
 
   // Assign Subtypes dialog state
-  const allOrgTypes = Constants.public.Enums.organization_type as readonly string[];
+  const [allOrgTypes, setAllOrgTypes] = useState<string[]>([]);
   const [isAssignOpen, setIsAssignOpen] = useState<boolean>(false);
   const [assignTemplateId, setAssignTemplateId] = useState<string | null>(null);
   const [initialAssignedTypes, setInitialAssignedTypes] = useState<string[]>([]);
@@ -42,6 +42,20 @@ export default function Repository() {
 
   const openAssignModal = async (templateId: string) => {
     try {
+      // Refresh available org subtypes (prefer dynamic table per tenant if present)
+      if (tenantId) {
+        const { data: dyn } = await supabase
+          .from('organization_subtypes')
+          .select('name')
+          .eq('tenant_id', tenantId)
+          .eq('is_active', true)
+          .order('name', { ascending: true });
+        const names = (dyn || []).map((r: any) => String(r.name));
+        if (names.length > 0) setAllOrgTypes(names);
+        else setAllOrgTypes([...(Constants.public.Enums.organization_type as readonly string[])] as string[]);
+      } else {
+        setAllOrgTypes([...(Constants.public.Enums.organization_type as readonly string[])] as string[]);
+      }
       // Show subtype as selected if ANY tenant currently has it assigned
       const { data, error } = await supabase
         .from('platform_assignments')

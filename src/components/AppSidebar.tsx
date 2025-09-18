@@ -14,7 +14,8 @@ import {
   MoreHorizontal,
   MapPin,
   LogOut,
-  Layers
+  Layers,
+  Tag
 } from "lucide-react";
 import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +46,7 @@ const mainItems = [
 const adminItems = [
   { title: "Accounts", url: "/accounts", icon: Building2 },
   { title: "Platform Admins", url: "/admins", icon: Shield },
+  { title: "Subtypes", url: "/subtypes", icon: Tag },
   { title: "Repository", url: "/repository", icon: Layers },
   { title: "Notification Center", url: "/notifications", icon: Bell },
   { title: "Logs", url: "/logs", icon: BarChart3 },

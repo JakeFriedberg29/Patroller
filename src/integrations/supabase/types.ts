@@ -292,6 +292,48 @@ export type Database = {
           },
         ]
       }
+      enterprise_subtypes: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enterprise_subtypes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enterprise_subtypes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enterprises: {
         Row: {
           created_at: string
@@ -586,6 +628,48 @@ export type Database = {
           },
           {
             foreignKeyName: "organization_report_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_subtypes: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: Database["public"]["Enums"]["organization_type"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: Database["public"]["Enums"]["organization_type"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: Database["public"]["Enums"]["organization_type"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_subtypes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_subtypes_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -1308,6 +1392,10 @@ export type Database = {
         Args: { p_activation_token: string; p_password: string }
         Returns: Json
       }
+      add_organization_subtype: {
+        Args: { p_name: string }
+        Returns: undefined
+      }
       assert_record_matches_org_tenant: {
         Args: { p_org_id: string; p_tenant_id: string }
         Returns: undefined
@@ -1423,6 +1511,14 @@ export type Database = {
           p_resource_id: string
           p_resource_type: string
         }
+        Returns: undefined
+      }
+      rename_organization_subtype: {
+        Args: { p_old_name: string; p_new_name: string }
+        Returns: undefined
+      }
+      delete_organization_subtype: {
+        Args: { p_name: string }
         Returns: undefined
       }
       send_notification: {
