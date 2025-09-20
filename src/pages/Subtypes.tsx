@@ -129,10 +129,10 @@ export default function Subtypes() {
             .from("organization_subtypes")
             .update({ name: newName as any })
             .eq("tenant_id", tenantId)
-            .eq("name", originalValue);
+            .eq("name", originalValue as any);
           if (updErr && (updErr as any).code === "23505") {
             // Unique violation: row for newName already exists; just remove the old one
-            await supabase.from("organization_subtypes").delete().eq("tenant_id", tenantId).eq("name", originalValue);
+            await supabase.from("organization_subtypes").delete().eq("tenant_id", tenantId).eq("name", originalValue as any);
           } else if (updErr) {
             throw updErr;
           }
@@ -140,7 +140,7 @@ export default function Subtypes() {
           // Ensure enum label exists and create tenant row, then remove the old row
           const { error: addErr } = await supabase.rpc("add_organization_subtype" as any, { p_name: newName });
           if (addErr) throw addErr;
-          await supabase.from("organization_subtypes").delete().eq("tenant_id", tenantId).eq("name", originalValue);
+          await supabase.from("organization_subtypes").delete().eq("tenant_id", tenantId).eq("name", originalValue as any);
         }
 
         setOrganizationRows(prev => {

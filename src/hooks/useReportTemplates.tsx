@@ -49,17 +49,8 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
 
           // 1) Direct org assignments (legacy) -> optional table; ignore errors
           let directTemplateIds: string[] = [];
-          try {
-            const { data: assignments, error: assignmentError } = await supabase
-              .from('organization_report_templates')
-              .select('template_id')
-              .eq('organization_id', orgId)
-              .eq('tenant_id', resolvedTenantId as string);
-            if (!assignmentError && assignments) {
-              directTemplateIds = assignments.map(a => a.template_id);
-            }
-          } catch {}
-
+          // Skip organization_report_templates table as it doesn't exist
+          
           // 2) Subtype-based assignments via platform_assignments
           let typeTemplateIds: string[] = [];
           if (orgType && resolvedTenantId) {
@@ -69,7 +60,7 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
               .eq('tenant_id', resolvedTenantId)
               .eq('element_type', 'report_template')
               .eq('target_type', 'organization_type')
-              .eq('target_organization_type', orgType);
+              .eq('target_organization_type', orgType as any);
             typeTemplateIds = (typeAssignments || []).map((r: any) => r.element_id);
           }
 

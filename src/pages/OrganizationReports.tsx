@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { useMemo, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useOrganizationReportTemplates } from "@/hooks/useReportTemplates";
+import { useOrganizationReportTemplates, ReportTemplateSummary } from "@/hooks/useReportTemplates";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useReports } from "@/hooks/useReports";
@@ -61,7 +61,7 @@ export default function OrganizationReports() {
   const [newFolderName, setNewFolderName] = useState("");
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [isFolderContentOpen, setIsFolderContentOpen] = useState(false);
-  const handleDownloadTemplate = (template: { id: number; name: string; description: string }) => {
+  const handleDownloadTemplate = (template: ReportTemplateSummary) => {
     try {
       // Create a simple Word document template download
       const content = `${template.name}\n\n${template.description}\n\n[Template fields would be here]`;
@@ -89,7 +89,7 @@ export default function OrganizationReports() {
       });
     }
   };
-  const handleCreateReport = (template: { id: number; name: string }) => {
+  const handleCreateReport = (template: ReportTemplateSummary) => {
     navigate(`/organization/${id}/reports/create/${template.id}`);
   };
 

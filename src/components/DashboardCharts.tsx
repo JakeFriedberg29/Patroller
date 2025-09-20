@@ -276,7 +276,7 @@ export function ReportsByTypeChart(props: {
           <MultiSelectFilter label="Report types" options={typeOptions} selected={selectedTypes} onToggle={onToggleType} renderOption={(t) => (t as string).replace(/_/g, " ")} includeAll onToggleAll={() => {
             if (selectedTypes.size === 0) typeOptions.forEach(onToggleType); else Array.from(selectedTypes).forEach(onToggleType);
           }} />
-          <MultiSelectFilter label="Organization Subtypes" options={orgSubtypes} selected={selectedOrgSubtypes} onToggle={onToggleOrgSubtype} renderOption={(t) => (t as string).replace(/_/g, " ")} includeAll onToggleAll={() => {
+          <MultiSelectFilter label="Subtypes" options={orgSubtypes} selected={selectedOrgSubtypes} onToggle={onToggleOrgSubtype} renderOption={(t) => (t as string).replace(/_/g, " ")} includeAll onToggleAll={() => {
             if (selectedOrgSubtypes.size === 0) orgSubtypes.forEach(onToggleOrgSubtype); else Array.from(selectedOrgSubtypes).forEach(onToggleOrgSubtype);
           }} />
         </div>
