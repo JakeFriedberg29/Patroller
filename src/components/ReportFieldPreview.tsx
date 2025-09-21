@@ -2,7 +2,6 @@ import { Calendar, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -29,8 +28,8 @@ export function ReportFieldPreview({ field }: ReportFieldPreviewProps) {
       case 'short_answer':
         return (
           <div className="space-y-2">
-            <Input placeholder="Enter your response..." disabled />
-            <Input placeholder="Second line..." disabled />
+            <Input placeholder="Enter your response..." />
+            <Input placeholder="Second line..." />
           </div>
         );
 
@@ -40,19 +39,19 @@ export function ReportFieldPreview({ field }: ReportFieldPreviewProps) {
             placeholder="Enter detailed response..." 
             rows={5}
             className="resize-y"
-            disabled 
           />
         );
 
       case 'date':
         return (
           <div className="relative">
-            <Input 
-              placeholder="Select date..." 
-              disabled 
-              className="pr-10"
-            />
-            <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Button
+              variant="outline"
+              className="w-full justify-start text-left font-normal text-muted-foreground"
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Pick a date
+            </Button>
           </div>
         );
 
@@ -61,7 +60,7 @@ export function ReportFieldPreview({ field }: ReportFieldPreviewProps) {
           <div className="space-y-3">
             {field.options?.map((option, index) => (
               <div key={index} className="flex items-center space-x-2">
-                <Checkbox id={`${field.id}-${index}`} disabled />
+                <Checkbox id={`${field.id}-${index}`} />
                 <Label htmlFor={`${field.id}-${index}`} className="text-sm">
                   {option}
                 </Label>
@@ -75,7 +74,7 @@ export function ReportFieldPreview({ field }: ReportFieldPreviewProps) {
           return (
             <div className="space-y-2">
               <div className="text-xs text-muted-foreground">Multi-select dropdown</div>
-              <Select disabled>
+              <Select>
                 <SelectTrigger>
                   <SelectValue placeholder="Select multiple options..." />
                 </SelectTrigger>
@@ -93,7 +92,7 @@ export function ReportFieldPreview({ field }: ReportFieldPreviewProps) {
           return (
             <div className="space-y-2">
               <div className="text-xs text-muted-foreground">Single-select dropdown</div>
-              <Select disabled>
+              <Select>
                 <SelectTrigger>
                   <SelectValue placeholder="Select an option..." />
                 </SelectTrigger>
@@ -114,7 +113,7 @@ export function ReportFieldPreview({ field }: ReportFieldPreviewProps) {
           <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
             <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
             <p className="text-sm text-muted-foreground mb-2">Click to upload or drag and drop</p>
-            <Button variant="outline" size="sm" disabled>
+            <Button variant="outline" size="sm">
               Choose Files
             </Button>
           </div>
