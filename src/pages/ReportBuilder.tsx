@@ -7,13 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Loader2, Plus, Trash2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ChevronLeft, Loader2, Plus, Trash2, Eye, Edit, Minus, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { ReportDivider } from "@/components/ReportDivider";
+import { ReportPageBreak } from "@/components/ReportPageBreak";
+import { ReportFieldPreview } from "@/components/ReportFieldPreview";
 
-type FieldType = 'short_answer' | 'paragraph' | 'date' | 'checkbox' | 'single_select' | 'multi_select' | 'file_upload';
+type FieldType = 'short_answer' | 'paragraph' | 'date' | 'checkbox' | 'dropdown' | 'file_upload' | 'divider' | 'page_break';
 
 type FieldRow = { 
   id: string; 
@@ -21,6 +24,8 @@ type FieldRow = {
   type: FieldType;
   required: boolean;
   options?: string[];
+  multiSelect?: boolean; // for dropdown fields
+  label?: string; // for divider/page_break elements
 };
 
 export default function ReportBuilder() {
@@ -32,6 +37,7 @@ export default function ReportBuilder() {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [status, setStatus] = useState<'draft' | 'ready' | 'published' | 'unpublished'>("draft");
+  const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
 
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -67,9 +73,11 @@ export default function ReportBuilder() {
         ? schema.fields.map((f: any) => ({ 
             id: crypto.randomUUID(), 
             name: String(f.name || ''), 
-            type: (f.type || 'short_answer') as FieldType,
+            type: (f.type === 'single_select' || f.type === 'multi_select') ? 'dropdown' : (f.type || 'short_answer') as FieldType,
             required: Boolean(f.required || false),
-            options: f.options || []
+            options: f.options || [],
+            multiSelect: f.type === 'multi_select' || f.multiSelect,
+            label: f.label || ''
           }))
         : [];
       setFieldRows(rows);
@@ -85,8 +93,17 @@ export default function ReportBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId]);
 
-  const addFieldRow = () => {
-    setFieldRows(prev => [...prev, { id: crypto.randomUUID(), name: "", type: 'short_answer', required: false, options: [] }]);
+  const addFieldRow = (type: FieldType = 'short_answer') => {
+    const newField: FieldRow = { 
+      id: crypto.randomUUID(), 
+      name: type === 'divider' ? '' : type === 'page_break' ? '' : '', 
+      type, 
+      required: false, 
+      options: [],
+      multiSelect: false,
+      label: ''
+    };
+    setFieldRows(prev => [...prev, newField]);
   };
   const updateFieldRow = (id: string, patch: Partial<FieldRow>) => {
     setFieldRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
@@ -102,9 +119,11 @@ export default function ReportBuilder() {
     }
     const schema = { fields: fieldRows.map(r => ({ 
       name: r.name.trim(), 
-      type: r.type, 
+      type: r.type === 'dropdown' ? (r.multiSelect ? 'multi_select' : 'single_select') : r.type, 
       required: r.required,
-      options: r.options?.filter(opt => opt.trim()) || []
+      options: r.options?.filter(opt => opt.trim()) || [],
+      multiSelect: r.multiSelect,
+      label: r.label || ''
     })) };
     setSaving(true);
     try {
@@ -174,6 +193,15 @@ export default function ReportBuilder() {
           </Button>
         </div>
         <div className="flex gap-2 items-center">
+          <Button
+            variant={isPreviewMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setIsPreviewMode(!isPreviewMode)}
+            className="gap-2"
+          >
+            {isPreviewMode ? <Edit className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {isPreviewMode ? "Edit" : "Preview"}
+          </Button>
           <Select value={status} onValueChange={(v) => handleStatusChange(v as any)}>
             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
@@ -206,77 +234,170 @@ export default function ReportBuilder() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Fields</Label>
-              <Button variant="outline" size="sm" className="gap-2" onClick={addFieldRow}>
-                <Plus className="h-4 w-4" /> Add Field
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {fieldRows.length === 0 && (
-                <div className="text-sm text-muted-foreground">No fields configured.</div>
-              )}
-              {fieldRows.map(row => (
-                <div key={row.id} className="space-y-4 p-4 border rounded-lg">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Field Name</Label>
-                      <Input 
-                        placeholder="Enter field name" 
-                        value={row.name} 
-                        onChange={(e) => updateFieldRow(row.id, { name: e.target.value })} 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Field Type</Label>
-                      <Select value={row.type} onValueChange={(v) => updateFieldRow(row.id, { type: v as FieldType })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select field type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="short_answer">Short Answer</SelectItem>
-                          <SelectItem value="paragraph">Paragraph</SelectItem>
-                          <SelectItem value="date">Date Selector</SelectItem>
-                          <SelectItem value="single_select">Single Select Dropdown</SelectItem>
-                          <SelectItem value="multi_select">Multi-Select Dropdown</SelectItem>
-                          <SelectItem value="checkbox">Checkboxes</SelectItem>
-                          <SelectItem value="file_upload">File Upload</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`required-${row.id}`}
-                      checked={row.required} 
-                      onCheckedChange={(checked) => updateFieldRow(row.id, { required: Boolean(checked) })} 
-                    />
-                    <Label htmlFor={`required-${row.id}`} className="text-sm">
-                      Required field
-                      {row.required && <Badge variant="secondary" className="ml-2">Required</Badge>}
-                    </Label>
-                  </div>
-
-                  {(row.type === 'single_select' || row.type === 'multi_select' || row.type === 'checkbox') && (
-                    <div className="space-y-2">
-                      <Label>Options (one per line)</Label>
-                      <Textarea
-                        placeholder="Option 1&#10;Option 2&#10;Option 3"
-                        value={row.options?.join('\n') || ''}
-                        onChange={(e) => updateFieldRow(row.id, { options: e.target.value.split('\n').filter(opt => opt.trim()) })}
-                        rows={4}
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => removeFieldRow(row.id)} className="text-destructive hover:text-destructive">
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Remove Field
-                    </Button>
-                  </div>
+              <Label>Form Elements</Label>
+              {!isPreviewMode && (
+                <div className="flex gap-2">
+                  <Select onValueChange={(type) => addFieldRow(type as FieldType)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Add Element" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="short_answer">Short Answer</SelectItem>
+                      <SelectItem value="paragraph">Paragraph</SelectItem>
+                      <SelectItem value="date">Date Selector</SelectItem>
+                      <SelectItem value="dropdown">Dropdown</SelectItem>
+                      <SelectItem value="checkbox">Checkboxes</SelectItem>
+                      <SelectItem value="file_upload">File Upload</SelectItem>
+                      <SelectItem value="divider">Section Divider</SelectItem>
+                      <SelectItem value="page_break">Page Break</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              ))}
+              )}
+            </div>
+            <div className="space-y-4">
+              {fieldRows.length === 0 && (
+                <div className="text-sm text-muted-foreground">No form elements configured.</div>
+              )}
+              {fieldRows.map(row => {
+                if (isPreviewMode) {
+                  // Preview mode - show how responders will see it
+                  if (row.type === 'divider') {
+                    return <ReportDivider key={row.id} label={row.label} isPreview />;
+                  }
+                  if (row.type === 'page_break') {
+                    return <ReportPageBreak key={row.id} label={row.label} isPreview />;
+                  }
+                  return (
+                    <div key={row.id} className="p-4">
+                      <ReportFieldPreview field={row} />
+                    </div>
+                  );
+                }
+
+                // Edit mode - show configuration
+                if (row.type === 'divider') {
+                  return (
+                    <div key={row.id} className="relative">
+                      <ReportDivider 
+                        label={row.label} 
+                        onLabelChange={(label) => updateFieldRow(row.id, { label })} 
+                      />
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => removeFieldRow(row.id)} 
+                        className="absolute top-2 right-2 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                }
+
+                if (row.type === 'page_break') {
+                  return (
+                    <div key={row.id} className="relative">
+                      <ReportPageBreak 
+                        label={row.label} 
+                        onLabelChange={(label) => updateFieldRow(row.id, { label })} 
+                      />
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => removeFieldRow(row.id)} 
+                        className="absolute top-2 right-2 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={row.id} className="space-y-4 p-4 border rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>
+                          Field Name
+                          {row.required && <span className="text-orange-500 ml-1">*</span>}
+                        </Label>
+                        <Input 
+                          placeholder="Enter field name" 
+                          value={row.name} 
+                          onChange={(e) => updateFieldRow(row.id, { name: e.target.value })} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Field Type</Label>
+                        <Select value={row.type} onValueChange={(v) => updateFieldRow(row.id, { type: v as FieldType })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select field type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="short_answer">Short Answer</SelectItem>
+                            <SelectItem value="paragraph">Paragraph</SelectItem>
+                            <SelectItem value="date">Date Selector</SelectItem>
+                            <SelectItem value="dropdown">Dropdown</SelectItem>
+                            <SelectItem value="checkbox">Checkboxes</SelectItem>
+                            <SelectItem value="file_upload">File Upload</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`required-${row.id}`}
+                        checked={row.required} 
+                        onCheckedChange={(checked) => updateFieldRow(row.id, { required: Boolean(checked) })} 
+                      />
+                      <Label htmlFor={`required-${row.id}`} className="text-sm">
+                        Required field
+                      </Label>
+                    </div>
+
+                    {row.type === 'dropdown' && (
+                      <div className="space-y-3">
+                        <Label>Selection Type</Label>
+                        <RadioGroup 
+                          value={row.multiSelect ? "multi" : "single"} 
+                          onValueChange={(value) => updateFieldRow(row.id, { multiSelect: value === "multi" })}
+                          className="flex gap-6"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="single" id={`single-${row.id}`} />
+                            <Label htmlFor={`single-${row.id}`}>Single select</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="multi" id={`multi-${row.id}`} />
+                            <Label htmlFor={`multi-${row.id}`}>Multi-select</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                    )}
+
+                    {(row.type === 'dropdown' || row.type === 'checkbox') && (
+                      <div className="space-y-2">
+                        <Label>Options (one per line)</Label>
+                        <Textarea
+                          placeholder="Option 1&#10;Option 2&#10;Option 3"
+                          value={row.options?.join('\n') || ''}
+                          onChange={(e) => updateFieldRow(row.id, { options: e.target.value.split('\n').filter(opt => opt.trim()) })}
+                          rows={4}
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => removeFieldRow(row.id)} className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </CardContent>

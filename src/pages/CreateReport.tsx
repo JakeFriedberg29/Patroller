@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, ArrowLeft, Save, Send, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
+import { FileText, ArrowLeft, Save, Send, ChevronLeft, ChevronRight, CalendarIcon, Upload } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useReports } from "@/hooks/useReports";
+import { ReportDivider } from "@/components/ReportDivider";
+import { ReportPageBreak } from "@/components/ReportPageBreak";
 
 export const reportTemplates = [
   {
@@ -216,7 +218,67 @@ export default function CreateReport() {
       placeholder: field.placeholder || (field.type === 'date' || field.type === 'time' ? '' : `Enter ${field.label.toLowerCase()}`)
     };
 
+    // Handle dividers and page breaks
+    if (field.type === 'divider') {
+      return <ReportDivider label={field.label} isPreview />;
+    }
+    if (field.type === 'page_break') {
+      return <ReportPageBreak label={field.label} isPreview />;
+    }
+
     switch (field.type) {
+      case 'dropdown':
+        if (field.multiSelect) {
+          // Multi-select dropdown rendered as checkboxes
+          return (
+            <div className="space-y-2">
+              {field.options?.map((option: string) => {
+                const currentValues = formData[field.name] ? formData[field.name].split(',') : [];
+                const isChecked = currentValues.includes(option);
+                
+                return (
+                  <div key={option} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${field.name}-${option}`}
+                      checked={isChecked}
+                      onCheckedChange={(checked) => {
+                        let newValues = [...currentValues];
+                        if (checked) {
+                          newValues.push(option);
+                        } else {
+                          newValues = newValues.filter(v => v !== option);
+                        }
+                        handleInputChange(field.name, newValues.join(','));
+                      }}
+                      disabled={commonProps.disabled}
+                    />
+                    <Label htmlFor={`${field.name}-${option}`}>{option}</Label>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        } else {
+          // Single-select dropdown
+          return (
+            <Select
+              value={formData[field.name] || ""}
+              onValueChange={(value) => handleInputChange(field.name, value)}
+              disabled={commonProps.disabled}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={`Select ${field.label}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {field.options?.map((option: string) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          );
+        }
       case 'select':
       case 'single_select':
         return (
@@ -302,7 +364,8 @@ export default function CreateReport() {
             value={formData[field.name] || ""}
             onChange={(e) => handleInputChange(field.name, e.target.value)}
             placeholder={commonProps.placeholder}
-            rows={4}
+            rows={5}
+            className="resize-y"
             disabled={commonProps.disabled}
           />
         );
@@ -341,18 +404,31 @@ export default function CreateReport() {
       case 'file':
       case 'file_upload':
         return (
-          <Input
-            type="file"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                handleInputChange(field.name, file.name);
-              }
-            }}
-            multiple
-            accept="image/*,application/pdf,.doc,.docx"
-            disabled={commonProps.disabled}
-          />
+          <div className="space-y-3">
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mb-2">Click to upload or drag and drop</p>
+              <Input
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleInputChange(field.name, file.name);
+                  }
+                }}
+                multiple
+                accept="image/*,application/pdf,.doc,.docx"
+                disabled={commonProps.disabled}
+                className="hidden"
+                id={`file-${field.name}`}
+              />
+              <Label htmlFor={`file-${field.name}`} className="cursor-pointer">
+                <Button variant="outline" size="sm" disabled={commonProps.disabled} asChild>
+                  <span>Choose Files</span>
+                </Button>
+              </Label>
+            </div>
+          </div>
         );
       case 'number':
         return (
@@ -365,10 +441,28 @@ export default function CreateReport() {
           />
         );
       case 'short_answer':
+        return (
+          <div className="space-y-2">
+            <Input
+              type="text"
+              value={formData[field.name] || ""}
+              onChange={(e) => handleInputChange(field.name, e.target.value)}
+              placeholder={commonProps.placeholder}
+              disabled={commonProps.disabled}
+            />
+            <Input
+              type="text"
+              value={formData[field.name + '_line2'] || ""}
+              onChange={(e) => handleInputChange(field.name + '_line2', e.target.value)}
+              placeholder="Second line (optional)"
+              disabled={commonProps.disabled}
+            />
+          </div>
+        );
       default:
         return (
           <Input
-            type={field.type === 'short_answer' ? 'text' : field.type}
+            type={field.type}
             value={formData[field.name] || ""}
             onChange={(e) => handleInputChange(field.name, e.target.value)}
             placeholder={commonProps.placeholder}
@@ -436,15 +530,26 @@ export default function CreateReport() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {currentSection.fields.map((field) => (
-              <div key={field.name} className="space-y-2">
-                <Label htmlFor={field.name}>
-                  {field.label}
-                  {field.required && <span className="text-destructive ml-1">*</span>}
-                </Label>
-                {renderField(field)}
-              </div>
-            ))}
+            {currentSection.fields.map((field) => {
+              // Skip rendering name/label for structural elements
+              if (field.type === 'divider' || field.type === 'page_break') {
+                return (
+                  <div key={field.name} className="md:col-span-2">
+                    {renderField(field)}
+                  </div>
+                );
+              }
+
+              return (
+                <div key={field.name} className="space-y-2">
+                  <Label htmlFor={field.name}>
+                    {field.label}
+                    {field.required && <span className="text-orange-500 ml-1">*</span>}
+                  </Label>
+                  {renderField(field)}
+                </div>
+              );
+            })}
           </div>
 
           {totalSteps > 1 && (
