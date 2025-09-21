@@ -6,7 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, ArrowLeft, Save, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, ArrowLeft, Save, Send, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useReports } from "@/hooks/useReports";
@@ -213,6 +218,7 @@ export default function CreateReport() {
 
     switch (field.type) {
       case 'select':
+      case 'single_select':
         return (
           <Select
             value={formData[field.name] || ""}
@@ -223,7 +229,7 @@ export default function CreateReport() {
               <SelectValue placeholder={`Select ${field.label}`} />
             </SelectTrigger>
             <SelectContent>
-              {field.options.map((option: string) => (
+              {field.options?.map((option: string) => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -231,7 +237,66 @@ export default function CreateReport() {
             </SelectContent>
           </Select>
         );
+      case 'multi_select':
+        return (
+          <div className="space-y-2">
+            {field.options?.map((option: string) => {
+              const currentValues = formData[field.name] ? formData[field.name].split(',') : [];
+              const isChecked = currentValues.includes(option);
+              
+              return (
+                <div key={option} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`${field.name}-${option}`}
+                    checked={isChecked}
+                    onCheckedChange={(checked) => {
+                      let newValues = [...currentValues];
+                      if (checked) {
+                        newValues.push(option);
+                      } else {
+                        newValues = newValues.filter(v => v !== option);
+                      }
+                      handleInputChange(field.name, newValues.join(','));
+                    }}
+                    disabled={commonProps.disabled}
+                  />
+                  <Label htmlFor={`${field.name}-${option}`}>{option}</Label>
+                </div>
+              );
+            })}
+          </div>
+        );
+      case 'checkbox':
+        return (
+          <div className="space-y-2">
+            {field.options?.map((option: string) => {
+              const currentValues = formData[field.name] ? formData[field.name].split(',') : [];
+              const isChecked = currentValues.includes(option);
+              
+              return (
+                <div key={option} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`${field.name}-${option}`}
+                    checked={isChecked}
+                    onCheckedChange={(checked) => {
+                      let newValues = [...currentValues];
+                      if (checked) {
+                        newValues.push(option);
+                      } else {
+                        newValues = newValues.filter(v => v !== option);
+                      }
+                      handleInputChange(field.name, newValues.join(','));
+                    }}
+                    disabled={commonProps.disabled}
+                  />
+                  <Label htmlFor={`${field.name}-${option}`}>{option}</Label>
+                </div>
+              );
+            })}
+          </div>
+        );
       case 'textarea':
+      case 'paragraph':
         return (
           <Textarea
             value={formData[field.name] || ""}
@@ -241,7 +306,40 @@ export default function CreateReport() {
             disabled={commonProps.disabled}
           />
         );
+      case 'date':
+        const selectedDate = formData[field.name] ? new Date(formData[field.name]) : undefined;
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
+                disabled={commonProps.disabled}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => {
+                  if (date) {
+                    handleInputChange(field.name, format(date, "yyyy-MM-dd"));
+                  }
+                }}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        );
       case 'file':
+      case 'file_upload':
         return (
           <Input
             type="file"
@@ -266,10 +364,11 @@ export default function CreateReport() {
             disabled={commonProps.disabled}
           />
         );
+      case 'short_answer':
       default:
         return (
           <Input
-            type={field.type}
+            type={field.type === 'short_answer' ? 'text' : field.type}
             value={formData[field.name] || ""}
             onChange={(e) => handleInputChange(field.name, e.target.value)}
             placeholder={commonProps.placeholder}

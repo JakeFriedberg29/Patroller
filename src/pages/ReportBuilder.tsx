@@ -6,12 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Loader2, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
-type FieldRow = { id: string; name: string; type: 'text' | 'date' };
+type FieldType = 'short_answer' | 'paragraph' | 'date' | 'checkbox' | 'single_select' | 'multi_select' | 'file_upload';
+
+type FieldRow = { 
+  id: string; 
+  name: string; 
+  type: FieldType;
+  required: boolean;
+  options?: string[];
+};
 
 export default function ReportBuilder() {
   const navigate = useNavigate();
@@ -54,7 +64,13 @@ export default function ReportBuilder() {
       setStatus((data as any).status || 'draft');
       const schema = (data as any).template_schema as any;
       const rows: FieldRow[] = Array.isArray(schema?.fields)
-        ? schema.fields.map((f: any) => ({ id: crypto.randomUUID(), name: String(f.name || ''), type: (f.type === 'date' ? 'date' : 'text') as 'text' | 'date' }))
+        ? schema.fields.map((f: any) => ({ 
+            id: crypto.randomUUID(), 
+            name: String(f.name || ''), 
+            type: (f.type || 'short_answer') as FieldType,
+            required: Boolean(f.required || false),
+            options: f.options || []
+          }))
         : [];
       setFieldRows(rows);
     } catch (e: any) {
@@ -70,7 +86,7 @@ export default function ReportBuilder() {
   }, [templateId]);
 
   const addFieldRow = () => {
-    setFieldRows(prev => [...prev, { id: crypto.randomUUID(), name: "", type: 'text' }]);
+    setFieldRows(prev => [...prev, { id: crypto.randomUUID(), name: "", type: 'short_answer', required: false, options: [] }]);
   };
   const updateFieldRow = (id: string, patch: Partial<FieldRow>) => {
     setFieldRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
@@ -84,7 +100,12 @@ export default function ReportBuilder() {
       toast({ title: 'Name required', description: 'Please provide a report name.', variant: 'destructive' });
       return;
     }
-    const schema = { fields: fieldRows.map(r => ({ name: r.name.trim(), type: r.type })) };
+    const schema = { fields: fieldRows.map(r => ({ 
+      name: r.name.trim(), 
+      type: r.type, 
+      required: r.required,
+      options: r.options?.filter(opt => opt.trim()) || []
+    })) };
     setSaving(true);
     try {
       if (!templateId || templateId === 'new') {
@@ -195,24 +216,63 @@ export default function ReportBuilder() {
                 <div className="text-sm text-muted-foreground">No fields configured.</div>
               )}
               {fieldRows.map(row => (
-                <div key={row.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
-                  <div className="md:col-span-3">
-                    <Input placeholder="Field name" value={row.name} onChange={(e) => updateFieldRow(row.id, { name: e.target.value })} />
+                <div key={row.id} className="space-y-4 p-4 border rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Field Name</Label>
+                      <Input 
+                        placeholder="Enter field name" 
+                        value={row.name} 
+                        onChange={(e) => updateFieldRow(row.id, { name: e.target.value })} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Field Type</Label>
+                      <Select value={row.type} onValueChange={(v) => updateFieldRow(row.id, { type: v as FieldType })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select field type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="short_answer">Short Answer</SelectItem>
+                          <SelectItem value="paragraph">Paragraph</SelectItem>
+                          <SelectItem value="date">Date Selector</SelectItem>
+                          <SelectItem value="single_select">Single Select Dropdown</SelectItem>
+                          <SelectItem value="multi_select">Multi-Select Dropdown</SelectItem>
+                          <SelectItem value="checkbox">Checkboxes</SelectItem>
+                          <SelectItem value="file_upload">File Upload</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="md:col-span-2">
-                    <Select value={row.type} onValueChange={(v) => updateFieldRow(row.id, { type: v as 'text' | 'date' })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="date">Date Selector</SelectItem>
-                        <SelectItem value="text">Input Field</SelectItem>
-                      </SelectContent>
-                    </Select>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`required-${row.id}`}
+                      checked={row.required} 
+                      onCheckedChange={(checked) => updateFieldRow(row.id, { required: Boolean(checked) })} 
+                    />
+                    <Label htmlFor={`required-${row.id}`} className="text-sm">
+                      Required field
+                      {row.required && <Badge variant="secondary" className="ml-2">Required</Badge>}
+                    </Label>
                   </div>
-                  <div className="md:col-span-1 flex justify-end">
-                    <Button variant="ghost" size="icon" onClick={() => removeFieldRow(row.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
+
+                  {(row.type === 'single_select' || row.type === 'multi_select' || row.type === 'checkbox') && (
+                    <div className="space-y-2">
+                      <Label>Options (one per line)</Label>
+                      <Textarea
+                        placeholder="Option 1&#10;Option 2&#10;Option 3"
+                        value={row.options?.join('\n') || ''}
+                        onChange={(e) => updateFieldRow(row.id, { options: e.target.value.split('\n').filter(opt => opt.trim()) })}
+                        rows={4}
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => removeFieldRow(row.id)} className="text-destructive hover:text-destructive">
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Remove Field
                     </Button>
                   </div>
                 </div>
