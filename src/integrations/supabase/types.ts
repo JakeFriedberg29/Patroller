@@ -1478,6 +1478,10 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_organization_subtype: {
+        Args: { p_name: string }
+        Returns: undefined
+      }
       ensure_current_user_platform_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1514,11 +1518,7 @@ export type Database = {
         Returns: undefined
       }
       rename_organization_subtype: {
-        Args: { p_old_name: string; p_new_name: string }
-        Returns: undefined
-      }
-      delete_organization_subtype: {
-        Args: { p_name: string }
+        Args: { p_new_name: string; p_old_name: string }
         Returns: undefined
       }
       send_notification: {
@@ -1530,6 +1530,13 @@ export type Database = {
           p_user_ids: string[]
         }
         Returns: number
+      }
+      set_report_template_status: {
+        Args: {
+          p_status: Database["public"]["Enums"]["report_template_status"]
+          p_template_id: string
+        }
+        Returns: Json
       }
       user_has_role: {
         Args: { _role_type: Database["public"]["Enums"]["role_type"] }
@@ -1554,6 +1561,7 @@ export type Database = {
         | "volunteer_emergency_services"
       platform_assignment_target_type: "organization" | "organization_type"
       platform_element_type: "report_template"
+      report_template_status: "draft" | "ready" | "published" | "unpublished"
       role_type:
         | "platform_admin"
         | "enterprise_admin"
@@ -1577,7 +1585,6 @@ export type Database = {
         | "inactive"
         | "suspended"
         | "deactivated"
-      report_template_status: "draft" | "ready" | "published" | "unpublished"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1724,6 +1731,7 @@ export const Constants = {
       ],
       platform_assignment_target_type: ["organization", "organization_type"],
       platform_element_type: ["report_template"],
+      report_template_status: ["draft", "ready", "published", "unpublished"],
       role_type: [
         "platform_admin",
         "enterprise_admin",
@@ -1750,7 +1758,6 @@ export const Constants = {
         "suspended",
         "deactivated",
       ],
-      report_template_status: ["draft", "ready", "published", "unpublished"],
     },
   },
 } as const

@@ -1,0 +1,46 @@
+export type ReportStatus = 'draft' | 'ready' | 'published' | 'unpublished';
+
+export interface StatusOption {
+  value: ReportStatus;
+  label: string;
+}
+
+/**
+ * Get valid next states for a report template based on current status
+ * Transition rules:
+ * - Draft → Ready, Published
+ * - Ready → Draft, Published  
+ * - Published → Unpublished, Ready, Draft
+ * - Unpublished → Draft, Ready, Published
+ */
+export function getValidNextStates(currentStatus: ReportStatus): StatusOption[] {
+  const allOptions: StatusOption[] = [
+    { value: 'draft', label: 'Draft' },
+    { value: 'ready', label: 'Ready' },
+    { value: 'published', label: 'Published' },
+    { value: 'unpublished', label: 'Unpublished' }
+  ];
+
+  switch (currentStatus) {
+    case 'draft':
+      return allOptions.filter(opt => ['ready', 'published'].includes(opt.value));
+    case 'ready':
+      return allOptions.filter(opt => ['draft', 'published'].includes(opt.value));
+    case 'published':
+      return allOptions.filter(opt => ['unpublished', 'ready', 'draft'].includes(opt.value));
+    case 'unpublished':
+      return allOptions.filter(opt => ['draft', 'ready', 'published'].includes(opt.value));
+    default:
+      // Fallback for unknown status - show all options
+      return allOptions;
+  }
+}
+
+/**
+ * Check if a status transition is valid
+ */
+export function isValidTransition(from: ReportStatus, to: ReportStatus): boolean {
+  if (from === to) return true; // Same status is always allowed
+  const validNextStates = getValidNextStates(from);
+  return validNextStates.some(opt => opt.value === to);
+}

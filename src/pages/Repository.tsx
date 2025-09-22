@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getValidNextStates, type ReportStatus } from "@/utils/statusTransitions";
 
 export default function Repository() {
   const navigate = useNavigate();
@@ -434,10 +435,11 @@ export default function Repository() {
                         <Select value={(t as any).status || 'draft'} onValueChange={(v) => handleInlineStatusChange(t.id, v as any)}>
                           <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="ready">Ready</SelectItem>
-                            <SelectItem value="published">Published</SelectItem>
-                            <SelectItem value="unpublished">Unpublished</SelectItem>
+                            {getValidNextStates(((t as any).status || 'draft') as ReportStatus).map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </TableCell>

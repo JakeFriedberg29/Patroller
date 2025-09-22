@@ -15,6 +15,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { ReportDivider } from "@/components/ReportDivider";
 import { ReportPageBreak } from "@/components/ReportPageBreak";
 import { ReportFieldPreview } from "@/components/ReportFieldPreview";
+import { getValidNextStates, type ReportStatus } from "@/utils/statusTransitions";
 
 type FieldType = 'short_answer' | 'paragraph' | 'date' | 'checkbox' | 'dropdown' | 'file_upload' | 'divider' | 'page_break';
 
@@ -214,10 +215,11 @@ export default function ReportBuilder() {
           <Select value={status} onValueChange={(v) => handleStatusChange(v as any)}>
             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="ready">Ready</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-              <SelectItem value="unpublished">Unpublished</SelectItem>
+              {getValidNextStates(status as ReportStatus).map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={() => navigate('/repository')} disabled={saving}>Cancel</Button>
