@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Plus, Pencil, Trash2, Tag } from "lucide-react";
+import { Plus, Pencil, Trash2, Tag, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Constants } from "@/integrations/supabase/types";
 
@@ -30,6 +30,7 @@ export default function Subtypes() {
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
   const [editValue, setEditValue] = useState<string>("");
   const [originalValue, setOriginalValue] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const orgEnumValues = useMemo(() => Constants.public.Enums.organization_type as readonly string[], []);
 
@@ -174,45 +175,54 @@ export default function Subtypes() {
     }
   };
 
-  const renderTable = (rows: { id: string; name: string; is_active: boolean }[]) => (
-    <Card>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="font-semibold">Name</TableHead>
-              <TableHead className="w-28 text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
+  const renderTable = (rows: { id: string; name: string; is_active: boolean }[]) => {
+    // Filter rows based on search term
+    const filteredRows = rows.filter(row => 
+      row.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={2} className="text-sm text-muted-foreground">Loading…</TableCell>
+                <TableHead className="font-semibold">Name</TableHead>
+                <TableHead className="w-28 text-right">Actions</TableHead>
               </TableRow>
-            ) : rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={2} className="text-sm text-muted-foreground">No subtypes found.</TableCell>
-              </TableRow>
-            ) : rows.map(r => (
-              <TableRow key={r.id} className="hover:bg-muted/50">
-                <TableCell className="font-medium">{r.name}</TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEdit(r.name)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(r.name)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={2} className="text-sm text-muted-foreground">Loading…</TableCell>
+                </TableRow>
+              ) : filteredRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={2} className="text-sm text-muted-foreground">
+                    {searchTerm ? `No subtypes found matching "${searchTerm}".` : "No subtypes found."}
+                  </TableCell>
+                </TableRow>
+              ) : filteredRows.map(r => (
+                <TableRow key={r.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium">{r.name}</TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEdit(r.name)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(r.name)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="p-4 space-y-6">
@@ -234,6 +244,20 @@ export default function Subtypes() {
           <TabsTrigger value="enterprise">Enterprise</TabsTrigger>
           <TabsTrigger value="organization">Organization</TabsTrigger>
         </TabsList>
+        
+        {/* Search Bar */}
+        <div className="mb-4 mt-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder={`Search ${activeTab} subtypes...`}
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        
         <TabsContent value="enterprise" className="space-y-4">
           {renderTable(enterpriseRows)}
         </TabsContent>

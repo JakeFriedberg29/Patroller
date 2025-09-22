@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layers, Plus, Loader2, Layers as LayersIcon, ChevronRight, ChevronLeft, Trash2 } from "lucide-react";
+import { Layers, Plus, Loader2, Layers as LayersIcon, ChevronRight, ChevronLeft, Trash2, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -34,6 +35,7 @@ export default function Repository() {
   const [platformTemplates, setPlatformTemplates] = useState<Array<{ id: string; name: string; description: string | null }>>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [assignedOrgCounts, setAssignedOrgCounts] = useState<Record<string, number>>({});
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
   // Add Report moved to full-page Report Builder
@@ -392,6 +394,12 @@ export default function Repository() {
     loadTemplates();
   }, [tenantId]);
 
+  // Filter reports based on search term
+  const filteredTemplates = platformTemplates.filter(template => 
+    template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
     <div className="p-4 space-y-6">
       <div>
@@ -413,6 +421,20 @@ export default function Repository() {
               Add Report
             </Button>
           </div>
+          
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search reports by name or description..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -426,7 +448,7 @@ export default function Repository() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {platformTemplates.map(t => (
+                  {filteredTemplates.map(t => (
                     <TableRow key={t.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">{t.name}</TableCell>
                       <TableCell className="text-muted-foreground">{t.description || ''}</TableCell>
@@ -466,10 +488,10 @@ export default function Repository() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {!isLoading && platformTemplates.length === 0 && (
+                  {!isLoading && filteredTemplates.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={2} className="text-sm text-muted-foreground text-center py-6">
-                        No platform forms found.
+                      <TableCell colSpan={5} className="text-sm text-muted-foreground text-center py-6">
+                        {searchTerm ? `No reports found matching "${searchTerm}".` : "No platform forms found."}
                       </TableCell>
                     </TableRow>
                   )}
