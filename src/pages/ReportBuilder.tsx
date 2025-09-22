@@ -373,6 +373,11 @@ export default function ReportBuilder() {
                               placeholder="Option 1&#10;Option 2&#10;Option 3"
                               value={row.options?.join('\n') || ''}
                               onChange={(e) => updateFieldRow(row.id, { options: e.target.value.split('\n').filter(opt => opt.trim()) })}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.stopPropagation();
+                                }
+                              }}
                               rows={4}
                             />
                           </div>
