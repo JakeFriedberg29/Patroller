@@ -435,6 +435,9 @@ export default function Repository() {
                         <Select value={(t as any).status || 'draft'} onValueChange={(v) => handleInlineStatusChange(t.id, v as any)}>
                           <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
                           <SelectContent>
+                            <SelectItem value={(t as any).status || 'draft'}>
+                              {((t as any).status || 'draft').charAt(0).toUpperCase() + ((t as any).status || 'draft').slice(1)}
+                            </SelectItem>
                             {getValidNextStates(((t as any).status || 'draft') as ReportStatus).map(option => (
                               <SelectItem key={option.value} value={option.value}>
                                 {option.label}

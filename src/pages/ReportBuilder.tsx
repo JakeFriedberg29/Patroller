@@ -215,6 +215,9 @@ export default function ReportBuilder() {
           <Select value={status} onValueChange={(v) => handleStatusChange(v as any)}>
             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
+              <SelectItem value={status}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </SelectItem>
               {getValidNextStates(status as ReportStatus).map(option => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
