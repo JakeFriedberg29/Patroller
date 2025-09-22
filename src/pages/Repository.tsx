@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { getValidNextStates, type ReportStatus } from "@/utils/statusTransitions";
+import { getValidNextStates, canDeleteReport, type ReportStatus } from "@/utils/statusTransitions";
 
 export default function Repository() {
   const navigate = useNavigate();
@@ -452,10 +452,12 @@ export default function Repository() {
                             <LayersIcon className="h-4 w-4" />
                             <span className="sr-only">Assign Subtypes</span>
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openDeleteDialog(t.id, t.name)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
+                          {canDeleteReport(((t as any).status || 'draft') as ReportStatus) && (
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openDeleteDialog(t.id, t.name)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          )}
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => navigate(`/repository/reports/${t.id}`)}>
                             <ChevronRight className="h-4 w-4" />
                             <span className="sr-only">View More</span>

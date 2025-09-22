@@ -44,3 +44,11 @@ export function isValidTransition(from: ReportStatus, to: ReportStatus): boolean
   const validNextStates = getValidNextStates(from);
   return validNextStates.some(opt => opt.value === to);
 }
+
+/**
+ * Check if a report template can be deleted based on its status
+ * Only Draft and Unpublished reports can be deleted
+ */
+export function canDeleteReport(status: ReportStatus): boolean {
+  return status === 'draft' || status === 'unpublished';
+}
