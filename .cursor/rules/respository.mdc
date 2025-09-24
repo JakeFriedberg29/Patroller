@@ -4,15 +4,17 @@ globs:
 alwaysApply: true
 ---
 # Repository Propagation Rules
-   ## All repository items are created and maintained at the Platform level.  
-   ## Repository items must be assigned to one or more organizational subtypes to be used as the Account level. 
+
+- All repository items are created and maintained at the **Platform level**.  
+- Repository items must be assigned to one or more **organizational subtypes** in order to be available at the **Account level**.  
 
 ---
 
-#Report Rules
-## Once set to published at the Platform level, Organization Admins of the assigned subtypes can review the reports available. 
-## Organization Admins may toggle which published reports are displayed to their patrollers 
-## Only reports explicitly enabled by an Organizational Admin are visible to Responders within that organization.   
-## If a report's status at the Platform level is changed to Unpublished, it is immediately removed from all organizations and responders, however submissions of those reports will not be removed. 
+# Report Rules
 
-
+- Once set to **Published** at the Platform level, **Organization Admins** of the assigned subtypes can review the reports available.  
+- Organization Admins may toggle which **Published reports** are displayed to their patrollers.  
+- Only reports explicitly enabled by an Organization Admin are visible to **Responders** within that Organization.  
+- If a report's status at the Platform level is changed to **Unpublished**:  
+  - It is immediately removed from all Organizations and Responders.  
+  - Submissions of those reports are **not removed**.  

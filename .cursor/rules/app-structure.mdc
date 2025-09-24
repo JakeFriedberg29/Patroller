@@ -3,34 +3,48 @@ description:
 globs:
 alwaysApply: true
 ---
-#tenancy rules
-every table needs a tenant_id
-enterprises can view organizations they're assigned to
-never return or expose data across tenants, even in admin queries
 
-#user rules
-##Platform Admin
-Global system access.
-Permissions: full (create, edit, delete) or view-only.
-Can assign Platform Admins to accounts.
-Cannot see accounts they are not assigned to.
-##Enterprise Admin
-Access limited to their Enterprise + its Organizations.
-Permissions: full or view-only.
-Can assign Enterprise Admins within their Enterprise.
-Cannot see Organizations outside their Enterprise.
-##Enterprise User
-Read-only or limited access.
-Can view and contribute, but not manage users/accounts.
-##Organization Admin
-Access limited to their Organization.
-Permissions: full or view-only.
-Can assign Organization Users (Admin/User/Responder).
-Can manage Organization settings.
-##Organization User (View-only)
-Can log in and view Organization details.
-No ability to modify data or manage users.
-##Organization Responder
-Can log in and submit reports.
-No ability to manage users or settings.
-Ensure all UI and permissions reflect these rules at each level.
+# User Rules
+
+## Platform Admin
+- **Scope**: Global system access.  
+- **Permissions**: Full (create, edit, delete) or view-only.  
+- **Capabilities**:  
+  - Can assign Platform Admins to accounts.  
+  - Cannot see accounts they are not assigned to.  
+
+## Enterprise Admin
+- **Scope**: Access limited to their Enterprise + its Organizations.  
+- **Permissions**: Full or view-only.  
+- **Capabilities**:  
+  - Can assign Enterprise Admins within their Enterprise.  
+  - Cannot see Organizations outside their Enterprise or that they're not assigned to.  
+
+## Enterprise User
+- **Scope**: Read-only or limited access within their Enterprise.  
+- **Capabilities**:  
+  - Can view and contribute.  
+  - Cannot manage users or accounts.  
+
+## Organization Admin
+- **Scope**: Access limited to their Organization.  
+- **Permissions**: Full or view-only.  
+- **Capabilities**:  
+  - Can assign Organization Users (Admin, User, Responder).  
+  - Can manage Organization settings.  
+
+## Organization User (View-only)
+- **Scope**: Access limited to viewing Organization details.  
+- **Capabilities**:  
+  - Can log in and view Organization data.  
+  - Cannot modify data or manage users.  
+
+## Organization Patroller
+- **Scope**: Access limited to their Organization.  
+- **Capabilities**:  
+  - Can log in and submit reports.  
+  - Cannot manage users or settings.  
+
+---
+
+⚠️ **Note**: Ensure all UI elements and permission checks accurately reflect these rules at each level.  

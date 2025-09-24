@@ -1,0 +1,47 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Resource Design
+- Use **nouns, not verbs** → `/users` not `/getUsers`.
+- Use **plural form** → `/users` not `/user`.
+- Use **hierarchy** → `/users/123/orders`.
+
+---
+
+# HTTP Methods
+- **GET** → Retrieve a resource.  
+- **POST** → Create a resource.  
+- **PUT** → Update/replace a resource.  
+- **PATCH** → Partially update a resource.  
+- **DELETE** → Remove a resource.  
+
+---
+
+# Request & Response
+- Use **JSON** as the common standard.  
+
+### HTTP Status Codes
+- `200 OK` → Success  
+- `201 Created` → Resource created  
+- `204 No Content` → Deleted successfully  
+- `400 Bad Request` → Invalid request  
+- `401 Unauthorized` / `403 Forbidden` → Authentication or permission issues  
+- `404 Not Found` → Resource missing  
+- `500 Internal Server Error` → Unexpected server error  
+
+---
+
+# Security
+- Use **HTTPS** always.  
+- Authentication via **OAuth2, JWT, or API keys**.  
+- Avoid exposing sensitive data in URLs.  
+
+---
+
+# Best Practices
+- **Versioning**: Include version in URL (`/api/v1/users`) or header.  
+- **Pagination**: For lists, use query params (`/users?page=2&limit=20`).  
+- **Filtering & Sorting**: `/users?role=admin&sort=created_at`.  
+- **Consistent Naming**: Stick to one style (`camelCase` or `snake_case`).  
