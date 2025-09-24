@@ -1,7 +1,5 @@
 ---
-description:
-globs:
-alwaysApply: true
+alwaysApply: false
 ---
 # Resource Design
 - Use **nouns, not verbs** → `/users` not `/getUsers`.
