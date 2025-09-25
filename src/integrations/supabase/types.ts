@@ -1064,7 +1064,7 @@ export type Database = {
       }
     }
     Views: {
-      report_data: {
+      reports_flat: {
         Row: {
           account_id: string | null
           account_type: string | null
