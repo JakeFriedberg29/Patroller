@@ -126,54 +126,6 @@ export type Database = {
         }
         Relationships: []
       }
-      departments: {
-        Row: {
-          created_at: string
-          description: string | null
-          head_user_id: string | null
-          id: string
-          is_active: boolean
-          name: string
-          organization_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          head_user_id?: string | null
-          id?: string
-          is_active?: boolean
-          name: string
-          organization_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          head_user_id?: string | null
-          id?: string
-          is_active?: boolean
-          name?: string
-          organization_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "departments_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_departments_head_user"
-            columns: ["head_user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       email_notification_logs: {
         Row: {
           error_message: string | null
@@ -1032,7 +984,6 @@ export type Database = {
         Row: {
           auth_user_id: string | null
           created_at: string
-          department_id: string | null
           email: string
           email_verified: boolean
           employee_id: string | null
@@ -1052,7 +1003,6 @@ export type Database = {
         Insert: {
           auth_user_id?: string | null
           created_at?: string
-          department_id?: string | null
           email: string
           email_verified?: boolean
           employee_id?: string | null
@@ -1072,7 +1022,6 @@ export type Database = {
         Update: {
           auth_user_id?: string | null
           created_at?: string
-          department_id?: string | null
           email?: string
           email_verified?: boolean
           employee_id?: string | null
@@ -1090,13 +1039,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "users_department_id_fkey"
-            columns: ["department_id"]
-            isOneToOne: false
-            referencedRelation: "departments"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "users_organization_id_fkey"
             columns: ["organization_id"]

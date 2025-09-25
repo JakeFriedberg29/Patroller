@@ -20,7 +20,7 @@ const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  department: z.string().optional(),
+  
   location: z.string().optional()
 });
 
@@ -64,7 +64,6 @@ export const EditAdminModal = ({
       fullName: admin ? `${admin.firstName} ${admin.lastName}` : '',
       email: admin?.email || '',
       phone: admin?.phone || '',
-      department: '',
       location: ''
     }
   });
@@ -75,7 +74,7 @@ export const EditAdminModal = ({
         fullName: `${admin.firstName} ${admin.lastName}`,
         email: admin.email,
         phone: admin.phone || '',
-        department: '',
+        
         location: ''
       });
     }
@@ -206,20 +205,6 @@ export const EditAdminModal = ({
     }
   };
 
-  const getDepartmentOptions = () => {
-    if (accountType === "organization") {
-      return [
-        "Operations",
-        "Safety",
-        "Training",
-        "Medical",
-        "Communications",
-        "Logistics"
-      ];
-    }
-    return ["Administration", "Operations", "Technical", "Support"];
-  };
-
   const getLocationOptions = () => {
     if (accountType === "organization") {
       return [
@@ -299,29 +284,6 @@ export const EditAdminModal = ({
 
             {accountType !== "platform" && (
               <>
-                <FormField
-                  control={form.control}
-                  name="department"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Department</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select department" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {getDepartmentOptions().map((dept) => (
-                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="location"

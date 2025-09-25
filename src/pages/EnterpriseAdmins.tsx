@@ -51,7 +51,7 @@ interface EnterpriseAdmin {
   phone: string;
   role: string;
   activation_status: "pending" | "active" | "suspended";
-  department: string;
+  
   location: string;
   lastLogin: string;
   createdDate: string;
@@ -110,7 +110,7 @@ export default function EnterpriseAdmins() {
 
       const transformedAdmins: EnterpriseAdmin[] = data.map(user => {
         const profileData = user.profile_data as { 
-          department?: string; 
+           
           location?: string; 
           permissions?: string[];
           avatar?: string;
@@ -126,7 +126,7 @@ export default function EnterpriseAdmins() {
           phone: user.phone || '',
           role: 'Enterprise Admin',
           activation_status: user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended',
-          department: profileData.department || '',
+          
           location: profileData.location || '',
           lastLogin: user.last_login_at || user.updated_at || '',
           createdDate: user.created_at || '',
@@ -154,7 +154,7 @@ export default function EnterpriseAdmins() {
       admin.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      admin.department.toLowerCase().includes(searchTerm.toLowerCase());
+      admin.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || admin.activation_status.toLowerCase() === statusFilter;
     
     return matchesSearch && matchesStatus;

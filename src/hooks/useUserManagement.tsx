@@ -9,7 +9,7 @@ export interface CreateUserRequest {
   role?: string;
   tenantId?: string;
   organizationId?: string;
-  department?: string;
+  
   location?: string;
   phone?: string;
 }
@@ -95,7 +95,7 @@ export const useUserManagement = () => {
         p_tenant_id: tenantId,
         p_organization_id: userData.organizationId || null,
         p_phone: userData.phone || null,
-        p_department: userData.department || null,
+        
         p_location: userData.location || null,
         p_role_type: mapRoleToDbRole(userData.role || 'responder')
       });

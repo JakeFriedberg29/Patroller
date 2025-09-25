@@ -32,7 +32,7 @@ interface FormProfile {
   email: string;
   phone: string;
   title: string;
-  department: string;
+  
   location: string;
   bio: string;
   avatar: string;
@@ -72,7 +72,6 @@ export default function UserSettings() {
     email: "",
     phone: "",
     title: "",
-    department: "",
     location: "",
     bio: "",
     avatar: "",
@@ -109,7 +108,6 @@ export default function UserSettings() {
         email: profile.email,
         phone: profile.phone,
         title: profile.role,
-        department: profile.profileData?.department || '',
         location: profile.profileData?.location || '',
         bio: profile.profileData?.bio || '',
         avatar: profile.profileData?.avatar_url || '',
@@ -152,7 +150,6 @@ export default function UserSettings() {
           phone: formProfile.phone,
           profile_data: {
             ...profile.profileData,
-            department: formProfile.department,
             location: formProfile.location,
             bio: formProfile.bio,
             timezone: formProfile.timezone,
@@ -260,7 +257,6 @@ export default function UserSettings() {
                 <div className="space-y-1">
                   <h3 className="text-lg font-semibold">{formProfile.firstName} {formProfile.lastName}</h3>
                   <p className="text-sm text-muted-foreground">{formProfile.title}</p>
-                  <p className="text-sm text-muted-foreground">{formProfile.department}</p>
                 </div>
               </div>
 
@@ -317,15 +313,6 @@ export default function UserSettings() {
                     id="title"
                     value={formProfile.title}
                     disabled={true} // Job title should be based on role
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="department">Department</Label>
-                  <Input
-                    id="department"
-                    value={formProfile.department}
-                    disabled={!isEditing}
-                    onChange={(e) => setFormProfile(prev => ({ ...prev, department: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">

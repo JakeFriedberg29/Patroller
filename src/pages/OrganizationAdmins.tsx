@@ -51,7 +51,7 @@ interface OrganizationAdmin {
   phone: string;
   role: string;
   activation_status: "pending" | "active" | "suspended";
-  department: string;
+  
   location: string;
   lastLogin: string;
   createdDate: string;
@@ -106,7 +106,7 @@ export default function OrganizationAdmins() {
 
       const transformedAdmins: OrganizationAdmin[] = data.map(user => {
         const profileData = user.profile_data as { 
-          department?: string; 
+           
           location?: string; 
           permissions?: string[];
           avatar?: string;
@@ -122,7 +122,7 @@ export default function OrganizationAdmins() {
           phone: user.phone || '',
           role: 'Organization Admin',
           activation_status: user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended',
-          department: profileData.department || '',
+          
           location: profileData.location || '',
           lastLogin: user.last_login_at || user.updated_at || '',
           createdDate: user.created_at || '',
@@ -149,12 +149,10 @@ export default function OrganizationAdmins() {
     const matchesSearch = 
       admin.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      admin.department.toLowerCase().includes(searchTerm.toLowerCase());
+      admin.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || admin.activation_status.toLowerCase() === statusFilter;
-    const matchesDepartment = departmentFilter === "all" || admin.department.toLowerCase().includes(departmentFilter);
     
-    return matchesSearch && matchesStatus && matchesDepartment;
+    return matchesSearch && matchesStatus;
   });
 
   const formatDate = (dateString: string) => {
@@ -301,9 +299,6 @@ export default function OrganizationAdmins() {
                           {admin.phone || 'Not provided'}
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{admin.department || 'Not assigned'}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
