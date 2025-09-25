@@ -67,7 +67,6 @@ export default function OrganizationAdmins() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -238,20 +237,6 @@ export default function OrganizationAdmins() {
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
-              
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
-                  <SelectItem value="operations">Operations</SelectItem>
-                  <SelectItem value="training">Training</SelectItem>
-                  <SelectItem value="reports">Reports</SelectItem>
-                  <SelectItem value="communications">Communications</SelectItem>
-                  <SelectItem value="medical">Medical</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </CardHeader>
@@ -263,7 +248,6 @@ export default function OrganizationAdmins() {
                 <TableRow>
                   <TableHead>Administrator</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Department</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Login</TableHead>
