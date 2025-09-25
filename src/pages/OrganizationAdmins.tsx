@@ -126,7 +126,7 @@ export default function OrganizationAdmins() {
           location: profileData.location || '',
           lastLogin: user.last_login_at || user.updated_at || '',
           createdDate: user.created_at || '',
-          permissions: profileData.permissions || ['Team Management', 'Equipment Management'],
+          permissions: profileData.permissions || ['Team Management', 'Report Management'],
           avatar: profileData.avatar || '',
           activation_sent_at: profileData.activation_sent_at
         };
@@ -249,7 +249,7 @@ export default function OrganizationAdmins() {
                   <SelectItem value="all">All Departments</SelectItem>
                   <SelectItem value="operations">Operations</SelectItem>
                   <SelectItem value="training">Training</SelectItem>
-                  <SelectItem value="equipment">Equipment</SelectItem>
+                  <SelectItem value="reports">Reports</SelectItem>
                   <SelectItem value="communications">Communications</SelectItem>
                   <SelectItem value="medical">Medical</SelectItem>
                 </SelectContent>

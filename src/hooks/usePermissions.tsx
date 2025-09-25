@@ -13,8 +13,6 @@ export const usePermissions = () => {
   const isOrgAdminViewOnly = isOrganizationAdmin && orgAdminPermission === 'view';
   
   const canManageUsers = (isPlatformAdmin || isEnterpriseAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly)) && !isOrgViewer;
-  const canManageEquipment = (isPlatformAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly)) && !isOrgViewer;
-  const canManageLocations = (isPlatformAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly)) && !isOrgViewer;
   const canManageIncidents = (isPlatformAdmin || isEnterpriseAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly)) && !isOrgViewer;
   const canReportIncidents = isResponder || isOrganizationAdmin || isEnterpriseAdmin || isPlatformAdmin; // viewers cannot report
   const canSubmitReports = isResponder; // only Responders submit reports
@@ -31,8 +29,6 @@ export const usePermissions = () => {
     isOrgAdminViewOnly,
     isOrgViewer,
     canManageUsers,
-    canManageEquipment,
-    canManageLocations,
     canManageIncidents,
     canViewAllData,
     canManageOrganizations,

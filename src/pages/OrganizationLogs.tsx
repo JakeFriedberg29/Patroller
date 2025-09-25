@@ -37,9 +37,7 @@ const actionOptions = [
 const resourceOptions = [
   { value: "ALL", label: "All Resources" },
   { value: "user", label: "Users" },
-  { value: "equipment", label: "Equipment" },
   { value: "report", label: "Reports" },
-  { value: "location", label: "Locations" },
   { value: "session", label: "Sessions" }
 ];
 
@@ -56,18 +54,6 @@ const mockLogs = [
     metadata: { setup_method: "manual_entry" },
     new_values: { title: "Search and Rescue Operation", status: "active" },
     old_values: null
-  },
-  {
-    id: "org-log-002",
-    action: "UPDATE",
-    resource_type: "equipment",
-    created_at: "2024-01-15T14:15:42Z",
-    user_name: "System",
-    user_email: null,
-    ip_address: "192.168.1.101",
-    metadata: { alert_type: "fuel_low" },
-    new_values: { status: "maintenance_required", fuel_level: "24%" },
-    old_values: { status: "active", fuel_level: "75%" }
   },
   {
     id: "org-log-003",
@@ -157,12 +143,8 @@ export default function OrganizationLogs() {
     switch (resourceType.toLowerCase()) {
       case 'user':
         return <User className={iconClass} />;
-      case 'equipment':
-        return <Settings className={iconClass} />;
       case 'report':
         return <FileText className={iconClass} />;
-      case 'location':
-        return <Building className={iconClass} />;
       default:
         return <Database className={iconClass} />;
     }
@@ -179,14 +161,10 @@ export default function OrganizationLogs() {
         return `Updated user ${target}`;
       case 'create_report':
         return `Created report: ${target}`;
-      case 'update_equipment':
-        return `Updated equipment status`;
       case 'login_session':
         return `Signed in`;
       case 'logout_session':
         return `Signed out`;
-      case 'update_location':
-        return `Updated location settings`;
       default:
         return `Performed ${log.action.toLowerCase()} on ${log.resource_type}`;
     }
@@ -421,7 +399,7 @@ export default function OrganizationLogs() {
                     <TableCell>
                       <div className="max-w-md">
                         <p className="text-sm">{generateDescription(log)}</p>
-                        {(log.new_values?.role_type || log.new_values?.status || log.metadata?.setup_method || log.metadata?.alert_type || log.metadata?.training_type) && (
+                        {(log.new_values?.role_type || log.new_values?.status || log.metadata?.setup_method || log.metadata?.training_type) && (
                           <div className="flex flex-wrap gap-1 mt-1">
                             {log.new_values?.role_type && (
                               <Badge variant="outline" className="text-xs">
@@ -436,11 +414,6 @@ export default function OrganizationLogs() {
                             {log.metadata?.setup_method && (
                               <Badge variant="outline" className="text-xs">
                                 Setup: {log.metadata.setup_method}
-                              </Badge>
-                            )}
-                            {log.metadata?.alert_type && (
-                              <Badge variant="outline" className="text-xs">
-                                Alert: {log.metadata.alert_type}
                               </Badge>
                             )}
                             {log.metadata?.training_type && (

@@ -5,8 +5,6 @@ import type { DateRange } from 'react-day-picker';
 
 export interface MissionControlData {
   totalUsers: number;
-  totalLocations: number;
-  totalEquipment: number;
   totalReportsSubmitted: number;
   avgTimeToReportHours: number;
   totalLogins: number;
@@ -17,8 +15,6 @@ export interface MissionControlData {
 export const useMissionControlData = (organizationId?: string, dateRange?: DateRange) => {
   const [data, setData] = useState<MissionControlData>({
     totalUsers: 0,
-    totalLocations: 0,
-    totalEquipment: 0,
     totalReportsSubmitted: 0,
     avgTimeToReportHours: 0,
     totalLogins: 0,
@@ -44,19 +40,6 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
         .select('id', { count: 'exact' })
         .eq('organization_id', organizationId)
         .eq('status', 'active');
-
-      // Fetch locations count
-      const { count: locationsCount } = await supabase
-        .from('locations')
-        .select('id', { count: 'exact' })
-        .eq('organization_id', organizationId)
-        .eq('is_active', true);
-
-      // Fetch equipment count
-      const { count: equipmentCount } = await supabase
-        .from('equipment')
-        .select('id', { count: 'exact' })
-        .eq('organization_id', organizationId);
 
       // Fetch recent logins (last 30 days)
       const thirtyDaysAgo = new Date();
@@ -97,8 +80,6 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
 
       setData({
         totalUsers: usersCount || 0,
-        totalLocations: locationsCount || 0,
-        totalEquipment: equipmentCount || 0,
         totalReportsSubmitted: reportsCount || 0,
         avgTimeToReportHours,
         totalLogins: loginsCount || 0,

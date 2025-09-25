@@ -86,8 +86,6 @@ export const LogEntry: React.FC<LogEntryProps> = ({
         return <Building className={iconClass} />;
       case 'report':
         return <FileText className={iconClass} />;
-      case 'equipment':
-        return <Settings className={iconClass} />;
       default:
         return <Database className={iconClass} />;
     }

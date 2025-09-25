@@ -410,7 +410,6 @@ export default function Repository() {
       <Tabs defaultValue="reports" className="w-full">
         <TabsList>
           <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="equipment">Equipment</TabsTrigger>
         </TabsList>
 
         <TabsContent value="reports">
@@ -598,7 +597,6 @@ export default function Repository() {
             </AlertDialogContent>
           </AlertDialog>
         </TabsContent>
-        <TabsContent value="equipment"></TabsContent>
       </Tabs>
     </div>
   );

@@ -38,7 +38,6 @@ const resourceOptions = [
   { value: "user", label: "Users" },
   { value: "organization", label: "Organizations" },
   { value: "report", label: "Reports" },
-  { value: "equipment", label: "Equipment" },
   { value: "session", label: "Sessions" }
 ];
 
@@ -159,8 +158,6 @@ export default function EnterpriseLogs() {
         return <Building className={iconClass} />;
       case 'report':
         return <FileText className={iconClass} />;
-      case 'equipment':
-        return <Settings className={iconClass} />;
       default:
         return <Database className={iconClass} />;
     }

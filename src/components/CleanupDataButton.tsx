@@ -51,7 +51,7 @@ export function CleanupDataButton() {
           <AlertDialogTitle>Delete All Data?</AlertDialogTitle>
           <AlertDialogDescription>
             This will permanently delete ALL data from the platform including:
-            users, organizations, tenants, incidents, equipment, locations, and audit logs.
+            users, organizations, tenants, reports, and audit logs.
             This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>

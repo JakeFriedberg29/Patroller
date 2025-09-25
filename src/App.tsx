@@ -21,8 +21,6 @@ const Logs = lazy(() => import("./pages/Logs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const MissionControl = lazy(() => import("./pages/MissionControl"));
 const TeamDirectory = lazy(() => import("./pages/TeamDirectory"));
-const Locations = lazy(() => import("./pages/Locations"));
-const Equipment = lazy(() => import("./pages/Equipment"));
 const OrganizationReports = lazy(() => import("./pages/OrganizationReports"));
 const OrganizationLogs = lazy(() => import("./pages/OrganizationLogs"));
 const CreateReport = lazy(() => import("./pages/CreateReport"));
@@ -70,8 +68,6 @@ const App = () => (
                       <Route path="organization/:id/mission-control" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
                       <Route path="organization/:id/responder-dashboard" element={<ProtectedRoute requireAssignment accountType="Organization"><ResponderDashboard /></ProtectedRoute>} />
                       <Route path="organization/:id/team-directory" element={<ProtectedRoute requireAssignment accountType="Organization"><TeamDirectory /></ProtectedRoute>} />
-                      <Route path="organization/:id/locations" element={<ProtectedRoute requireAssignment accountType="Organization"><Locations /></ProtectedRoute>} />
-                      <Route path="organization/:id/equipment" element={<ProtectedRoute requireAssignment accountType="Organization"><Equipment /></ProtectedRoute>} />
                       {/* Incidents route removed */}
                       <Route path="organization/:id/reports/create/:templateId" element={<ProtectedRoute requireAssignment accountType="Organization"><CreateReport /></ProtectedRoute>} />
                       <Route path="organization/:id/reports" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationReports /></ProtectedRoute>} />

@@ -10,7 +10,6 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { useLocations } from "@/hooks/useLocations";
 
 interface IncidentFormProps {
   incident?: any;
@@ -24,18 +23,14 @@ export function IncidentForm({ incident, onSubmit }: IncidentFormProps) {
     incident_type: incident?.incident_type || "",
     priority: incident?.priority || "medium",
     status: incident?.status || "open",
-    location_id: incident?.location_id || "none",
     occurred_at: incident?.occurred_at ? new Date(incident.occurred_at) : new Date()
   });
-
-  const { locations } = useLocations();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       ...formData,
-      occurred_at: formData.occurred_at.toISOString(),
-      location_id: formData.location_id === "none" ? null : formData.location_id
+      occurred_at: formData.occurred_at.toISOString()
     });
   };
 
@@ -127,26 +122,6 @@ export function IncidentForm({ incident, onSubmit }: IncidentFormProps) {
             </div>
 
             <div>
-              <Label htmlFor="location">Location</Label>
-              <Select
-                value={formData.location_id}
-                onValueChange={(value) => setFormData({ ...formData, location_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No specific location</SelectItem>
-                  {locations.map((location) => (
-                    <SelectItem key={location.id} value={location.id}>
-                      {location.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="md:col-span-2">
               <Label htmlFor="occurred_at">Occurred At</Label>
               <Popover>
                 <PopoverTrigger asChild>
