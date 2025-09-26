@@ -1,8 +1,15 @@
 # Cache static assets for 1 year with versioned filenames
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+  
+# More specific asset patterns
+/assets/*.js
+  Cache-Control: public, max-age=31536000, immutable
+  
+/assets/*.css
+  Cache-Control: public, max-age=31536000, immutable
 
-# Cache CSS and JS files for 1 year
+# Cache CSS and JS files for 1 year (root level)
 /*.css
   Cache-Control: public, max-age=31536000, immutable
 
