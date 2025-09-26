@@ -22,14 +22,7 @@ export const AuthBrandingPane = ({
       
       {/* Content */}
       <div className="relative z-10 text-center px-8 py-12 max-w-md">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 tracking-tight">
-            {title}
-          </h1>
-          <p className="text-lg opacity-90 leading-relaxed">
-            {subtitle}
-          </p>
-        </div>
+        
         
         {/* Mission Badge */}
         
