@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { AuthBrandingPane } from "@/components/AuthBrandingPane";
 import authHeroImage from "@/assets/auth-hero.jpg";
+import { Shield } from "lucide-react";
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -89,6 +90,12 @@ const Auth = () => {
       <div className="flex-1 flex items-center justify-center bg-background p-4 lg:p-8">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
+            {/* Placeholder Logo */}
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                <Shield className="w-8 h-8 text-primary-foreground" />
+              </div>
+            </div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h1>
             <p className="text-muted-foreground">Sign in to access your Patroller Console</p>
           </div>
@@ -102,14 +109,14 @@ const Auth = () => {
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="login-email">Email</Label>
-              <Input id="login-email" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required disabled={loading} placeholder="Enter your email address" className="bg-slate-50 rounded-2xl" />
+              <Input id="login-email" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required disabled={loading} placeholder="Enter your email address" className="bg-slate-50 rounded-2xl border-2 border-black" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="login-password">Password</Label>
-              <Input id="login-password" type="password" value={loginPassword} onChange={e => handlePasswordChange(e.target.value)} required disabled={loading} placeholder="Enter your password" minLength={12} className="bg-slate-50 rounded-2xl" />
+              <Input id="login-password" type="password" value={loginPassword} onChange={e => handlePasswordChange(e.target.value)} required disabled={loading} placeholder="Enter your password" minLength={12} className="bg-slate-50 rounded-2xl border-2 border-black" />
             </div>
             
-            <Button type="submit" disabled={loading} className="w-full rounded-2xl">
+            <Button type="submit" disabled={loading} className="w-full rounded-2xl border-2 border-black">
               {loading ? "Signing in..." : "Sign In"}
             </Button>
 
