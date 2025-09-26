@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MissionLog - Emergency Response Platform</title>
     
+    <!-- Resource hints to optimize loading chain -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+    
+    <!-- Preload critical resources to break dependency chain -->
+    <link rel="modulepreload" href="/src/main.tsx" />
+    <link rel="preload" href="/src/App.tsx" as="script" />
+    <link rel="preload" href="/src/index.css" as="style" />
+    
     <!-- Async CSS loading to prevent render blocking -->
     <script>
       (function() {
