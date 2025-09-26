@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+import { AuthBrandingPane } from "@/components/AuthBrandingPane";
+import authHeroImage from "@/assets/auth-hero.jpg";
 
 
 const Auth = () => {
@@ -89,12 +91,15 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Your Mission Portal</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="min-h-screen flex">
+      {/* Left Pane - Sign In Form */}
+      <div className="flex-1 flex items-center justify-center bg-background p-4 lg:p-8">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h1>
+            <p className="text-muted-foreground">Sign in to access your mission portal</p>
+          </div>
+
           {error && (
             <Alert className="mb-4 border-destructive">
               <AlertDescription className="text-destructive">
@@ -128,7 +133,6 @@ const Auth = () => {
                 placeholder="Enter your password"
                 minLength={12}
               />
-                
             </div>
             
             <Button 
@@ -151,7 +155,6 @@ const Auth = () => {
                       toast.error("Failed to send password reset email");
                     } else {
                       toast.success("Password reset email sent! Check your inbox.");
-                      // Optionally guide the user to check their email or proceed
                     }
                   } else {
                     toast.error("Please enter your email address first.");
@@ -163,8 +166,16 @@ const Auth = () => {
               </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Right Pane - Branding */}
+      <div className="hidden lg:block lg:flex-1">
+        <AuthBrandingPane 
+          image={authHeroImage}
+          className="h-full"
+        />
+      </div>
     </div>
   );
 };
