@@ -6,8 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Suspense, lazy } from "react";
-
-const Layout = lazy(() => import("@/components/Layout").then(m => ({ default: m.Layout })));
+import { Layout } from "@/components/Layout";
 const Auth = lazy(() => import("@/pages/Auth"));
 const ActivateAccount = lazy(() => import("@/pages/ActivateAccount"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
