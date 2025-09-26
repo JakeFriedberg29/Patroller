@@ -4,6 +4,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MissionLog - Emergency Response Platform</title>
+    
+    <!-- Async CSS loading to prevent render blocking -->
+    <script>
+      (function() {
+        if (typeof MutationObserver !== 'undefined') {
+          var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+              mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1 && node.tagName === 'LINK' && node.rel === 'stylesheet') {
+                  node.media = 'print';
+                  node.onload = function() {
+                    this.media = 'all';
+                    this.onload = null;
+                  };
+                  // Add noscript fallback
+                  var noscript = document.createElement('noscript');
+                  var fallbackLink = node.cloneNode(true);
+                  fallbackLink.media = 'all';
+                  noscript.appendChild(fallbackLink);
+                  document.head.appendChild(noscript);
+                }
+              });
+            });
+          });
+          observer.observe(document.head, { childList: true, subtree: true });
+        }
+      })();
+    </script>
     <meta name="description" content="Comprehensive digital solution for emergency response teams - streamline operations, simplify documentation, enhance coordination" />
     <meta name="author" content="MissionLog" />
 
