@@ -39,6 +39,12 @@ const ResponderDashboard = lazy(() => import("./pages/ResponderDashboard"));
 
 const queryClient = new QueryClient();
 
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -46,53 +52,59 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Suspense fallback={null}>
+          <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/activate" element={<ActivateAccount />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/repository" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <Repository />
-                  </Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <Layout>
+                      <Repository />
+                    </Layout>
+                  </Suspense>
                 </ProtectedRoute>
               } />
               <Route path="/*" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <Routes>
-                      <Route index element={<Index />} />
-                      <Route path="accounts" element={<Accounts />} />
-                      <Route path="organization/:id" element={<ProtectedRoute requireAssignment accountType="Organization"><AccountDetail /></ProtectedRoute>} />
-                      <Route path="organization/:id/mission-control" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
-                      <Route path="organization/:id/responder-dashboard" element={<ProtectedRoute requireAssignment accountType="Organization"><ResponderDashboard /></ProtectedRoute>} />
-                      <Route path="organization/:id/team-directory" element={<ProtectedRoute requireAssignment accountType="Organization"><TeamDirectory /></ProtectedRoute>} />
-                      {/* Incidents route removed */}
-                      <Route path="organization/:id/reports/create/:templateId" element={<ProtectedRoute requireAssignment accountType="Organization"><CreateReport /></ProtectedRoute>} />
-                      <Route path="organization/:id/reports" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationReports /></ProtectedRoute>} />
-                      <Route path="organization/:id/logs" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationLogs /></ProtectedRoute>} />
-                      <Route path="organization/:id/settings" element={<ProtectedRoute requireAssignment accountType="Organization"><Settings /></ProtectedRoute>} />
-                      <Route path="enterprises/:id/enterprise-view" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseView /></ProtectedRoute>} />
-                      <Route path="enterprises/:id/organizations" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseOrganizations /></ProtectedRoute>} />
-                      <Route path="enterprises/:id/enterprise-admins" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseAdmins /></ProtectedRoute>} />
-                      <Route path="enterprises/:id/notifications" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseNotificationCenter /></ProtectedRoute>} />
-                      <Route path="enterprises/:id/logs" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseLogs /></ProtectedRoute>} />
-                      <Route path="enterprises/:id/settings" element={<ProtectedRoute requireAssignment accountType="Enterprise"><Settings /></ProtectedRoute>} />
-                      <Route path="reports" element={<Reports />} />
-                      <Route path="reports/:templateId" element={<ReportDetail />} />
-                      <Route path="repository/reports/:templateId" element={<ReportBuilder />} />
-                      <Route path="repository/reports/new" element={<ReportBuilder />} />
-                      <Route path="admins" element={<PlatformAdmins />} />
-                      <Route path="subtypes" element={<Subtypes />} />
-                      <Route path="repository" element={<Repository />} />
-                      <Route path="notifications" element={<PlatformNotificationCenter />} />
-                      <Route path="logs" element={<Logs />} />
-                      <Route path="settings" element={<UserSettings />} />
-                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <Layout>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Routes>
+                          <Route index element={<Index />} />
+                          <Route path="accounts" element={<Accounts />} />
+                          <Route path="organization/:id" element={<ProtectedRoute requireAssignment accountType="Organization"><AccountDetail /></ProtectedRoute>} />
+                          <Route path="organization/:id/mission-control" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
+                          <Route path="organization/:id/responder-dashboard" element={<ProtectedRoute requireAssignment accountType="Organization"><ResponderDashboard /></ProtectedRoute>} />
+                          <Route path="organization/:id/team-directory" element={<ProtectedRoute requireAssignment accountType="Organization"><TeamDirectory /></ProtectedRoute>} />
+                          {/* Incidents route removed */}
+                          <Route path="organization/:id/reports/create/:templateId" element={<ProtectedRoute requireAssignment accountType="Organization"><CreateReport /></ProtectedRoute>} />
+                          <Route path="organization/:id/reports" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationReports /></ProtectedRoute>} />
+                          <Route path="organization/:id/logs" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationLogs /></ProtectedRoute>} />
+                          <Route path="organization/:id/settings" element={<ProtectedRoute requireAssignment accountType="Organization"><Settings /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/enterprise-view" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseView /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/organizations" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseOrganizations /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/enterprise-admins" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseAdmins /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/notifications" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseNotificationCenter /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/logs" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseLogs /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/settings" element={<ProtectedRoute requireAssignment accountType="Enterprise"><Settings /></ProtectedRoute>} />
+                          <Route path="reports" element={<Reports />} />
+                          <Route path="reports/:templateId" element={<ReportDetail />} />
+                          <Route path="repository/reports/:templateId" element={<ReportBuilder />} />
+                          <Route path="repository/reports/new" element={<ReportBuilder />} />
+                          <Route path="admins" element={<PlatformAdmins />} />
+                          <Route path="subtypes" element={<Subtypes />} />
+                          <Route path="repository" element={<Repository />} />
+                          <Route path="notifications" element={<PlatformNotificationCenter />} />
+                          <Route path="logs" element={<Logs />} />
+                          <Route path="settings" element={<UserSettings />} />
+                          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </Suspense>
+                    </Layout>
+                  </Suspense>
                 </ProtectedRoute>
               } />
             </Routes>
