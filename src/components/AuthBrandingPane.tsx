@@ -1,27 +1,21 @@
 import { Card } from "@/components/ui/card";
-
 interface AuthBrandingPaneProps {
   image?: string;
   title?: string;
   subtitle?: string;
   className?: string;
 }
-
-export const AuthBrandingPane = ({ 
+export const AuthBrandingPane = ({
   image = "/src/assets/auth-hero.jpg",
   title = "Your Mission Portal",
   subtitle = "Secure access to mission-critical operations and emergency response coordination.",
   className = ""
 }: AuthBrandingPaneProps) => {
-  return (
-    <div className={`relative flex flex-col justify-center items-center text-white overflow-hidden ${className}`}>
+  return <div className={`relative flex flex-col justify-center items-center text-white overflow-hidden ${className}`}>
       {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url("${image}")`,
-        }}
-      />
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{
+      backgroundImage: `url("${image}")`
+    }} />
       
       {/* Subtle Dark Overlay for Text Readability */}
       <div className="absolute inset-0 bg-black/20" />
@@ -38,13 +32,7 @@ export const AuthBrandingPane = ({
         </div>
         
         {/* Mission Badge */}
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold mb-1">RESCUE</div>
-            <div className="text-sm opacity-80">Emergency Response</div>
-          </div>
-        </Card>
+        
       </div>
-    </div>
-  );
+    </div>;
 };

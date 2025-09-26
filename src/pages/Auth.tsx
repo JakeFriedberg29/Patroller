@@ -11,8 +11,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { AuthBrandingPane } from "@/components/AuthBrandingPane";
 import authHeroImage from "@/assets/auth-hero.jpg";
-
-
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -22,32 +20,34 @@ const Auth = () => {
   // Form states
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  
-  const { user } = useAuth();
-  
+  const {
+    user
+  } = useAuth();
   useAuthRedirect();
-
   useEffect(() => {
     // Check if user is already authenticated
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (session) {
         setRedirecting(true);
       }
     };
     checkUser();
   }, []);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
-    const { error } = await supabase.auth.signInWithPassword({
+    const {
+      error
+    } = await supabase.auth.signInWithPassword({
       email: loginEmail,
-      password: loginPassword,
+      password: loginPassword
     });
-
     if (error) {
       setError(error.message);
       toast.error(error.message);
@@ -67,101 +67,69 @@ const Auth = () => {
       } catch (logError) {
         console.log('Failed to log login action:', logError);
       }
-
       toast.success("Welcome back!");
       setRedirecting(true);
       // Redirect will be handled by useAuthRedirect hook
     }
     setLoading(false);
   };
-
   const handlePasswordChange = (password: string) => {
     setLoginPassword(password);
   };
-
   if (redirecting) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="mt-2 text-muted-foreground">Redirecting to your dashboard...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen flex">
+  return <div className="min-h-screen flex">
       {/* Left Pane - Sign In Form */}
       <div className="flex-1 flex items-center justify-center bg-background p-4 lg:p-8">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h1>
-            <p className="text-muted-foreground">Sign in to access your mission portal</p>
+            <p className="text-muted-foreground">Sign in to access your Patroller Console</p>
           </div>
 
-          {error && (
-            <Alert className="mb-4 border-destructive">
+          {error && <Alert className="mb-4 border-destructive">
               <AlertDescription className="text-destructive">
                 {error}
               </AlertDescription>
-            </Alert>
-          )}
+            </Alert>}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="login-email">Email</Label>
-              <Input
-                id="login-email"
-                type="email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                required
-                disabled={loading}
-                placeholder="Enter your email address"
-              />
+              <Input id="login-email" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required disabled={loading} placeholder="Enter your email address" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="login-password">Password</Label>
-              <Input
-                id="login-password"
-                type="password"
-                value={loginPassword}
-                onChange={(e) => handlePasswordChange(e.target.value)}
-                required
-                disabled={loading}
-                placeholder="Enter your password"
-                minLength={12}
-              />
+              <Input id="login-password" type="password" value={loginPassword} onChange={e => handlePasswordChange(e.target.value)} required disabled={loading} placeholder="Enter your password" minLength={12} />
             </div>
             
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
 
             <div className="text-center">
-              <button
-                type="button"
-                onClick={async () => {
-                  if (loginEmail) {
-                    const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
-                      redirectTo: `${window.location.origin}/reset-password`
-                    });
-                    if (error) {
-                      toast.error("Failed to send password reset email");
-                    } else {
-                      toast.success("Password reset email sent! Check your inbox.");
-                    }
-                  } else {
-                    toast.error("Please enter your email address first.");
-                  }
-                }}
-                className="text-sm text-primary hover:underline"
-              >
+              <button type="button" onClick={async () => {
+              if (loginEmail) {
+                const {
+                  error
+                } = await supabase.auth.resetPasswordForEmail(loginEmail, {
+                  redirectTo: `${window.location.origin}/reset-password`
+                });
+                if (error) {
+                  toast.error("Failed to send password reset email");
+                } else {
+                  toast.success("Password reset email sent! Check your inbox.");
+                }
+              } else {
+                toast.error("Please enter your email address first.");
+              }
+            }} className="text-sm text-primary hover:underline">
                 Forgot your password?
               </button>
             </div>
@@ -171,13 +139,8 @@ const Auth = () => {
 
       {/* Right Pane - Branding */}
       <div className="hidden lg:block lg:flex-1">
-        <AuthBrandingPane 
-          image={authHeroImage}
-          className="h-full"
-        />
+        <AuthBrandingPane image={authHeroImage} className="h-full" />
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Auth;
