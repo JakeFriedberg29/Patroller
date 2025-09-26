@@ -109,7 +109,7 @@ const Auth = () => {
               <Input id="login-password" type="password" value={loginPassword} onChange={e => handlePasswordChange(e.target.value)} required disabled={loading} placeholder="Enter your password" minLength={12} className="bg-slate-50 rounded-2xl" />
             </div>
             
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full rounded-2xl">
               {loading ? "Signing in..." : "Sign In"}
             </Button>
 
