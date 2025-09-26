@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -31,6 +32,14 @@ export default function Subtypes() {
   const [editValue, setEditValue] = useState<string>("");
   const [originalValue, setOriginalValue] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  
+  // Pagination states for Enterprise subtypes
+  const [enterpriseRowsPerPage, setEnterpriseRowsPerPage] = useState(10);
+  const [enterpriseCurrentPage, setEnterpriseCurrentPage] = useState(1);
+  
+  // Pagination states for Organization subtypes
+  const [organizationRowsPerPage, setOrganizationRowsPerPage] = useState(10);
+  const [organizationCurrentPage, setOrganizationCurrentPage] = useState(1);
 
   const orgEnumValues = useMemo(() => Constants.public.Enums.organization_type as readonly string[], []);
 
@@ -175,11 +184,21 @@ export default function Subtypes() {
     }
   };
 
-  const renderTable = (rows: { id: string; name: string; is_active: boolean }[]) => {
+  const renderTable = (rows: { id: string; name: string; is_active: boolean }[], isEnterprise: boolean) => {
     // Filter rows based on search term
     const filteredRows = rows.filter(row => 
       row.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Pagination logic
+    const currentPage = isEnterprise ? enterpriseCurrentPage : organizationCurrentPage;
+    const rowsPerPage = isEnterprise ? enterpriseRowsPerPage : organizationRowsPerPage;
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const paginatedRows = filteredRows.slice(startIndex, startIndex + rowsPerPage);
+
+    const setCurrentPage = isEnterprise ? setEnterpriseCurrentPage : setOrganizationCurrentPage;
+    const setRowsPerPage = isEnterprise ? setEnterpriseRowsPerPage : setOrganizationRowsPerPage;
 
     return (
       <Card>
@@ -196,13 +215,13 @@ export default function Subtypes() {
                 <TableRow>
                   <TableCell colSpan={2} className="text-sm text-muted-foreground">Loading…</TableCell>
                 </TableRow>
-              ) : filteredRows.length === 0 ? (
+              ) : paginatedRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={2} className="text-sm text-muted-foreground">
                     {searchTerm ? `No subtypes found matching "${searchTerm}".` : "No subtypes found."}
                   </TableCell>
                 </TableRow>
-              ) : filteredRows.map(r => (
+              ) : paginatedRows.map(r => (
                 <TableRow key={r.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">{r.name}</TableCell>
                   <TableCell>
@@ -219,6 +238,52 @@ export default function Subtypes() {
               ))}
             </TableBody>
           </Table>
+          
+          {/* Pagination */}
+          {filteredRows.length > 0 && (
+            <div className="flex items-center justify-between p-4 border-t">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Rows per page:</span>
+                <Select value={rowsPerPage.toString()} onValueChange={(value) => {
+                  setRowsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}>
+                  <SelectTrigger className="w-16">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {startIndex + 1}-{Math.min(startIndex + rowsPerPage, filteredRows.length)} of {filteredRows.length}
+                </span>
+                <div className="flex gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -259,10 +324,10 @@ export default function Subtypes() {
         </div>
         
         <TabsContent value="enterprise" className="space-y-4">
-          {renderTable(enterpriseRows)}
+          {renderTable(enterpriseRows, true)}
         </TabsContent>
         <TabsContent value="organization" className="space-y-4">
-          {renderTable(organizationRows)}
+          {renderTable(organizationRows, false)}
         </TabsContent>
       </Tabs>
 
