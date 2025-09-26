@@ -13,7 +13,7 @@ export const AuthBrandingPane = ({
 }: AuthBrandingPaneProps) => {
   return <div className={`relative flex flex-col justify-center items-center text-white overflow-hidden ${className}`}>
       {/* Background Image */}
-      <div className="absolute inset-0 bg-cover bg-right bg-no-repeat" style={{
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{
       backgroundImage: `url("${image}")`
     }} />
       
