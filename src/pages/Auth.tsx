@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { AuthBrandingPane } from "@/components/AuthBrandingPane";
-import authHeroImage from "@/assets/auth-hero.jpg";
+import authHeroImage from "@/assets/auth-hero-new.jpg";
 import { Shield } from "lucide-react";
 const Auth = () => {
   const navigate = useNavigate();
