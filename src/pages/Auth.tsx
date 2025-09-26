@@ -109,14 +109,14 @@ const Auth = () => {
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="login-email">Email</Label>
-              <Input id="login-email" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required disabled={loading} placeholder="Enter your email address" className="bg-slate-50 rounded-2xl border-2 border-black" />
+              <Input id="login-email" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required disabled={loading} placeholder="Enter your email address" className="bg-slate-50 rounded-2xl border border-black" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="login-password">Password</Label>
-              <Input id="login-password" type="password" value={loginPassword} onChange={e => handlePasswordChange(e.target.value)} required disabled={loading} placeholder="Enter your password" minLength={12} className="bg-slate-50 rounded-2xl border-2 border-black" />
+              <Input id="login-password" type="password" value={loginPassword} onChange={e => handlePasswordChange(e.target.value)} required disabled={loading} placeholder="Enter your password" minLength={12} className="bg-slate-50 rounded-2xl border border-black" />
             </div>
             
-            <Button type="submit" disabled={loading} className="w-full rounded-2xl border-2 border-black">
+            <Button type="submit" disabled={loading} className="w-full rounded-2xl border border-black">
               {loading ? "Signing in..." : "Sign In"}
             </Button>
 
