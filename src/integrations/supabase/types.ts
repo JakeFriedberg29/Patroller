@@ -81,7 +81,7 @@ export type Database = {
           },
         ]
       }
-      audit_logs_current_month: {
+      audit_logs_current: {
         Row: {
           action: string
           created_at: string
@@ -389,12 +389,81 @@ export type Database = {
           },
         ]
       }
+      organization_report_settings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          organization_id: string
+          template_id: string
+          tenant_id: string
+          updated_at: string
+          visible_to_responders: boolean
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          organization_id: string
+          template_id: string
+          tenant_id: string
+          updated_at?: string
+          visible_to_responders?: boolean
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          organization_id?: string
+          template_id?: string
+          tenant_id?: string
+          updated_at?: string
+          visible_to_responders?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_report_settings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_report_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_report_settings_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_report_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_report_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_subtypes: {
         Row: {
           created_at: string
           id: string
           is_active: boolean
-          name: string
+          name: Database["public"]["Enums"]["organization_type"]
           tenant_id: string
           updated_at: string
         }
@@ -402,7 +471,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
-          name: string
+          name: Database["public"]["Enums"]["organization_type"]
           tenant_id: string
           updated_at?: string
         }
@@ -410,7 +479,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
-          name?: string
+          name?: Database["public"]["Enums"]["organization_type"]
           tenant_id?: string
           updated_at?: string
         }
@@ -494,75 +563,6 @@ export type Database = {
           },
         ]
       }
-      patroller_report_visibility: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          organization_id: string
-          template_id: string
-          tenant_id: string
-          updated_at: string
-          visible_to_responders: boolean
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          organization_id: string
-          template_id: string
-          tenant_id: string
-          updated_at?: string
-          visible_to_responders?: boolean
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          organization_id?: string
-          template_id?: string
-          tenant_id?: string
-          updated_at?: string
-          visible_to_responders?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "organization_report_settings_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "organization_report_settings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "organization_report_settings_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "report_templates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "organization_report_settings_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "enterprises"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "organization_report_settings_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       platform_admin_account_assignments: {
         Row: {
           account_id: string
@@ -598,6 +598,80 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      platform_assignments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          element_id: string
+          element_type: Database["public"]["Enums"]["platform_element_type"]
+          id: string
+          target_organization_id: string | null
+          target_organization_type:
+            | Database["public"]["Enums"]["organization_type"]
+            | null
+          target_type: Database["public"]["Enums"]["platform_assignment_target_type"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          element_id: string
+          element_type: Database["public"]["Enums"]["platform_element_type"]
+          id?: string
+          target_organization_id?: string | null
+          target_organization_type?:
+            | Database["public"]["Enums"]["organization_type"]
+            | null
+          target_type: Database["public"]["Enums"]["platform_assignment_target_type"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          element_id?: string
+          element_type?: Database["public"]["Enums"]["platform_element_type"]
+          id?: string
+          target_organization_id?: string | null
+          target_organization_type?:
+            | Database["public"]["Enums"]["organization_type"]
+            | null
+          target_type?: Database["public"]["Enums"]["platform_assignment_target_type"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_assignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_assignments_target_organization_id_fkey"
+            columns: ["target_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       report_templates: {
         Row: {
@@ -656,7 +730,7 @@ export type Database = {
           },
         ]
       }
-      reports_submissions: {
+      reports: {
         Row: {
           account_id: string
           account_type: string
@@ -729,80 +803,6 @@ export type Database = {
           },
           {
             foreignKeyName: "reports_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      repository_assignments: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          element_id: string
-          element_type: Database["public"]["Enums"]["platform_element_type"]
-          id: string
-          target_organization_id: string | null
-          target_organization_type:
-            | Database["public"]["Enums"]["organization_type"]
-            | null
-          target_type: Database["public"]["Enums"]["platform_assignment_target_type"]
-          tenant_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          element_id: string
-          element_type: Database["public"]["Enums"]["platform_element_type"]
-          id?: string
-          target_organization_id?: string | null
-          target_organization_type?:
-            | Database["public"]["Enums"]["organization_type"]
-            | null
-          target_type: Database["public"]["Enums"]["platform_assignment_target_type"]
-          tenant_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          element_id?: string
-          element_type?: Database["public"]["Enums"]["platform_element_type"]
-          id?: string
-          target_organization_id?: string | null
-          target_organization_type?:
-            | Database["public"]["Enums"]["organization_type"]
-            | null
-          target_type?: Database["public"]["Enums"]["platform_assignment_target_type"]
-          tenant_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "platform_assignments_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "platform_assignments_target_organization_id_fkey"
-            columns: ["target_organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "platform_assignments_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "enterprises"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "platform_assignments_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -893,7 +893,6 @@ export type Database = {
           id: string
           is_active: boolean
           organization_id: string | null
-          permission: string | null
           role_type: Database["public"]["Enums"]["role_type"]
           user_id: string
         }
@@ -905,7 +904,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           organization_id?: string | null
-          permission?: string | null
           role_type: Database["public"]["Enums"]["role_type"]
           user_id: string
         }
@@ -917,7 +915,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           organization_id?: string | null
-          permission?: string | null
           role_type?: Database["public"]["Enums"]["role_type"]
           user_id?: string
         }
@@ -1369,10 +1366,6 @@ export type Database = {
           p_template_id: string
         }
         Returns: Json
-      }
-      user_has_full_permission: {
-        Args: { _role_type: Database["public"]["Enums"]["role_type"] }
-        Returns: boolean
       }
       user_has_role: {
         Args: { _role_type: Database["public"]["Enums"]["role_type"] }

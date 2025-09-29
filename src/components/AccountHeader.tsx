@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 export function AccountHeader() {
   const location = useLocation();
   const params = useParams();
-  const { isPlatformAdmin, isEnterpriseUser } = usePermissions();
+  const { isPlatformAdmin, isEnterpriseAdmin } = usePermissions();
 
   // Determine context
   const isInEnterprise = location.pathname.startsWith('/enterprises/');
@@ -39,11 +39,11 @@ export function AccountHeader() {
     return () => { isCancelled = true; };
   }, [isInEnterprise, accountId, isPlatformAdmin]);
 
-  // Fetch organization name for platform or enterprise users
+  // Fetch organization name for platform or enterprise admins
   useEffect(() => {
     let isCancelled = false;
     const fetchOrganization = async () => {
-      if (!(isInOrganization && accountId && (isPlatformAdmin || isEnterpriseUser))) {
+      if (!(isInOrganization && accountId && (isPlatformAdmin || isEnterpriseAdmin))) {
         setOrganizationName(null);
         return;
       }
@@ -58,7 +58,7 @@ export function AccountHeader() {
     };
     fetchOrganization();
     return () => { isCancelled = true; };
-  }, [isInOrganization, accountId, isPlatformAdmin, isEnterpriseUser]);
+  }, [isInOrganization, accountId, isPlatformAdmin, isEnterpriseAdmin]);
 
   // Hide header entirely if not in enterprise/org context
   if (!isInEnterprise && !isInOrganization) return null;
@@ -82,8 +82,8 @@ export function AccountHeader() {
     );
   }
 
-  // Organization header (Platform or Enterprise User)
-  if (isInOrganization && (isPlatformAdmin || isEnterpriseUser) && organizationName) {
+  // Organization header (Platform or Enterprise Admin)
+  if (isInOrganization && (isPlatformAdmin || isEnterpriseAdmin) && organizationName) {
     return (
       <div className="border-b bg-card/50 backdrop-blur-sm w-full">
         <div className="px-6 py-3">

@@ -4,32 +4,29 @@ export const usePermissions = () => {
   const { profile } = useUserProfile();
 
   const isPlatformAdmin = profile?.roleType === 'platform_admin';
-  const isEnterpriseUser = profile?.roleType === 'enterprise_user';
-  const isOrganizationUser = profile?.roleType === 'organization_user' || profile?.roleType === 'team_leader';
+  const isEnterpriseAdmin = profile?.roleType === 'enterprise_admin';
+  const isOrganizationAdmin = profile?.roleType === 'organization_admin' || profile?.roleType === 'team_leader';
   const isResponder = profile?.roleType === 'responder' || profile?.roleType === 'member';
   const isOrgViewer = profile?.roleType === 'observer';
 
-  // Check permission level from profileData
-  const userPermission = (profile?.profileData?.permission as 'full' | 'view' | undefined) || 'full';
-  const hasFullPermission = userPermission === 'full';
-  const hasViewOnlyPermission = userPermission === 'view';
+  const orgAdminPermission = (profile?.profileData?.org_admin_permission as 'full' | 'view' | undefined) || 'full';
+  const isOrgAdminViewOnly = isOrganizationAdmin && orgAdminPermission === 'view';
   
-  const canManageUsers = (isPlatformAdmin || (isEnterpriseUser && hasFullPermission) || (isOrganizationUser && hasFullPermission)) && !isOrgViewer;
-  const canManageIncidents = (isPlatformAdmin || (isEnterpriseUser && hasFullPermission) || (isOrganizationUser && hasFullPermission)) && !isOrgViewer;
-  const canReportIncidents = isResponder || isOrganizationUser || isEnterpriseUser || isPlatformAdmin;
-  const canSubmitReports = isResponder;
+  const canManageUsers = (isPlatformAdmin || isEnterpriseAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly)) && !isOrgViewer;
+  const canManageIncidents = (isPlatformAdmin || isEnterpriseAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly)) && !isOrgViewer;
+  const canReportIncidents = isResponder || isOrganizationAdmin || isEnterpriseAdmin || isPlatformAdmin; // viewers cannot report
+  const canSubmitReports = isResponder; // only Responders submit reports
   const canViewAllData = isPlatformAdmin;
-  const canManageOrganizations = isPlatformAdmin || (isEnterpriseUser && hasFullPermission);
-  const canManageEnterprise = isPlatformAdmin || (isEnterpriseUser && hasFullPermission);
-  const canManageOrgSettings = (isPlatformAdmin || (isOrganizationUser && hasFullPermission)) && !isOrgViewer;
+  const canManageOrganizations = isPlatformAdmin || isEnterpriseAdmin;
+  const canManageEnterprise = isPlatformAdmin || isEnterpriseAdmin;
+  const canManageOrgSettings = (isPlatformAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly)) && !isOrgViewer;
 
   return {
     isPlatformAdmin,
-    isEnterpriseUser,
-    isOrganizationUser,
+    isEnterpriseAdmin,
+    isOrganizationAdmin,
     isResponder,
-    hasFullPermission,
-    hasViewOnlyPermission,
+    isOrgAdminViewOnly,
     isOrgViewer,
     canManageUsers,
     canManageIncidents,
