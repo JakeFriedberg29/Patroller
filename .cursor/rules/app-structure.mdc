@@ -16,30 +16,24 @@ alwaysApply: true
 ## Enterprise Admin
 - **Scope**: Access limited to their Enterprise + its Organizations.  
 - **Permissions**: Full or view-only.  
-- **Capabilities**:  
+- **Full Capabilities**:  
   - Can assign Enterprise Admins within their Enterprise.  
-  - Cannot see Organizations outside their Enterprise or that they're not assigned to.  
-
-## Enterprise User
-- **Scope**: Read-only or limited access within their Enterprise.  
-- **Capabilities**:  
+  - Cannot see Organizations outside their Enterprise or that they're not assigned to.   
+- **View-on Capabilities**:  
   - Can view and contribute.  
   - Cannot manage users or accounts.  
 
 ## Organization Admin
 - **Scope**: Access limited to their Organization.  
 - **Permissions**: Full or view-only.  
-- **Capabilities**:  
+- **Full Capabilities**:  
   - Can assign Organization Users (Admin, User, Responder).  
   - Can manage Organization settings.  
-
-## Organization User (View-only)
-- **Scope**: Access limited to viewing Organization details.  
-- **Capabilities**:  
+- **View-Only Capabilities**:  
   - Can log in and view Organization data.  
   - Cannot modify data or manage users.  
 
-## Organization Patroller
+##Patroller
 - **Scope**: Access limited to their Organization.  
 - **Capabilities**:  
   - Can log in and submit reports.  
