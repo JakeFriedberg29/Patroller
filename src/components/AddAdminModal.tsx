@@ -17,13 +17,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUserManagement } from "@/hooks/useUserManagement";
@@ -33,7 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  role: z.string().optional(),
+  permission: z.enum(["full", "view"]).default("full"),
 });
 
 interface AddAdminModalProps {
@@ -57,13 +50,11 @@ export function AddAdminModal({
     defaultValues: {
       fullName: "",
       email: "",
-      role: "Enterprise Admin",
+      permission: "full",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const roleTitle = accountType === "enterprise" ? (values.role || "Enterprise Admin") : "Organization Admin";
-
     // Resolve tenant id correctly when creating users for an organization
     let tenantIdToUse: string | undefined = accountId;
     if (accountType === "organization" && accountId) {
@@ -78,10 +69,14 @@ export function AddAdminModal({
       tenantIdToUse = org?.tenant_id || undefined;
     }
 
+    // Map the role to the database role_type
+    const roleType = accountType === "enterprise" ? "enterprise_user" : "organization_user";
+
     const result = await createUser({
       email: values.email,
       fullName: values.fullName,
-      role: roleTitle,
+      role: roleType,
+      permission: values.permission,
       tenantId: tenantIdToUse,
       organizationId: accountType === "organization" ? accountId : undefined,
     });
@@ -94,15 +89,13 @@ export function AddAdminModal({
   };
 
   const getTitle = () => {
-    return accountType === "enterprise" ? "Add Enterprise Admin" : "Add Organization Admin";
+    return accountType === "enterprise" ? "Add Enterprise User" : "Add Organization User";
   };
 
   const getDescription = () => {
     const type = accountType === "enterprise" ? "enterprise" : "organization";
-    return `Add a new administrator to your ${type}. They will receive an activation email with password setup instructions.`;
+    return `Add a new user to your ${type}. They will receive an activation email with password setup instructions.`;
   };
-
-  
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,37 +139,51 @@ export function AddAdminModal({
 
             <FormField
               control={form.control}
-              name="role"
+              name="permission"
               render={({ field }) => (
-                accountType === "enterprise" ? (
-                  <FormItem>
-                    <FormLabel>Role *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Enterprise Admin">Enterprise Admin (Edit permissions)</SelectItem>
-                        <SelectItem value="Enterprise User">Enterprise User (View-only)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                ) : null
+                <FormItem className="space-y-3">
+                  <FormLabel>Permission Level *</FormLabel>
+                  <FormControl>
+                    <div className="flex gap-4">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          value="full"
+                          checked={field.value === 'full'}
+                          onChange={() => field.onChange('full')}
+                          className="h-4 w-4 text-primary"
+                        />
+                        <span className="text-sm font-medium">Full</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          value="view"
+                          checked={field.value === 'view'}
+                          onChange={() => field.onChange('view')}
+                          className="h-4 w-4 text-primary"
+                        />
+                        <span className="text-sm font-medium">View Only</span>
+                      </label>
+                    </div>
+                  </FormControl>
+                  <p className="text-sm text-muted-foreground">
+                    {field.value === 'full' 
+                      ? 'Full access allows managing users and settings'
+                      : 'View only allows read-only access to data'}
+                  </p>
+                  <FormMessage />
+                </FormItem>
               )}
             />
-
-            
 
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
               <h4 className="font-medium text-sm">Account Creation Process</h4>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>• Admin will receive an activation email with temporary login credentials</p>
+                <p>• User will receive an activation email with temporary login credentials</p>
                 <p>• They must click the activation link to confirm their account</p>
                 <p>• Temporary password will be shown in the activation email</p>
-                <p>• Admin can log in immediately after activation</p>
+                <p>• User can log in immediately after activation</p>
                 <p>• Account activation link expires in 24 hours</p>
               </div>
             </div>
@@ -191,7 +198,7 @@ export function AddAdminModal({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : `Add ${accountType === "enterprise" ? "Enterprise" : "Organization"} Admin`}
+                {isLoading ? "Creating..." : `Add ${accountType === "enterprise" ? "Enterprise" : "Organization"} User`}
               </Button>
             </div>
           </form>

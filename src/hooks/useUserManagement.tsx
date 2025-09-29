@@ -7,6 +7,7 @@ export interface CreateUserRequest {
   email: string;
   fullName: string;
   role?: string;
+  permission?: 'full' | 'view';
   tenantId?: string;
   organizationId?: string;
   
@@ -15,12 +16,12 @@ export interface CreateUserRequest {
 }
 
 // Map UI roles to database role types
-const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' => {
-  const roleMap: { [key: string]: 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' } = {
+const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_user' | 'organization_user' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' => {
+  const roleMap: { [key: string]: 'platform_admin' | 'enterprise_user' | 'organization_user' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' } = {
     'Platform Admin': 'platform_admin',
-    'Enterprise Admin': 'enterprise_admin', 
-    'Organization Admin': 'organization_admin',
-    'Admin': 'organization_admin',
+    'enterprise_user': 'enterprise_user',
+    'organization_user': 'organization_user',
+    'Admin': 'organization_user',
     'User': 'observer',
     'Team Leader': 'team_leader',
     'Supervisor': 'supervisor',
@@ -124,6 +125,15 @@ export const useUserManagement = () => {
       }
 
       console.log('User created successfully, sending activation email for userId:', result.user_id);
+      
+      // Update permission level for enterprise/organization users if specified
+      if (userData.permission && (userData.role === 'enterprise_user' || userData.role === 'organization_user')) {
+        await supabase
+          .from('user_roles')
+          .update({ permission: userData.permission })
+          .eq('user_id', result.user_id)
+          .eq('role_type', userData.role);
+      }
       
       // Send activation email using the configured email service
       const emailResult = await sendActivationEmail({

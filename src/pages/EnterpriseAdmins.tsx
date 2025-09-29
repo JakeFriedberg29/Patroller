@@ -91,9 +91,9 @@ export default function EnterpriseAdmins() {
         .from('users')
         .select(`
           *,
-          user_roles!user_roles_user_id_fkey!inner(role_type, is_active)
+          user_roles!user_roles_user_id_fkey!inner(role_type, is_active, permission)
         `)
-        .eq('user_roles.role_type', 'enterprise_admin')
+        .eq('user_roles.role_type', 'enterprise_user')
         .eq('user_roles.is_active', true)
         .neq('status', 'inactive') // Exclude soft-deleted users
         .order('created_at', { ascending: false });
@@ -117,6 +117,9 @@ export default function EnterpriseAdmins() {
           activation_sent_at?: string;
         } || {};
         
+        const userRole = Array.isArray(user.user_roles) ? user.user_roles[0] : user.user_roles;
+        const permission = userRole?.permission || 'full';
+        
         return {
           id: user.id,
           user_id: user.id,
@@ -124,7 +127,7 @@ export default function EnterpriseAdmins() {
           lastName: user.last_name || user.full_name?.split(' ').slice(1).join(' ') || '',
           email: user.email,
           phone: user.phone || '',
-          role: 'Enterprise Admin',
+          role: permission === 'full' ? 'Enterprise User - Full' : 'Enterprise User - View Only',
           activation_status: user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended',
           
           location: profileData.location || '',
@@ -253,13 +256,13 @@ export default function EnterpriseAdmins() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Shield className="h-8 w-8 text-primary" />
-            Enterprise Admins
+            Enterprise Users
           </h1>
-          <p className="text-muted-foreground">Manage administrators across your enterprise</p>
+          <p className="text-muted-foreground">Manage users across your enterprise</p>
         </div>
         <Button onClick={() => setIsAddModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Add Admin
+          Add User
         </Button>
       </div>
 
