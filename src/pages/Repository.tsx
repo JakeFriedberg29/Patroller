@@ -36,6 +36,7 @@ export default function Repository() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [assignedOrgCounts, setAssignedOrgCounts] = useState<Record<string, number>>({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
 
   // Add Report moved to full-page Report Builder
@@ -97,7 +98,7 @@ export default function Repository() {
     }
   };
 
-  const handleInlineStatusChange = async (templateId: string, next: 'draft' | 'ready' | 'published' | 'unpublished') => {
+  const handleInlineStatusChange = async (templateId: string, next: 'draft' | 'ready' | 'published' | 'unpublished' | 'archive') => {
     try {
       const { data, error } = await supabase.rpc('set_report_template_status' as any, {
         p_template_id: templateId,
@@ -334,6 +335,8 @@ export default function Repository() {
         ? 'bg-blue-500 text-white'
         : status === 'unpublished'
         ? 'bg-red-500 text-white'
+        : status === 'archive'
+        ? 'bg-yellow-600 text-white'
         : 'bg-gray-500 text-white';
     return <Badge className={`${colorClass} border-transparent`}>{label}</Badge>;
   };
@@ -394,11 +397,13 @@ export default function Repository() {
     loadTemplates();
   }, [tenantId]);
 
-  // Filter reports based on search term
-  const filteredTemplates = platformTemplates.filter(template => 
-    template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter reports based on search term and status
+  const filteredTemplates = platformTemplates.filter(template => {
+    const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatus = statusFilter === "all" || (template as any).status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="p-4 space-y-6">
@@ -421,8 +426,8 @@ export default function Repository() {
             </Button>
           </div>
           
-          {/* Search Bar */}
-          <div className="mb-4">
+          {/* Search and Filter Bar */}
+          <div className="mb-4 flex gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
@@ -432,6 +437,19 @@ export default function Repository() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="ready">Ready</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="unpublished">Unpublished</SelectItem>
+                <SelectItem value="archive">Archive</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <Card>

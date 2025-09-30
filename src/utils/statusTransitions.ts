@@ -1,4 +1,4 @@
-export type ReportStatus = 'draft' | 'ready' | 'published' | 'unpublished';
+export type ReportStatus = 'draft' | 'ready' | 'published' | 'unpublished' | 'archive';
 
 export interface StatusOption {
   value: ReportStatus;
@@ -8,28 +8,32 @@ export interface StatusOption {
 /**
  * Get valid next states for a report template based on current status
  * Transition rules:
- * - Draft → Ready, Published
- * - Ready → Draft, Published  
+ * - Draft → Ready, Published, Archive
+ * - Ready → Draft, Published, Archive
  * - Published → Unpublished, Ready, Draft
- * - Unpublished → Draft, Ready, Published
+ * - Unpublished → Draft, Ready, Published, Archive
+ * - Archive → (no transitions allowed)
  */
 export function getValidNextStates(currentStatus: ReportStatus): StatusOption[] {
   const allOptions: StatusOption[] = [
     { value: 'draft', label: 'Draft' },
     { value: 'ready', label: 'Ready' },
     { value: 'published', label: 'Published' },
-    { value: 'unpublished', label: 'Unpublished' }
+    { value: 'unpublished', label: 'Unpublished' },
+    { value: 'archive', label: 'Archive' }
   ];
 
   switch (currentStatus) {
     case 'draft':
-      return allOptions.filter(opt => ['ready', 'published'].includes(opt.value));
+      return allOptions.filter(opt => ['ready', 'published', 'archive'].includes(opt.value));
     case 'ready':
-      return allOptions.filter(opt => ['draft', 'published'].includes(opt.value));
+      return allOptions.filter(opt => ['draft', 'published', 'archive'].includes(opt.value));
     case 'published':
       return allOptions.filter(opt => ['unpublished', 'ready', 'draft'].includes(opt.value));
     case 'unpublished':
-      return allOptions.filter(opt => ['draft', 'ready', 'published'].includes(opt.value));
+      return allOptions.filter(opt => ['draft', 'ready', 'published', 'archive'].includes(opt.value));
+    case 'archive':
+      return []; // Cannot transition out of archive
     default:
       // Fallback for unknown status - show all options
       return allOptions;

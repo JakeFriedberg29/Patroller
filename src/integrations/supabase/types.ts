@@ -602,7 +602,7 @@ export type Database = {
       report_templates: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           id: string
           is_active: boolean
@@ -615,7 +615,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
@@ -628,7 +628,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
@@ -1397,7 +1397,12 @@ export type Database = {
         | "volunteer_emergency_services"
       platform_assignment_target_type: "organization" | "organization_type"
       platform_element_type: "report_template"
-      report_template_status: "draft" | "ready" | "published" | "unpublished"
+      report_template_status:
+        | "draft"
+        | "ready"
+        | "published"
+        | "unpublished"
+        | "archive"
       role_type:
         | "platform_admin"
         | "enterprise_admin"
@@ -1568,7 +1573,13 @@ export const Constants = {
       ],
       platform_assignment_target_type: ["organization", "organization_type"],
       platform_element_type: ["report_template"],
-      report_template_status: ["draft", "ready", "published", "unpublished"],
+      report_template_status: [
+        "draft",
+        "ready",
+        "published",
+        "unpublished",
+        "archive",
+      ],
       role_type: [
         "platform_admin",
         "enterprise_admin",

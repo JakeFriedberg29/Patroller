@@ -127,6 +127,12 @@ export default function ReportBuilder() {
       toast({ title: 'Name required', description: 'Please provide a report name.', variant: 'destructive' });
       return;
     }
+    
+    // Ensure profile is loaded before proceeding
+    if (!profile?.profileData?.user_id && (!templateId || templateId === 'new')) {
+      toast({ title: 'Please wait', description: 'Loading user profile...', variant: 'destructive' });
+      return;
+    }
     const schema = { fields: fieldRows.map(r => ({ 
       name: r.name.trim(), 
       type: r.type === 'dropdown' ? (r.multiSelect ? 'multi_select' : 'single_select') : r.type, 
@@ -139,14 +145,24 @@ export default function ReportBuilder() {
     try {
       if (!templateId || templateId === 'new') {
         // Insert new template in current tenant
-        const { data: prof } = await supabase
-          .from('users')
-          .select('id, tenant_id')
-          .eq('id', profile?.profileData?.user_id || '')
-          .maybeSingle();
-        const tenantId = prof?.tenant_id || profile?.profileData?.tenant_id;
+        const tenantId = profile?.profileData?.tenant_id;
         const createdBy = profile?.profileData?.user_id || null;
-        const { error } = await supabase
+        
+        // Validate required fields before insert
+        if (!tenantId) {
+          console.error('Missing tenant_id. Profile:', profile);
+          throw new Error('Unable to determine tenant ID. Please refresh and try again.');
+        }
+        
+        console.log('Inserting report template:', { 
+          name: name.trim(), 
+          tenantId, 
+          createdBy, 
+          status,
+          fieldCount: fieldRows.length 
+        });
+        
+        const { data, error } = await supabase
           .from('report_templates')
           .insert({
             name: name.trim(),
@@ -157,8 +173,14 @@ export default function ReportBuilder() {
             tenant_id: tenantId,
             organization_id: null,
             created_by: createdBy,
-          });
-        if (error) throw error;
+          })
+          .select();
+        
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+        console.log('Successfully inserted report template:', data);
       } else {
         const { error } = await supabase
           .from('report_templates')
@@ -166,10 +188,22 @@ export default function ReportBuilder() {
           .eq('id', templateId);
         if (error) throw error;
       }
-      toast({ title: 'Report updated', description: 'Changes saved successfully.' });
+      toast({ title: 'Report saved', description: 'Changes saved successfully.' });
       navigate('/repository');
     } catch (e: any) {
-      toast({ title: 'Update failed', description: 'Could not update the report.', variant: 'destructive' });
+      console.error('Save error:', e);
+      let errorMsg = 'Could not save the report. Please try again.';
+      
+      // Handle specific error types
+      if (e?.message?.includes('duplicate key') || e?.code === '23505') {
+        errorMsg = `A report with the name "${name.trim()}" already exists. Please choose a different name.`;
+      } else if (e?.message) {
+        errorMsg = e.message;
+      } else if (e?.hint) {
+        errorMsg = e.hint;
+      }
+      
+      toast({ title: 'Save failed', description: errorMsg, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
