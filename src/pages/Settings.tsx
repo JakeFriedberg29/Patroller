@@ -65,6 +65,21 @@ export default function Settings() {
   const [loadingOrgSubtypes, setLoadingOrgSubtypes] = useState(false);
   const [forceDbReload, setForceDbReload] = useState(false);
 
+  // Include legacy enum labels so previously saved enum values appear in the dropdown
+  const legacyOrganizationSubtypeLabels = [
+    'Search & Rescue',
+    'Lifeguard Service',
+    'Park Service',
+    'Event Medical',
+    'Ski Patrol',
+    'Harbor Master',
+    'Volunteer Emergency Services'
+  ];
+  const combinedOrganizationSubtypes = Array.from(new Set([
+    ...organizationSubtypes,
+    ...legacyOrganizationSubtypeLabels
+  ]));
+
   const loadEnterprises = async (q: string) => {
     try {
       setLoadingEnterprises(true);
@@ -203,7 +218,7 @@ export default function Settings() {
       console.log('Organization query result:', { org, orgError });
       
       if (org) {
-        // Use organization_subtype if it exists, otherwise fallback to organization_type
+        // Use organization_subtype if it exists, otherwise fallback to organization_type for display
         const displayCategory = org.organization_subtype || mapOrgTypeToCategory(org.organization_type);
         
         const account: Account = {
@@ -247,8 +262,8 @@ export default function Settings() {
         setFormData({
           name: account.name,
           type: account.type,
-          // Use organization_subtype if it exists, otherwise use organization_type
-          category: org.organization_subtype || org.organization_type,
+          // Use organization_subtype if it exists, otherwise map legacy enum to display label
+          category: org.organization_subtype || mapOrgTypeToCategory(org.organization_type),
           primaryEmail: account.email,
           primaryPhone: account.phone,
           primaryContact: "",
@@ -513,7 +528,11 @@ export default function Settings() {
   };
 
   const handleUnassignOrganization = async (orgId: string) => {
+    console.log('handleUnassignOrganization called with orgId:', orgId);
+    console.log('isPlatformAdmin:', isPlatformAdmin);
+    
     if (!isPlatformAdmin) {
+      console.log('Access denied - not platform admin');
       toast({
         title: "Access Denied",
         description: "Only Platform Admins can unassign organizations from enterprises.",
@@ -523,22 +542,32 @@ export default function Settings() {
     }
 
     try {
+      console.log('Setting unassigningOrgId to:', orgId);
       setUnassigningOrgId(orgId);
 
+      console.log('Attempting to update organization in database...');
       // Update the organization to set tenant_id to null
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('organizations')
         .update({ tenant_id: null })
-        .eq('id', orgId);
+        .eq('id', orgId)
+        .select();
 
-      if (error) throw error;
+      console.log('Update result:', { data, error });
 
+      if (error) {
+        console.error('Database update error:', error);
+        throw error;
+      }
+
+      console.log('Successfully unassigned organization');
       toast({
         title: "Organization Unassigned",
         description: "The organization has been unassigned from this enterprise and is now standalone.",
       });
 
       // Refresh the enterprise organizations list
+      console.log('Calling refetchEnterpriseData...');
       refetchEnterpriseData();
     } catch (error: any) {
       console.error("Error unassigning organization:", error);
@@ -548,6 +577,7 @@ export default function Settings() {
         variant: "destructive",
       });
     } finally {
+      console.log('Resetting unassigningOrgId to null');
       setUnassigningOrgId(null);
     }
   };
@@ -606,6 +636,10 @@ export default function Settings() {
   const isEnterprise = formData.type === "Enterprise";
   const isOrganization = formData.type === "Organization";
   const isRootEnterprise = isEnterprise && (formData.name === 'Patroller Root' || formData.category === 'Root Account');
+  // Compute display label for subtype when not editing
+  const displaySubtypeLabel = isEnterprise && isRootEnterprise
+    ? 'Root Account'
+    : (formData.category || (isOrganization ? mapOrgTypeToCategory(currentAccount?.organization_type) : ''));
 
   // Show loading state - only show loading if we're waiting for platform admin accounts or if we don't have currentAccount yet
   if ((isPlatformAdmin && loading) || (!currentAccount && id)) {
@@ -698,40 +732,46 @@ export default function Settings() {
               {isEnterprise && isRootEnterprise ? (
                 <div className="p-2 border rounded-md bg-muted/50 text-sm">Root Account</div>
               ) : (
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(value) => handleInputChange("category", value)}
-                  disabled={!isEditing || (isEnterprise && loadingEnterpriseSubtypes) || (isOrganization && loadingOrgSubtypes)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isEnterprise ? (
-                      loadingEnterpriseSubtypes ? (
+                isEditing ? (
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(value) => handleInputChange("category", value)}
+                    disabled={(isEnterprise && loadingEnterpriseSubtypes) || (isOrganization && loadingOrgSubtypes)}
+                  >
+                    <SelectTrigger>
+                      <span>{formData.category || 'Select a subtype...'}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isEnterprise ? (
+                        loadingEnterpriseSubtypes ? (
+                          <SelectItem value="_loading" disabled>Loading subtypes...</SelectItem>
+                        ) : enterpriseSubtypes.length > 0 ? (
+                          enterpriseSubtypes.map((subtype) => (
+                            <SelectItem key={subtype} value={subtype}>
+                              {subtype}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="_none" disabled>No subtypes available</SelectItem>
+                        )
+                      ) : loadingOrgSubtypes ? (
                         <SelectItem value="_loading" disabled>Loading subtypes...</SelectItem>
-                      ) : enterpriseSubtypes.length > 0 ? (
-                        enterpriseSubtypes.map((subtype) => (
+                      ) : combinedOrganizationSubtypes.length > 0 ? (
+                        combinedOrganizationSubtypes.map((subtype) => (
                           <SelectItem key={subtype} value={subtype}>
                             {subtype}
                           </SelectItem>
                         ))
                       ) : (
                         <SelectItem value="_none" disabled>No subtypes available</SelectItem>
-                      )
-                    ) : loadingOrgSubtypes ? (
-                      <SelectItem value="_loading" disabled>Loading subtypes...</SelectItem>
-                    ) : organizationSubtypes.length > 0 ? (
-                      organizationSubtypes.map((subtype) => (
-                        <SelectItem key={subtype} value={subtype}>
-                          {subtype}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="_none" disabled>No subtypes available</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                      )}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="p-2 border rounded-md bg-muted/50 text-sm">
+                    {displaySubtypeLabel || '—'}
+                  </div>
+                )
               )}
             </div>
           </div>
