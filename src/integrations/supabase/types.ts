@@ -328,6 +328,42 @@ export type Database = {
         }
         Relationships: []
       }
+      idempotency_keys: {
+        Row: {
+          created_at: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      idempotency_results: {
+        Row: {
+          created_at: string
+          request_id: string
+          resource_id: string
+          resource_type: string
+        }
+        Insert: {
+          created_at?: string
+          request_id: string
+          resource_id: string
+          resource_type: string
+        }
+        Update: {
+          created_at?: string
+          request_id?: string
+          resource_id?: string
+          resource_type?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1242,6 +1278,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_organization_tx: {
+        Args: { p_payload: Json; p_request_id?: string }
+        Returns: string
+      }
       create_pending_user: {
         Args:
           | {
@@ -1264,6 +1304,10 @@ export type Database = {
               p_tenant_id: string
             }
         Returns: Json
+      }
+      create_report_tx: {
+        Args: { p_actor_id: string; p_payload: Json; p_request_id?: string }
+        Returns: string
       }
       create_tenant_with_organization: {
         Args: {
@@ -1313,8 +1357,26 @@ export type Database = {
             }
         Returns: Json
       }
+      delete_enterprise_tx: {
+        Args: {
+          p_actor_id: string
+          p_force?: boolean
+          p_request_id?: string
+          p_tenant_id: string
+        }
+        Returns: undefined
+      }
       delete_organization_subtype: {
         Args: { p_name: string }
+        Returns: undefined
+      }
+      delete_report_template: {
+        Args: {
+          p_actor_id: string
+          p_request_id?: string
+          p_template_id: string
+          p_tenant_id: string
+        }
         Returns: undefined
       }
       ensure_current_user_platform_admin: {
@@ -1366,12 +1428,39 @@ export type Database = {
         }
         Returns: number
       }
+      set_platform_admin_assignment: {
+        Args: {
+          p_account_id: string
+          p_account_type: string
+          p_admin_id: string
+          p_is_active: boolean
+          p_request_id?: string
+        }
+        Returns: undefined
+      }
       set_report_template_status: {
         Args: {
           p_status: Database["public"]["Enums"]["report_template_status"]
           p_template_id: string
         }
         Returns: Json
+      }
+      slugify: {
+        Args: { p_text: string }
+        Returns: string
+      }
+      update_enterprise_settings_tx: {
+        Args: { p_payload: Json; p_request_id?: string; p_tenant_id: string }
+        Returns: undefined
+      }
+      update_or_delete_organization_tx: {
+        Args: {
+          p_mode: string
+          p_org_id: string
+          p_payload?: Json
+          p_request_id?: string
+        }
+        Returns: undefined
       }
       user_has_full_permission: {
         Args: { _role_type: Database["public"]["Enums"]["role_type"] }

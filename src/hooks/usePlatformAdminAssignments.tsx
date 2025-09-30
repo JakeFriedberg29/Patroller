@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { safeMutation } from '@/lib/safeMutation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -184,46 +185,23 @@ export const usePlatformAdminAssignmentManager = (platformAdminId?: string) => {
   // Add assignment
   const addAssignment = async (adminId: string, accountId: string, accountType: 'Enterprise' | 'Organization') => {
     try {
-      const { error } = await supabase
-        .from('platform_admin_account_assignments')
-        .insert({
-          platform_admin_id: adminId,
-          account_id: accountId,
-          account_type: accountType,
-          is_active: true
-        });
-
-      if (error) {
-        if (error.code === '23505') { // Unique constraint violation
-          toast({
-            title: "Assignment Already Exists",
-            description: "This account is already assigned to the administrator.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Error Adding Assignment",
-            description: "Failed to add account assignment.",
-            variant: "destructive"
-          });
-        }
-        return false;
-      }
-
-      toast({
-        title: "Assignment Added",
-        description: "Account assignment added successfully."
+      const requestId = crypto.randomUUID();
+      const ok = await safeMutation(`add-assignment:${adminId}:${accountId}:${accountType}`, {
+        op: () => supabase.rpc('set_platform_admin_assignment', {
+          p_admin_id: adminId,
+          p_account_id: accountId,
+          p_account_type: accountType,
+          p_is_active: true,
+          p_request_id: requestId,
+        }),
+        refetch: () => loadAssignments(adminId),
       });
-      
-      await loadAssignments(adminId);
+      if (!ok) return false;
+      toast({ title: "Assignment Added", description: "Account assignment added successfully." });
       return true;
     } catch (error) {
       console.error('Error adding assignment:', error);
-      toast({
-        title: "Error Adding Assignment",
-        description: "Failed to add account assignment.",
-        variant: "destructive"
-      });
+      toast({ title: "Error Adding Assignment", description: "Failed to add account assignment.", variant: "destructive" });
       return false;
     }
   };
@@ -231,34 +209,33 @@ export const usePlatformAdminAssignmentManager = (platformAdminId?: string) => {
   // Remove assignment
   const removeAssignment = async (assignmentId: string, adminId: string) => {
     try {
-      const { error } = await supabase
+      // Need account_id and account_type to call RPC; fetch minimal fields for this assignment
+      const { data: row } = await supabase
         .from('platform_admin_account_assignments')
-        .update({ is_active: false })
-        .eq('id', assignmentId);
-
-      if (error) {
-        toast({
-          title: "Error Removing Assignment",
-          description: "Failed to remove account assignment.",
-          variant: "destructive"
-        });
+        .select('account_id, account_type')
+        .eq('id', assignmentId)
+        .single();
+      if (!row) {
+        toast({ title: "Error Removing Assignment", description: "Assignment not found.", variant: "destructive" });
         return false;
       }
-
-      toast({
-        title: "Assignment Removed",
-        description: "Account assignment removed successfully."
+      const requestId = crypto.randomUUID();
+      const ok = await safeMutation(`rm-assignment:${assignmentId}`, {
+        op: () => supabase.rpc('set_platform_admin_assignment', {
+          p_admin_id: adminId,
+          p_account_id: row.account_id,
+          p_account_type: row.account_type,
+          p_is_active: false,
+          p_request_id: requestId,
+        }),
+        refetch: () => loadAssignments(adminId),
       });
-      
-      await loadAssignments(adminId);
+      if (!ok) return false;
+      toast({ title: "Assignment Removed", description: "Account assignment removed successfully." });
       return true;
     } catch (error) {
       console.error('Error removing assignment:', error);
-      toast({
-        title: "Error Removing Assignment",
-        description: "Failed to remove account assignment.",
-        variant: "destructive"
-      });
+      toast({ title: "Error Removing Assignment", description: "Failed to remove account assignment.", variant: "destructive" });
       return false;
     }
   };

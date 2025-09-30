@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { safeMutation } from '@/lib/safeMutation';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
 import { usePlatformAdminAssignments } from '@/hooks/usePlatformAdminAssignments';
@@ -305,25 +306,32 @@ export const useAccounts = () => {
         const orgType = isLegacyEnum ? mapped : 'search_and_rescue';
         const orgSubtype = isLegacyEnum ? null : accountData.category;
 
-        const { error } = await supabase
-          .from('organizations')
-          .insert({
-            tenant_id: tenantId,
-            name: accountData.name,
-            slug: uniqueOrgSlug,
-            organization_type: orgType as any,
-            organization_subtype: orgSubtype,
-            contact_email: accountData.primaryEmail,
-            contact_phone: accountData.primaryPhone,
-            address: address,
-            description: `${accountData.category} organization`,
-            settings: {
-              secondary_email: accountData.secondaryEmail,
-              secondary_phone: accountData.secondaryPhone
-            }
-          });
-
-        if (error) throw error;
+        const requestId = crypto.randomUUID();
+        const ok = await safeMutation(`create-org:${uniqueOrgSlug}:${requestId}`, {
+          op: () => supabase.rpc('create_organization_tx', {
+            p_payload: {
+              tenant_id: tenantId,
+              name: accountData.name,
+              slug: uniqueOrgSlug,
+              organization_type: orgType as any,
+              organization_subtype: orgSubtype,
+              contact_email: accountData.primaryEmail,
+              contact_phone: accountData.primaryPhone,
+              address: address as any,
+              description: `${accountData.category} organization`,
+              settings: {
+                secondary_email: accountData.secondaryEmail,
+                secondary_phone: accountData.secondaryPhone
+              },
+              is_active: true,
+            },
+            p_request_id: requestId,
+          }),
+          refetch: () => fetchAccounts(),
+          name: 'create_organization_tx',
+          tags: { request_id: requestId },
+        });
+        if (!ok) throw new Error('Create organization failed');
 
         toast({
           title: "Organization Created",
@@ -388,71 +396,41 @@ export const useAccounts = () => {
 
         if (error) throw error;
       } else {
-        // Update organization
-        // If tenant assignment is changing, ensure slug uniqueness for new tenant
-        let nextSlug: string | undefined = undefined;
-        let nextTenantId: string | undefined = undefined;
-        if (updates.tenant_id && updates.tenant_id !== account.tenant_id) {
-          nextTenantId = updates.tenant_id;
-          const baseOrgSlug = (account.settings?.slug as string) || (account.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-          // Ensure unique slug under new tenant
-          const uniqueOrgSlug = await (async () => {
-            let attempt = baseOrgSlug || 'organization';
-            let counter = 2;
-            // eslint-disable-next-line no-constant-condition
-            while (true) {
-              const { data } = await supabase
-                .from('organizations')
-                .select('id')
-                .eq('tenant_id', updates.tenant_id as string)
-                .eq('slug', attempt)
-                .limit(1);
-              if (!data || data.length === 0) return attempt;
-              attempt = `${baseOrgSlug}-${counter++}`;
-              if (counter > 1000) return `${baseOrgSlug}-${crypto.randomUUID().slice(0, 8)}`;
-            }
-          })();
-          nextSlug = uniqueOrgSlug;
-        }
-
-        // Handle organization_type and organization_subtype
+        // Update organization via transactional RPC
         let orgType: string | undefined = undefined;
         let orgSubtype: string | null = null;
-        
         if (updates.category) {
-          // Check if the category is a legacy enum value or dynamic subtype
           const mapped = mapCategoryToOrgType(updates.category);
           const isLegacyEnum = mapped !== 'search_and_rescue' || updates.category === 'Search & Rescue';
-          
           if (isLegacyEnum) {
-            // It's a legacy enum value, save to organization_type
             orgType = mapped;
             orgSubtype = null;
           } else {
-            // It's a dynamic subtype, save to organization_subtype
-            orgType = 'search_and_rescue'; // Default fallback for organization_type
+            orgType = 'search_and_rescue';
             orgSubtype = updates.category;
           }
         }
-
         const payload: any = {
           name: updates.name,
-          contact_email: updates.email,
-          contact_phone: updates.phone,
+          email: updates.email,
+          phone: updates.phone,
           organization_type: orgType as any,
           organization_subtype: orgSubtype,
           is_active: updates.is_active,
           address: updates.address,
+          tenant_id: updates.tenant_id,
         };
-        if (nextTenantId) payload.tenant_id = nextTenantId;
-        if (nextSlug) payload.slug = nextSlug;
-
-        const { error } = await supabase
-          .from('organizations')
-          .update(payload)
-          .eq('id', id);
-
-        if (error) throw error;
+        const requestId = crypto.randomUUID();
+        const ok = await safeMutation(`update-org:${id}:${requestId}` ,{
+          op: () => supabase.rpc('update_or_delete_organization_tx', {
+            p_org_id: id,
+            p_mode: 'update',
+            p_payload: payload,
+            p_request_id: requestId,
+          }),
+          refetch: () => fetchAccounts(),
+        });
+        if (!ok) throw new Error('Update failed');
       }
 
       toast({
@@ -496,21 +474,31 @@ export const useAccounts = () => {
       }
 
       if (account.type === 'Enterprise') {
-        // Delete tenant from database
-        const { error } = await supabase
-          .from('enterprises')
-          .delete()
-          .eq('id', id);
-
-        if (error) throw error;
+        const requestId = crypto.randomUUID();
+        const ok = await safeMutation(`delete-tenant:${id}:${requestId}`, {
+          op: () => supabase.rpc('delete_enterprise_tx', {
+            p_tenant_id: id,
+            p_actor_id: '',
+            p_force: true,
+            p_request_id: requestId,
+          }),
+          refetch: () => fetchAccounts(),
+          name: 'delete_enterprise_tx',
+          tags: { request_id: requestId },
+        });
+        if (!ok) throw new Error('Delete enterprise failed');
       } else {
-        // Delete organization from database
-        const { error } = await supabase
-          .from('organizations')
-          .delete()
-          .eq('id', id);
-
-        if (error) throw error;
+        const requestId = crypto.randomUUID();
+        const ok = await safeMutation(`delete-org:${id}:${requestId}`, {
+          op: () => supabase.rpc('update_or_delete_organization_tx', {
+            p_org_id: id,
+            p_mode: 'delete',
+            p_payload: {},
+            p_request_id: requestId,
+          }),
+          refetch: () => fetchAccounts(),
+        });
+        if (!ok) throw new Error('Delete failed');
       }
 
       toast({

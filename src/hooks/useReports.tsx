@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { safeMutation } from '@/lib/safeMutation';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
 
@@ -140,26 +141,30 @@ export const useReports = () => {
         });
       }
 
-      const insertData = {
-        tenant_id: currentUser.tenant_id,
-        account_id: accountId!,
-        account_type: accountType,
-        template_id: payload.template_id ?? null,
-        template_version: payload.template_version ?? null,
-        title: payload.title ?? null,
-        description: payload.description ?? null,
-        report_type: payload.report_type,
-        created_by: currentUser.id,
-        incident_id: payload.incident_id ?? null,
-        metadata: payload.metadata ?? null,
-        submitted_at: new Date().toISOString(),
-      } as const;
-
-      const { error } = await supabase.from('reports').insert(insertData);
-      if (error) throw error;
+      const requestId = crypto.randomUUID();
+      const ok = await safeMutation(`create-report:${requestId}`, {
+        op: () => supabase.rpc('create_report_tx', {
+          p_actor_id: currentUser.id,
+          p_payload: {
+            tenant_id: currentUser.tenant_id,
+            account_id: accountId!,
+            account_type: accountType,
+            template_id: payload.template_id ?? null,
+            template_version: payload.template_version ?? null,
+            title: payload.title ?? null,
+            description: payload.description ?? null,
+            report_type: payload.report_type,
+            incident_id: payload.incident_id ?? null,
+            metadata: payload.metadata ?? null,
+            submitted_at: new Date().toISOString(),
+          },
+          p_request_id: requestId,
+        }),
+        refetch: () => fetchReports(),
+      });
+      if (!ok) throw new Error('RPC failed');
 
       toast({ title: 'Report submitted', description: 'Your report has been created.' });
-      await fetchReports();
       return true;
     } catch (err) {
       console.error('Error creating report:', err);

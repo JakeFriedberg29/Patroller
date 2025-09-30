@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAccounts, Account } from "@/hooks/useAccounts";
 import { useEnterpriseData } from "@/hooks/useEnterpriseData";
 import { supabase } from "@/integrations/supabase/client";
+import { safeMutation } from "@/lib/safeMutation";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -469,30 +470,36 @@ export default function Settings() {
 
           if (error) throw error;
         } else {
-          // For enterprises, update settings
+          // For enterprises, update settings via RPC
           const currentSettings = currentAccount.settings || {};
-          const { error } = await supabase
-            .from('enterprises')
-            .update({
-              name: formData.name,
-              settings: {
-                ...currentSettings,
-                contact_email: formData.primaryEmail,
-                contact_phone: formData.primaryPhone,
-                contact_primary_name: formData.primaryContact,
-                enterprise_subtype: formData.category,
-                address: {
-                  street: formData.address,
-                  city: formData.city,
-                  state: formData.state,
-                  zip: formData.zip,
-                  country: 'USA'
-                }
+          const payload = {
+            name: formData.name,
+            settings: {
+              ...currentSettings,
+              contact_email: formData.primaryEmail,
+              contact_phone: formData.primaryPhone,
+              contact_primary_name: formData.primaryContact,
+              enterprise_subtype: formData.category,
+              address: {
+                street: formData.address,
+                city: formData.city,
+                state: formData.state,
+                zip: formData.zip,
+                country: 'USA'
               }
-            })
-            .eq('id', currentAccount.id);
-
-          if (error) throw error;
+            }
+          } as any;
+          const requestId = crypto.randomUUID();
+          const ok = await safeMutation(`update-enterprise:${currentAccount.id}:${requestId}`, {
+            op: () => supabase.rpc('update_enterprise_settings_tx', {
+              p_tenant_id: currentAccount.id,
+              p_payload: payload,
+              p_request_id: requestId,
+            }),
+            name: 'update_enterprise_settings_tx',
+            tags: { request_id: requestId },
+          });
+          if (!ok) throw new Error('Enterprise update failed');
         }
       }
 
@@ -547,18 +554,19 @@ export default function Settings() {
 
       console.log('Attempting to update organization in database...');
       // Update the organization to set tenant_id to null
-      const { error, data } = await supabase
-        .from('organizations')
-        .update({ tenant_id: null })
-        .eq('id', orgId)
-        .select();
-
-      console.log('Update result:', { data, error });
-
-      if (error) {
-        console.error('Database update error:', error);
-        throw error;
-      }
+      const requestId = crypto.randomUUID();
+      const ok = await safeMutation(`unassign-org:${orgId}:${requestId}`, {
+        op: () => supabase.rpc('update_or_delete_organization_tx', {
+          p_org_id: orgId,
+          p_mode: 'update',
+          p_payload: { tenant_id: null },
+          p_request_id: requestId,
+        }),
+        name: 'update_or_delete_organization_tx',
+        tags: { request_id: requestId },
+        refetch: () => refetchEnterpriseData(),
+      });
+      if (!ok) throw new Error('Unassign failed');
 
       console.log('Successfully unassigned organization');
       toast({

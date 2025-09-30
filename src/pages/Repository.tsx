@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { safeMutation } from "@/lib/safeMutation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -160,48 +161,25 @@ export default function Repository() {
     if (!tenantId || !deleteTemplateId) return;
     setIsDeleting(true);
     try {
-      // 1) Remove subtype/platform assignments for this template in this tenant
-      await supabase
-        .from('repository_assignments')
-        .delete()
-        .eq('tenant_id', tenantId)
-        .eq('element_type', 'report_template' as any)
-        .eq('target_type', 'organization_type' as any)
-        .eq('element_id', deleteTemplateId);
-
-      // 2) Remove any direct organization assignments (legacy), if table exists
-      try {
-        await supabase
-          .from('organization_report_templates' as any)
-          .delete()
-          .eq('tenant_id', tenantId)
-          .eq('template_id', deleteTemplateId);
-      } catch {}
-
-      // 3) Delete the template itself (reports keep visibility; template_id will be set NULL by FK)
-      const { error: delErr } = await supabase
-        .from('report_templates')
-        .delete()
-        .eq('tenant_id', tenantId)
-        .eq('id', deleteTemplateId);
-      if (delErr) throw delErr;
-
-      // 4) Audit log
       const userId = profile?.profileData?.user_id || null;
-      await supabase.from('audit_logs').insert({
-        tenant_id: tenantId,
-        user_id: userId as any,
-        action: 'DELETE_REPORT_TEMPLATE',
-        resource_type: 'report_template',
-        resource_id: deleteTemplateId,
-        metadata: { name: deleteTemplateName } as any,
-      } as any);
-
-      // 5) Update UI state
-      setPlatformTemplates(prev => prev.filter(t => t.id !== deleteTemplateId));
-      setAssignedOrgCounts(prev => {
-        const { [deleteTemplateId]: _omit, ...rest } = prev;
-        return rest;
+      const requestId = crypto.randomUUID();
+      await safeMutation(`del-template:${deleteTemplateId}`, {
+        op: () => supabase.rpc('delete_report_template', {
+          p_tenant_id: tenantId,
+          p_template_id: deleteTemplateId,
+          p_actor_id: userId,
+          p_request_id: requestId,
+        }),
+        refetch: async () => {
+          const { data } = await supabase
+            .from('report_templates')
+            .select('id,name,description,status')
+            .eq('tenant_id', tenantId)
+            .is('organization_id', null)
+            .order('name', { ascending: true });
+          const templates = (data || []) as Array<{ id: string; name: string; description: string | null }>;
+          setPlatformTemplates(templates);
+        },
       });
       toast({ title: 'Report deleted', description: `"${deleteTemplateName}" was permanently removed.` });
     } catch (e: any) {
