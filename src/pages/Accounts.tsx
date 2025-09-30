@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +61,11 @@ export default function Accounts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
   
+  // State for dynamic subtypes
+  const [organizationSubtypes, setOrganizationSubtypes] = useState<Array<{ id: string; name: string }>>([]);
+  const [enterpriseSubtypes, setEnterpriseSubtypes] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingSubtypes, setLoadingSubtypes] = useState(false);
+  
   const handleCopyId = async (id: string) => {
     try {
       await navigator.clipboard.writeText(id);
@@ -96,6 +101,52 @@ export default function Accounts() {
   const [enterpriseQuery, setEnterpriseQuery] = useState("");
   const [enterprises, setEnterprises] = useState<Array<{ id: string; name: string }>>([]);
   const [loadingEnterprises, setLoadingEnterprises] = useState(false);
+
+  // Fetch organization subtypes from platform
+  const loadOrganizationSubtypes = async () => {
+    try {
+      setLoadingSubtypes(true);
+      const { data, error } = await supabase
+        .from('organization_subtypes')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+      
+      if (error) throw error;
+      setOrganizationSubtypes((data || []).map((s: any) => ({ id: s.id, name: s.name })));
+    } catch (error) {
+      console.error('Error loading organization subtypes:', error);
+    } finally {
+      setLoadingSubtypes(false);
+    }
+  };
+
+  // Fetch enterprise subtypes from platform
+  const loadEnterpriseSubtypes = async () => {
+    try {
+      setLoadingSubtypes(true);
+      const { data, error } = await supabase
+        .from('enterprise_subtypes')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+      
+      if (error) throw error;
+      setEnterpriseSubtypes((data || []).map((s: any) => ({ id: s.id, name: s.name })));
+    } catch (error) {
+      console.error('Error loading enterprise subtypes:', error);
+    } finally {
+      setLoadingSubtypes(false);
+    }
+  };
+
+  // Load subtypes when modal opens
+  useEffect(() => {
+    if (isAddModalOpen) {
+      loadOrganizationSubtypes();
+      loadEnterpriseSubtypes();
+    }
+  }, [isAddModalOpen]);
 
   const loadEnterprises = async (q: string) => {
     try {
@@ -488,26 +539,31 @@ export default function Accounts() {
               <Label htmlFor="category">Subtype *</Label>
               <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
                 <SelectTrigger className="border-2">
-                  <SelectValue />
+                  <SelectValue placeholder="Select a subtype..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {formData.type === "Enterprise" ? (
-                    <>
-                      <SelectItem value="Resort Chain">Resort Chain</SelectItem>
-                      <SelectItem value="Municipality">Municipality</SelectItem>
-                      <SelectItem value="Park Agency">Park Agency</SelectItem>
-                      <SelectItem value="Event Management">Event Management</SelectItem>
-                    </>
+                  {loadingSubtypes ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">Loading subtypes...</div>
+                  ) : formData.type === "Enterprise" ? (
+                    enterpriseSubtypes.length > 0 ? (
+                      enterpriseSubtypes.map((subtype) => (
+                        <SelectItem key={subtype.id} value={subtype.name}>
+                          {subtype.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="py-6 text-center text-sm text-muted-foreground">No enterprise subtypes available</div>
+                    )
                   ) : (
-                    <>
-                      <SelectItem value="Search & Rescue">Search & Rescue</SelectItem>
-                      <SelectItem value="Lifeguard Service">Lifeguard Service</SelectItem>
-                      <SelectItem value="Park Service">Park Service</SelectItem>
-                      <SelectItem value="Event Medical">Event Medical</SelectItem>
-                      <SelectItem value="Ski Patrol">Ski Patrol</SelectItem>
-                      <SelectItem value="Harbor Master">Harbor Master</SelectItem>
-                      <SelectItem value="Volunteer Emergency Services">Volunteer Emergency Services</SelectItem>
-                    </>
+                    organizationSubtypes.length > 0 ? (
+                      organizationSubtypes.map((subtype) => (
+                        <SelectItem key={subtype.id} value={subtype.name}>
+                          {subtype.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="py-6 text-center text-sm text-muted-foreground">No organization subtypes available</div>
+                    )
                   )}
                 </SelectContent>
               </Select>
