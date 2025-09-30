@@ -62,6 +62,7 @@ export default function Repository() {
   const openAssignModal = async (templateId: string) => {
     try {
       // Refresh available org subtypes (prefer dynamic table per tenant if present)
+      let orgTypes: string[] = [];
       if (tenantId) {
         const { data: dyn } = await supabase
           .from('organization_subtypes')
@@ -70,11 +71,14 @@ export default function Repository() {
           .eq('is_active', true)
           .order('name', { ascending: true });
         const names = (dyn || []).map((r: any) => String(r.name));
-        if (names.length > 0) setAllOrgTypes(names);
-        else setAllOrgTypes([...(Constants.public.Enums.organization_type as readonly string[])] as string[]);
+        orgTypes = names.length > 0
+          ? names
+          : ([...(Constants.public.Enums.organization_type as readonly string[])] as string[]);
       } else {
-        setAllOrgTypes([...(Constants.public.Enums.organization_type as readonly string[])] as string[]);
+        orgTypes = ([...(Constants.public.Enums.organization_type as readonly string[])] as string[]);
       }
+      // Update state for any UI that depends on it, but use local orgTypes to avoid race conditions
+      setAllOrgTypes(orgTypes);
       // Show subtype as selected if ANY tenant currently has it assigned
       const { data, error } = await supabase
         .from('repository_assignments')
@@ -86,7 +90,7 @@ export default function Repository() {
       const assignedDistinct = Array.from(new Set((data || [])
         .map((r: any) => String(r.target_organization_type))
         .filter(Boolean)));
-      const available = allOrgTypes.filter(t => !assignedDistinct.includes(t));
+      const available = orgTypes.filter(t => !assignedDistinct.includes(t));
       setAssignTemplateId(templateId);
       setInitialAssignedTypes(assignedDistinct);
       setRightList(assignedDistinct);
