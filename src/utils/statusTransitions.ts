@@ -12,7 +12,7 @@ export interface StatusOption {
  * - Ready → Draft, Published, Archive
  * - Published → Unpublished, Ready, Draft
  * - Unpublished → Draft, Ready, Published, Archive
- * - Archive → (no transitions allowed)
+ * - Archive → Draft, Ready
  */
 export function getValidNextStates(currentStatus: ReportStatus): StatusOption[] {
   const allOptions: StatusOption[] = [
@@ -33,7 +33,7 @@ export function getValidNextStates(currentStatus: ReportStatus): StatusOption[] 
     case 'unpublished':
       return allOptions.filter(opt => ['draft', 'ready', 'published', 'archive'].includes(opt.value));
     case 'archive':
-      return []; // Cannot transition out of archive
+      return allOptions.filter(opt => ['draft', 'ready'].includes(opt.value));
     default:
       // Fallback for unknown status - show all options
       return allOptions;
@@ -51,8 +51,8 @@ export function isValidTransition(from: ReportStatus, to: ReportStatus): boolean
 
 /**
  * Check if a report template can be deleted based on its status
- * Only Draft and Unpublished reports can be deleted
+ * Only Archive status reports can be deleted
  */
 export function canDeleteReport(status: ReportStatus): boolean {
-  return status === 'draft' || status === 'unpublished';
+  return status === 'archive';
 }

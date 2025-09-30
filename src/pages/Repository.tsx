@@ -76,7 +76,7 @@ export default function Repository() {
       }
       // Show subtype as selected if ANY tenant currently has it assigned
       const { data, error } = await supabase
-        .from('platform_assignments')
+        .from('repository_assignments')
         .select('target_organization_type')
         .eq('element_type', 'report_template')
         .eq('element_id', templateId)
@@ -100,17 +100,40 @@ export default function Repository() {
 
   const handleInlineStatusChange = async (templateId: string, next: 'draft' | 'ready' | 'published' | 'unpublished' | 'archive') => {
     try {
-      const { data, error } = await supabase.rpc('set_report_template_status' as any, {
-        p_template_id: templateId,
-        p_status: next,
-      });
-      const ok = (data as any)?.success !== false;
-      if (error || !ok) throw error || new Error((data as any)?.error || 'update_failed');
-      setPlatformTemplates(prev => prev.map(t => t.id === templateId ? ({ ...t, status: next } as any) : t));
-      const { title, description } = { title: 'Status updated', description: `Report set to ${next}.` };
-      toast({ title, description });
+      // Direct update using RLS policies (simpler and more reliable than RPC)
+      const { data, error } = await supabase
+        .from('report_templates')
+        .update({ status: next })
+        .eq('id', templateId)
+        .select('status')
+        .single();
+      
+      if (error) {
+        console.error('Status update error:', error);
+        throw error;
+      }
+      
+      // Update local state with confirmed status from database
+      setPlatformTemplates(prev => prev.map(t => 
+        t.id === templateId ? ({ ...t, status: data.status } as any) : t
+      ));
+      toast({ title: 'Status updated', description: `Report status changed to ${data.status}.` });
     } catch (e: any) {
-      toast({ title: 'Update failed', description: 'Could not update status.', variant: 'destructive' });
+      console.error('Status change error:', e);
+      let errorMsg = 'Could not update status.';
+      
+      // Handle specific error types
+      if (e?.message?.includes('Invalid status transition')) {
+        errorMsg = `Invalid status change. ${e.message}`;
+      } else if (e?.message?.includes('permission')) {
+        errorMsg = 'You do not have permission to change report status.';
+      } else if (e?.code === 'PGRST301') {
+        errorMsg = 'Report not found or you do not have access.';
+      } else if (e?.message) {
+        errorMsg = `Update failed: ${e.message}`;
+      }
+      
+      toast({ title: 'Update failed', description: errorMsg, variant: 'destructive' });
     }
   };
 
@@ -139,7 +162,7 @@ export default function Repository() {
     try {
       // 1) Remove subtype/platform assignments for this template in this tenant
       await supabase
-        .from('platform_assignments')
+        .from('repository_assignments')
         .delete()
         .eq('tenant_id', tenantId)
         .eq('element_type', 'report_template' as any)
@@ -180,10 +203,19 @@ export default function Repository() {
         const { [deleteTemplateId]: _omit, ...rest } = prev;
         return rest;
       });
-      toast({ title: 'Report deleted', description: `“${deleteTemplateName}” was permanently removed.` });
+      toast({ title: 'Report deleted', description: `"${deleteTemplateName}" was permanently removed.` });
     } catch (e: any) {
       console.error('Failed to delete template', e);
-      toast({ title: 'Delete failed', description: 'Could not delete report. Please try again.', variant: 'destructive' });
+      let errorMsg = 'Could not delete report. Please try again.';
+      
+      // Handle specific error for non-archive status
+      if (e?.message?.includes('Only archived reports can be deleted') || e?.message?.includes('Cannot delete report template with status')) {
+        errorMsg = 'Only archived reports can be deleted. Please archive this report first.';
+      } else if (e?.message) {
+        errorMsg = e.message;
+      }
+      
+      toast({ title: 'Delete failed', description: errorMsg, variant: 'destructive' });
     } finally {
       setIsDeleting(false);
       setIsDeleteOpen(false);
@@ -258,7 +290,7 @@ export default function Repository() {
       const templateIdsAcrossTenants = Object.values(tenantToTemplateId);
       if (tenantsForSelected.length > 0 && rightList.length > 0 && templateIdsAcrossTenants.length > 0) {
         const { data: existingRows, error: existErr } = await supabase
-          .from('platform_assignments')
+          .from('repository_assignments')
           .select('tenant_id, target_organization_type, element_id')
           .eq('element_type', 'report_template')
           .eq('target_type', 'organization_type')
@@ -288,7 +320,7 @@ export default function Repository() {
         }
       }
       if (missingRows.length > 0) {
-        const { error: addErr } = await supabase.from('platform_assignments').insert(missingRows);
+        const { error: addErr } = await supabase.from('repository_assignments').insert(missingRows);
         if (addErr) throw addErr;
       }
 
@@ -302,7 +334,7 @@ export default function Repository() {
         const allTemplateIds = (allRt || []).map((r: any) => r.id);
         if (allTemplateIds.length > 0) {
           const { error: delErr } = await supabase
-            .from('platform_assignments')
+            .from('repository_assignments')
             .delete()
             .eq('element_type', 'report_template')
             .eq('target_type', 'organization_type')
@@ -360,7 +392,7 @@ export default function Repository() {
         if (templateIds.length > 0) {
           const [{ data: assignments }, { data: orgs }] = await Promise.all([
             supabase
-              .from('platform_assignments')
+              .from('repository_assignments')
               .select('element_id, target_organization_type')
               .eq('tenant_id', tenantId)
               .eq('element_type', 'report_template')

@@ -209,20 +209,34 @@ export default function ReportBuilder() {
     }
   };
 
-  const handleStatusChange = async (next: 'draft' | 'ready' | 'published' | 'unpublished') => {
+  const handleStatusChange = async (next: 'draft' | 'ready' | 'published' | 'unpublished' | 'archive') => {
     try {
       setStatus(next);
       if (templateId && templateId !== 'new') {
-        const { data, error } = await supabase.rpc('set_report_template_status' as any, {
-          p_template_id: templateId,
-          p_status: next,
-        });
-        const ok = (data as any)?.success !== false;
-        if (error || !ok) throw error || new Error((data as any)?.error || 'update_failed');
+        // Direct update using RLS policies
+        const { error } = await supabase
+          .from('report_templates')
+          .update({ status: next })
+          .eq('id', templateId);
+        
+        if (error) {
+          console.error('Status update error:', error);
+          throw error;
+        }
+        
         toast({ title: 'Status updated', description: `Report set to ${next}.` });
       }
     } catch (e: any) {
-      toast({ title: 'Update failed', description: 'Could not update status.', variant: 'destructive' });
+      console.error('Status change error:', e);
+      let errorMsg = 'Could not update status.';
+      
+      if (e?.message?.includes('Invalid status transition')) {
+        errorMsg = `Invalid status change. ${e.message}`;
+      } else if (e?.message) {
+        errorMsg = `Update failed: ${e.message}`;
+      }
+      
+      toast({ title: 'Update failed', description: errorMsg, variant: 'destructive' });
     }
   };
 
