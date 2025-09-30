@@ -386,15 +386,22 @@ export const useAccounts = () => {
           address: updates.address ?? (account.settings as any)?.address,
         };
 
-        const { error } = await supabase
-          .from('enterprises')
-          .update({
-            name: updates.name,
-            settings: nextSettings
-          })
-          .eq('id', id);
-
-        if (error) throw error;
+        const payload: any = {
+          name: updates.name,
+          settings: nextSettings,
+        };
+        const requestId = crypto.randomUUID();
+        const ok = await safeMutation(`update-enterprise:${id}:${requestId}`, {
+          op: () => supabase.rpc('update_enterprise_settings_tx', {
+            p_tenant_id: id,
+            p_payload: payload,
+            p_request_id: requestId,
+          }),
+          refetch: () => fetchAccounts(),
+          name: 'update_enterprise_settings_tx',
+          tags: { request_id: requestId },
+        });
+        if (!ok) throw new Error('Enterprise update failed');
       } else {
         // Update organization via transactional RPC
         let orgType: string | undefined = undefined;
