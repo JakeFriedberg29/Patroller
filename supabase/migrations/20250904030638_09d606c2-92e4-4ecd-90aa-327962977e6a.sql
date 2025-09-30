@@ -17,7 +17,7 @@ BEGIN
     -- If no tenant exists, create one
     IF v_tenant_id IS NULL THEN
         INSERT INTO public.tenants (name, slug, subscription_tier, max_organizations, max_users) 
-        VALUES ('MissionLog Platform', 'missionlog-platform', 'enterprise', 100, 1000)
+        VALUES ('Patroller Console', 'patroller-console', 'enterprise', 100, 1000)
         RETURNING id INTO v_tenant_id;
     END IF;
 

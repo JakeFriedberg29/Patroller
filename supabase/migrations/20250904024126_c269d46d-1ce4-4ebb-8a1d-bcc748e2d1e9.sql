@@ -1,5 +1,5 @@
 -- =====================================================
--- MISSIONLOG ESSENTIAL FUNCTIONS & PROCEDURES - PHASE 3
+-- PATROLLER CONSOLE ESSENTIAL FUNCTIONS & PROCEDURES - PHASE 3
 -- Core Business Logic and User Management
 -- =====================================================
 

@@ -25,7 +25,7 @@ const mockActivationNotifications = [{
   lastSent: "2024-01-15T09:05:00Z",
   emailTemplate: `Dear [RECIPIENT_NAME],
 
-Welcome to MissionLog Platform Administration!
+Welcome to Patroller Console Administration!
 
 Your Platform Administrator account has been created and is ready for activation.
 
@@ -49,7 +49,7 @@ As a Platform Administrator, you will have access to:
 If you have any questions or need assistance, please contact our support team.
 
 Best regards,
-MissionLog Platform Team
+Patroller Console Team
 
 ---
 This is an automated message. Please do not reply to this email.`

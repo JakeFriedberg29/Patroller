@@ -126,7 +126,7 @@ export const useAccounts = () => {
         
         const settings: any = tenant.settings || {};
         let enterpriseSubtype = settings.enterprise_subtype || 'Municipality';
-        const isPlatformRoot = (tenant as any)?.slug === 'missionlog-platform' || tenant.name === 'MissionLog Platform';
+        const isPlatformRoot = (tenant as any)?.slug === 'patroller-console' || tenant.name === 'Patroller Console';
         if (isPlatformRoot) {
           enterpriseSubtype = 'Root Account';
         }
@@ -376,7 +376,7 @@ export const useAccounts = () => {
 
       if (account.type === 'Enterprise') {
         // Update enterprise settings and profile fields
-        const isPlatformRoot = account.name === 'MissionLog Platform';
+        const isPlatformRoot = account.name === 'Patroller Console';
         const nextSettings: any = {
           ...(account.settings || {}),
           contact_email: updates.email ?? (account.settings as any)?.contact_email,

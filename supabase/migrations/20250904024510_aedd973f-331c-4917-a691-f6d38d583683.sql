@@ -1,5 +1,5 @@
 -- =====================================================
--- MISSIONLOG DATABASE FINAL SETUP
+-- PATROLLER CONSOLE DATABASE FINAL SETUP
 -- Complete the database architecture
 -- =====================================================
 

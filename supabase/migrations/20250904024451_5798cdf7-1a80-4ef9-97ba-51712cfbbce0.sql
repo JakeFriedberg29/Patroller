@@ -1,5 +1,5 @@
 -- =====================================================
--- MISSIONLOG DATABASE COMPLETION - FINAL PHASE
+-- PATROLLER CONSOLE DATABASE COMPLETION - FINAL PHASE
 -- Essential Constraints and Basic Sample Data
 -- =====================================================
 

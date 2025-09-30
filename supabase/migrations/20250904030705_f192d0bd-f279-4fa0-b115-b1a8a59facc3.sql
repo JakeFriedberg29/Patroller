@@ -8,18 +8,18 @@ DECLARE
     v_auth_user_id UUID;
     v_user_id UUID;
     v_tenant_id UUID;
-    v_temp_password TEXT := 'MissionLog2025!'; -- Temporary password
+    v_temp_password TEXT := 'Patroller2025!'; -- Temporary password
     v_user_exists BOOLEAN := false;
 BEGIN
     -- Get or create the main tenant
-    SELECT id INTO v_tenant_id FROM public.tenants WHERE slug = 'missionlog-platform';
+    SELECT id INTO v_tenant_id FROM public.tenants WHERE slug = 'patroller-console';
     
     IF v_tenant_id IS NULL THEN
         INSERT INTO public.tenants (name, slug, subscription_tier, max_organizations, max_users) 
-        VALUES ('MissionLog Platform', 'missionlog-platform', 'enterprise', 100, 1000)
+        VALUES ('Patroller Console', 'patroller-console', 'enterprise', 100, 1000)
         RETURNING id INTO v_tenant_id;
         
-        RAISE NOTICE 'Created new tenant: MissionLog Platform';
+        RAISE NOTICE 'Created new tenant: Patroller Console';
     END IF;
 
     -- Check if user already exists

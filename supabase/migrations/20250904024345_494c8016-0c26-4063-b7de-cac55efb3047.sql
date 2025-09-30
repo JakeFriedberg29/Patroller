@@ -1,5 +1,5 @@
 -- =====================================================
--- MISSIONLOG SAMPLE DATA - CORRECTED VERSION
+-- PATROLLER CONSOLE SAMPLE DATA - CORRECTED VERSION
 -- Basic Development and Testing Data Setup  
 -- =====================================================
 
@@ -238,7 +238,7 @@ BEGIN
     ) VALUES (
       user_record.tenant_id,
       user_record.id,
-      'Welcome to MissionLog!',
+      'Welcome to Patroller Console!',
       'Welcome ' || user_record.full_name || '! Your account has been set up successfully.',
       'success',
       false

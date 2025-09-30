@@ -140,12 +140,12 @@ $$;
 REVOKE ALL ON FUNCTION public.delete_organization_subtype(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.delete_organization_subtype(TEXT) TO authenticated;
 
--- 3) Seed initial values for platform tenant (MissionLog Platform)
+-- 3) Seed initial values for platform tenant (Patroller Console)
 DO $$
 DECLARE
   platform_tenant_id UUID;
 BEGIN
-  SELECT id INTO platform_tenant_id FROM public.enterprises WHERE slug = 'missionlog-platform' OR name = 'MissionLog Platform' LIMIT 1;
+  SELECT id INTO platform_tenant_id FROM public.enterprises WHERE slug = 'patroller-console' OR name = 'Patroller Console' LIMIT 1;
 
   IF platform_tenant_id IS NOT NULL THEN
     -- Enterprise subtypes

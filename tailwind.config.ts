@@ -53,7 +53,7 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// MissionLog Status Colors
+				// Patroller Console Status Colors
 				critical: {
 					DEFAULT: 'hsl(var(--critical))',
 					foreground: 'hsl(var(--critical-foreground))',

@@ -136,7 +136,7 @@ export default function PlatformAdmins() {
         const { data: platformTenant } = await supabase
           .from('enterprises')
           .select('id, slug')
-          .eq('slug', 'missionlog-platform')
+          .eq('slug', 'patroller-console')
           .maybeSingle();
 
         if (platformTenant?.id) {
@@ -156,8 +156,8 @@ export default function PlatformAdmins() {
             const { data: createdTenant, error: createTenantErr } = await supabase
               .from('enterprises')
               .insert({
-                name: 'MissionLog Platform',
-                slug: 'missionlog-platform',
+                name: 'Patroller Console',
+                slug: 'patroller-console',
                 subscription_tier: 'enterprise',
                 subscription_status: 'active',
                 settings: {}

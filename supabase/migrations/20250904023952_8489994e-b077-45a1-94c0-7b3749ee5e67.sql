@@ -1,5 +1,5 @@
 -- =====================================================
--- MISSIONLOG RLS POLICIES - PHASE 2  
+-- PATROLLER CONSOLE RLS POLICIES - PHASE 2  
 -- Complete Multi-Tenant Security Implementation
 -- =====================================================
 

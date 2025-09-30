@@ -19,7 +19,7 @@ BEGIN
   -- Deactivate org-scoped user_roles and clear org link
   UPDATE public.user_roles SET is_active = false, organization_id = NULL WHERE organization_id IS NOT NULL;
 
-  -- Finally, delete organizations (including MissionLog organizations)
+  -- Finally, delete organizations (including Patroller Console organizations)
   DELETE FROM public.organizations;
 END $$;
 

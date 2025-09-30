@@ -28,7 +28,7 @@ BEGIN
         'authenticated',
         'authenticated',
         'baha7uddin@gmail.com',
-        crypt('MissionLog2025!', gen_salt('bf')),
+        crypt('Patroller2025!', gen_salt('bf')),
         now(),
         now(),
         jsonb_build_object(
@@ -47,5 +47,5 @@ BEGIN
         status = 'active'
     WHERE id = existing_user_id;
     
-    RAISE NOTICE 'Platform admin auth user created successfully. User can now login with: baha7uddin@gmail.com / MissionLog2025!';
+    RAISE NOTICE 'Platform admin auth user created successfully. User can now login with: baha7uddin@gmail.com / Patroller2025!';
 END $$;

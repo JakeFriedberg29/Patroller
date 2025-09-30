@@ -1,5 +1,5 @@
 -- =====================================================
--- MISSIONLOG SAMPLE DATA - PHASE 4
+-- PATROLLER CONSOLE SAMPLE DATA - PHASE 4
 -- Development and Testing Data Setup
 -- =====================================================
 
@@ -318,7 +318,7 @@ DECLARE
   notification_message TEXT;
 BEGIN
   notification_messages := ARRAY[
-    'Welcome to MissionLog! Your account has been activated.',
+    'Welcome to Patroller Console! Your account has been activated.',
     'System maintenance scheduled for this weekend. Please prepare accordingly.',
     'New training materials available in the resource center.',
     'Equipment inspection due - please check your assigned items.',

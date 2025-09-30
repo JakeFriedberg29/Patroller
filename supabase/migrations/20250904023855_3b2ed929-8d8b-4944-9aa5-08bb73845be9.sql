@@ -1,5 +1,5 @@
 -- =====================================================
--- MISSIONLOG DATABASE FOUNDATION - PHASE 1
+-- PATROLLER CONSOLE DATABASE FOUNDATION - PHASE 1
 -- Production-Ready Multi-Tenant Platform Architecture
 -- =====================================================
 
