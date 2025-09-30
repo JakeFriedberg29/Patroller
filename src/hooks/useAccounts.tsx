@@ -163,7 +163,7 @@ export const useAccounts = () => {
           id: org.id,
           name: org.name,
           type: 'Organization' as const,
-          category: mapOrgTypeToCategory(org.organization_type),
+          category: org.organization_subtype || mapOrgTypeToCategory(org.organization_type),
           members: memberCount,
           email: org.contact_email || 'N/A',
           phone: org.contact_phone || 'N/A',
@@ -316,13 +316,20 @@ export const useAccounts = () => {
         const baseOrgSlug = slugify(accountData.name);
         const uniqueOrgSlug = await getUniqueOrgSlug(tenantId, baseOrgSlug);
 
+        // Determine if category is legacy enum or dynamic subtype
+        const mapped = mapCategoryToOrgType(accountData.category);
+        const isLegacyEnum = mapped !== 'search_and_rescue' || accountData.category === 'Search & Rescue';
+        const orgType = isLegacyEnum ? mapped : 'search_and_rescue';
+        const orgSubtype = isLegacyEnum ? null : accountData.category;
+
         const { error } = await supabase
           .from('organizations')
           .insert({
             tenant_id: tenantId,
             name: accountData.name,
             slug: uniqueOrgSlug,
-            organization_type: mapCategoryToOrgType(accountData.category) as any,
+            organization_type: orgType as any,
+            organization_subtype: orgSubtype,
             contact_email: accountData.primaryEmail,
             contact_phone: accountData.primaryPhone,
             address: address,
@@ -425,17 +432,23 @@ export const useAccounts = () => {
           nextSlug = uniqueOrgSlug;
         }
 
-        // Handle organization_type: try mapping first for legacy values, otherwise use category directly
+        // Handle organization_type and organization_subtype
         let orgType: string | undefined = undefined;
+        let orgSubtype: string | null = null;
+        
         if (updates.category) {
-          // Try mapping for legacy hardcoded categories
+          // Check if the category is a legacy enum value or dynamic subtype
           const mapped = mapCategoryToOrgType(updates.category);
-          // If mapping returns default, check if category is already a valid enum value (dynamic subtype)
-          if (mapped === 'search_and_rescue' && updates.category !== 'Search & Rescue') {
-            // Category didn't match hardcoded map, use it directly (it's a dynamic subtype)
-            orgType = updates.category;
-          } else {
+          const isLegacyEnum = mapped !== 'search_and_rescue' || updates.category === 'Search & Rescue';
+          
+          if (isLegacyEnum) {
+            // It's a legacy enum value, save to organization_type
             orgType = mapped;
+            orgSubtype = null;
+          } else {
+            // It's a dynamic subtype, save to organization_subtype
+            orgType = 'search_and_rescue'; // Default fallback for organization_type
+            orgSubtype = updates.category;
           }
         }
 
@@ -444,6 +457,7 @@ export const useAccounts = () => {
           contact_email: updates.email,
           contact_phone: updates.phone,
           organization_type: orgType as any,
+          organization_subtype: orgSubtype,
           is_active: updates.is_active,
           address: updates.address,
         };

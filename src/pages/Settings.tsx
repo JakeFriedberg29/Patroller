@@ -62,6 +62,7 @@ export default function Settings() {
   const [organizationSubtypes, setOrganizationSubtypes] = useState<string[]>([]);
   const [loadingEnterpriseSubtypes, setLoadingEnterpriseSubtypes] = useState(false);
   const [loadingOrgSubtypes, setLoadingOrgSubtypes] = useState(false);
+  const [forceDbReload, setForceDbReload] = useState(false);
 
   const loadEnterprises = async (q: string) => {
     try {
@@ -201,11 +202,14 @@ export default function Settings() {
       console.log('Organization query result:', { org, orgError });
       
       if (org) {
+        // Use organization_subtype if it exists, otherwise fallback to organization_type
+        const displayCategory = org.organization_subtype || mapOrgTypeToCategory(org.organization_type);
+        
         const account: Account = {
           id: org.id,
           name: org.name,
           type: 'Organization',
-          category: mapOrgTypeToCategory(org.organization_type),
+          category: displayCategory,
           members: 0,
           email: org.contact_email || 'N/A',
           phone: org.contact_phone || 'N/A',
@@ -242,8 +246,8 @@ export default function Settings() {
         setFormData({
           name: account.name,
           type: account.type,
-          // Use the raw enum value for organizations so Select value matches
-          category: org.organization_type,
+          // Use organization_subtype if it exists, otherwise use organization_type
+          category: org.organization_subtype || org.organization_type,
           primaryEmail: account.email,
           primaryPhone: account.phone,
           primaryContact: "",
@@ -321,10 +325,11 @@ export default function Settings() {
       console.log("ID from params:", id);
       console.log("Accounts length:", accounts.length);
       console.log("isPlatformAdmin:", isPlatformAdmin);
+      console.log("Force DB reload:", forceDbReload);
       if (!id) return;
 
-      // For platform admins: try cache first when available
-      if (isPlatformAdmin && accounts.length > 0) {
+      // For platform admins: try cache first when available (unless forcing DB reload)
+      if (isPlatformAdmin && accounts.length > 0 && !forceDbReload) {
         const account = accounts.find(acc => acc.id === id);
         console.log("Found account in cache:", account);
         if (account) {
@@ -333,8 +338,8 @@ export default function Settings() {
           setFormData({
             name: account.name,
             type: account.type,
-            // For organizations, store the raw enum value to match Select items; otherwise keep category label
-            category: account.type === 'Organization' ? (account.organization_type || account.category) : account.category,
+            // Use the category which already contains organization_subtype or mapped organization_type
+            category: account.category,
             primaryEmail: account.email,
             primaryPhone: account.phone,
             primaryContact: account.primaryContact || "",
@@ -350,7 +355,7 @@ export default function Settings() {
         }
       }
 
-      // For non-platform admins or when not in cache: fetch directly by id from DB
+      // For non-platform admins or when not in cache or forcing reload: fetch directly by id from DB
       const loaded = await loadAccountById(id);
       if (!loaded) {
         toast({
@@ -365,9 +370,14 @@ export default function Settings() {
           navigate('/');
         }
       }
+      
+      // Reset force reload flag after loading
+      if (forceDbReload) {
+        setForceDbReload(false);
+      }
     };
     run();
-  }, [id, accounts, navigate, toast, isPlatformAdmin]);
+  }, [id, accounts, navigate, toast, isPlatformAdmin, forceDbReload]);
 
   // When the currentEnterprise changes (e.g., after save), ensure Enterprise-related pages show new orgs
   useEffect(() => {
@@ -426,9 +436,8 @@ export default function Settings() {
       } else {
         // Non-platform admins update directly via Supabase (RLS policies will enforce permissions)
         if (currentAccount.type === 'Organization') {
-          // Map category to organization_type
-          let orgType: string = formData.category;
-          const legacyMap: { [key: string]: string } = {
+          // Check if the category is a dynamic subtype or a legacy enum value
+          const legacyEnumMap: { [key: string]: string } = {
             'Search & Rescue': 'search_and_rescue',
             'Lifeguard Service': 'lifeguard_service',
             'Park Service': 'park_service',
@@ -437,9 +446,11 @@ export default function Settings() {
             'Harbor Master': 'harbor_master',
             'Volunteer Emergency Services': 'volunteer_emergency_services'
           };
-          if (legacyMap[formData.category]) {
-            orgType = legacyMap[formData.category];
-          }
+          
+          // Determine if it's a legacy enum or dynamic subtype
+          const isLegacyEnum = legacyEnumMap[formData.category] !== undefined;
+          const orgType = isLegacyEnum ? legacyEnumMap[formData.category] : 'search_and_rescue'; // Default fallback
+          const orgSubtype = isLegacyEnum ? null : formData.category; // Store dynamic subtype
 
           const { error } = await supabase
             .from('organizations')
@@ -448,6 +459,7 @@ export default function Settings() {
               contact_email: formData.primaryEmail,
               contact_phone: formData.primaryPhone,
               organization_type: orgType as any,
+              organization_subtype: orgSubtype,
               address: {
                 street: formData.address,
                 city: formData.city,
@@ -497,8 +509,8 @@ export default function Settings() {
         }
       }
       
-      // Reload the account data to reflect changes
-      await loadAccountById(currentAccount.id);
+      // Force a database reload to ensure we get the latest saved data
+      setForceDbReload(true);
       
       toast({
         title: "Settings Updated Successfully",

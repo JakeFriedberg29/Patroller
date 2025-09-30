@@ -441,6 +441,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          organization_subtype: string | null
           organization_type: Database["public"]["Enums"]["organization_type"]
           settings: Json | null
           slug: string
@@ -456,6 +457,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          organization_subtype?: string | null
           organization_type: Database["public"]["Enums"]["organization_type"]
           settings?: Json | null
           slug: string
@@ -471,6 +473,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          organization_subtype?: string | null
           organization_type?: Database["public"]["Enums"]["organization_type"]
           settings?: Json | null
           slug?: string
