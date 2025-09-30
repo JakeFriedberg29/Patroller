@@ -15,6 +15,18 @@ import { useToast } from "@/hooks/use-toast";
 type EnterpriseSubtypeRow = { id: string; name: string; is_active: boolean };
 type OrganizationSubtypeRow = { id: string; name: string; is_active: boolean };
 
+// Common organization subtype values for autocomplete
+const orgEnumValues: string[] = [
+  "Ski Patrol",
+  "Beach Patrol", 
+  "Mountain Rescue",
+  "Search and Rescue",
+  "Park Rangers",
+  "Fire Department",
+  "EMS",
+  "Police Department"
+];
+
 export default function Subtypes() {
   const { profile } = useUserProfile();
   const { isPlatformAdmin } = usePermissions();
