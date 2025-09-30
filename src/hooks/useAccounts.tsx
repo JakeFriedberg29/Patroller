@@ -61,7 +61,8 @@ const mapOrgTypeToCategory = (orgType: string): string => {
     'harbor_master': 'Harbor Master',
     'volunteer_emergency_services': 'Volunteer Emergency Services'
   };
-  return typeMap[orgType] || 'Search & Rescue';
+  // If it's a legacy hardcoded type, map it; otherwise return as-is (dynamic subtype)
+  return typeMap[orgType] || orgType;
 };
 
 export const useAccounts = () => {
@@ -424,11 +425,25 @@ export const useAccounts = () => {
           nextSlug = uniqueOrgSlug;
         }
 
+        // Handle organization_type: try mapping first for legacy values, otherwise use category directly
+        let orgType: string | undefined = undefined;
+        if (updates.category) {
+          // Try mapping for legacy hardcoded categories
+          const mapped = mapCategoryToOrgType(updates.category);
+          // If mapping returns default, check if category is already a valid enum value (dynamic subtype)
+          if (mapped === 'search_and_rescue' && updates.category !== 'Search & Rescue') {
+            // Category didn't match hardcoded map, use it directly (it's a dynamic subtype)
+            orgType = updates.category;
+          } else {
+            orgType = mapped;
+          }
+        }
+
         const payload: any = {
           name: updates.name,
           contact_email: updates.email,
           contact_phone: updates.phone,
-          organization_type: updates.category ? (mapCategoryToOrgType(updates.category) as any) : undefined,
+          organization_type: orgType as any,
           is_active: updates.is_active,
           address: updates.address,
         };

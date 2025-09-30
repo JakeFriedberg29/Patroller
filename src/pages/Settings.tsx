@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { accounts, loading, updateAccount, deleteAccount } = useAccounts();
-  const { isPlatformAdmin } = usePermissions();
+  const { isPlatformAdmin, canManageOrgSettings } = usePermissions();
   // Removed dummy add-org modal state and mock organizations
   const [isEditing, setIsEditing] = useState(false);
   const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
@@ -57,6 +57,12 @@ export default function Settings() {
   const [currentEnterprise, setCurrentEnterprise] = useState<{ id: string; name: string } | null>(null);
   const [pendingEnterpriseId, setPendingEnterpriseId] = useState<string | null>(null);
 
+  // Subtypes state
+  const [enterpriseSubtypes, setEnterpriseSubtypes] = useState<string[]>([]);
+  const [organizationSubtypes, setOrganizationSubtypes] = useState<string[]>([]);
+  const [loadingEnterpriseSubtypes, setLoadingEnterpriseSubtypes] = useState(false);
+  const [loadingOrgSubtypes, setLoadingOrgSubtypes] = useState(false);
+
   const loadEnterprises = async (q: string) => {
     try {
       setLoadingEnterprises(true);
@@ -70,7 +76,7 @@ export default function Settings() {
       const { data } = await query;
       setEnterprises(
         (data || [])
-          .filter((t: any) => t.slug !== 'missionlog-platform' && t.name !== 'MissionLog Platform')
+          .filter((t: any) => t.slug !== 'patroller-root' && t.name !== 'Patroller Root')
           .map((t: any) => ({ id: t.id, name: t.name }))
       );
     } catch (e) {
@@ -79,6 +85,86 @@ export default function Settings() {
       setLoadingEnterprises(false);
     }
   };
+
+  const loadEnterpriseSubtypes = useCallback(async () => {
+    try {
+      setLoadingEnterpriseSubtypes(true);
+      
+      // Get the platform-level tenant (root tenant)
+      const { data: platformTenant, error: tenantError } = await supabase
+        .from('enterprises')
+        .select('id')
+        .eq('slug', 'patroller-root')
+        .maybeSingle();
+      
+      if (tenantError || !platformTenant) {
+        console.error('Error loading platform tenant:', tenantError);
+        setEnterpriseSubtypes([]);
+        return;
+      }
+      
+      console.log('Loading enterprise subtypes from platform tenant:', platformTenant.id);
+      const { data, error } = await supabase
+        .from('enterprise_subtypes')
+        .select('name')
+        .eq('tenant_id', platformTenant.id)
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+      
+      if (error) {
+        console.error('Error loading enterprise subtypes:', error);
+        setEnterpriseSubtypes([]);
+      } else {
+        console.log('Loaded enterprise subtypes:', data);
+        setEnterpriseSubtypes((data || []).map((row: any) => row.name));
+      }
+    } catch (e) {
+      console.error('Exception loading enterprise subtypes:', e);
+      setEnterpriseSubtypes([]);
+    } finally {
+      setLoadingEnterpriseSubtypes(false);
+    }
+  }, []);
+
+  const loadOrganizationSubtypes = useCallback(async () => {
+    try {
+      setLoadingOrgSubtypes(true);
+      
+      // Get the platform-level tenant (root tenant)
+      const { data: platformTenant, error: tenantError } = await supabase
+        .from('enterprises')
+        .select('id')
+        .eq('slug', 'patroller-root')
+        .maybeSingle();
+      
+      if (tenantError || !platformTenant) {
+        console.error('Error loading platform tenant:', tenantError);
+        setOrganizationSubtypes([]);
+        return;
+      }
+      
+      console.log('Loading org subtypes from platform tenant:', platformTenant.id);
+      const { data, error } = await supabase
+        .from('organization_subtypes')
+        .select('name')
+        .eq('tenant_id', platformTenant.id)
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+      
+      if (error) {
+        console.error('Error loading organization subtypes:', error);
+        setOrganizationSubtypes([]);
+      } else {
+        console.log('Loaded org subtypes:', data);
+        setOrganizationSubtypes((data || []).map((row: any) => row.name));
+      }
+    } catch (e) {
+      console.error('Exception loading organization subtypes:', e);
+      setOrganizationSubtypes([]);
+    } finally {
+      setLoadingOrgSubtypes(false);
+    }
+  }, []);
 
   // Enterprise organizations (for Enterprise Settings listing)
   const {
@@ -98,17 +184,22 @@ export default function Settings() {
       'harbor_master': 'Harbor Master',
       'volunteer_emergency_services': 'Volunteer Emergency Services'
     };
-    return orgType ? (typeMap[orgType] || 'Search & Rescue') : 'Search & Rescue';
+    // If it's a legacy hardcoded type, map it; otherwise return as-is (dynamic subtype)
+    return orgType ? (typeMap[orgType] || orgType) : 'Search & Rescue';
   };
 
   const loadAccountById = async (accountId: string) => {
+    console.log('loadAccountById called with ID:', accountId);
     try {
       // Try organization first
-      const { data: org } = await supabase
+      const { data: org, error: orgError } = await supabase
         .from('organizations')
         .select('*')
         .eq('id', accountId)
         .maybeSingle();
+      
+      console.log('Organization query result:', { org, orgError });
+      
       if (org) {
         const account: Account = {
           id: org.id,
@@ -125,6 +216,7 @@ export default function Settings() {
           address: org.address,
           settings: org.settings
         };
+        console.log('Setting currentAccount (org):', account);
         setCurrentAccount(account);
         // Preload current enterprise
         if (org.tenant_id) {
@@ -134,7 +226,7 @@ export default function Settings() {
             .eq('id', org.tenant_id)
             .maybeSingle();
           if (ent) {
-            const isPlatformRoot = (ent as any).slug === 'missionlog-platform' || ent.name === 'MissionLog Platform';
+            const isPlatformRoot = (ent as any).slug === 'patroller-root' || ent.name === 'Patroller Root';
             if (isPlatformRoot) {
               setCurrentEnterprise(null);
             } else {
@@ -146,33 +238,40 @@ export default function Settings() {
         } else {
           setCurrentEnterprise(null);
         }
+        const addr = (org.address || {}) as any;
         setFormData({
           name: account.name,
           type: account.type,
-          category: account.category,
+          // Use the raw enum value for organizations so Select value matches
+          category: org.organization_type,
           primaryEmail: account.email,
           primaryPhone: account.phone,
           primaryContact: "",
           secondaryEmail: "",
           secondaryPhone: "",
           secondaryContact: "",
-          address: "",
-          city: "",
-          state: "",
-          zip: ""
+          address: addr.street || "",
+          city: addr.city || "",
+          state: addr.state || "",
+          zip: addr.zip || ""
         });
+        console.log('Form data set successfully for organization');
         return true;
       }
 
       // Then try enterprise
-      const { data: tenant } = await supabase
+      console.log('Not an organization, trying enterprise...');
+      const { data: tenant, error: tenantError } = await supabase
         .from('enterprises')
         .select('*')
         .eq('id', accountId)
         .maybeSingle();
+      
+      console.log('Enterprise query result:', { tenant, tenantError });
+      
       if (tenant) {
         const tenantSettings: any = tenant.settings || {};
-        const isPlatformRoot = tenant.slug === 'missionlog-platform' || tenant.name === 'MissionLog Platform';
+        const isPlatformRoot = tenant.slug === 'patroller-root' || tenant.name === 'Patroller Root';
         const enterpriseSubtype: string = isPlatformRoot ? 'Root Account' : (tenantSettings.enterprise_subtype || 'Municipality');
         const account: Account = {
           id: tenant.id,
@@ -187,6 +286,7 @@ export default function Settings() {
           is_active: tenant.subscription_status === 'active',
           settings: tenant.settings
         };
+        console.log('Setting currentAccount (enterprise):', account);
         setCurrentAccount(account);
         setFormData({
           name: account.name,
@@ -203,10 +303,13 @@ export default function Settings() {
           state: (tenantSettings.address && tenantSettings.address.state) || '',
           zip: (tenantSettings.address && tenantSettings.address.zip) || ''
         });
+        console.log('Form data set successfully for enterprise');
         return true;
       }
+      
+      console.log('No account found (neither org nor enterprise)');
     } catch (e) {
-      // ignore; upstream handles not-found
+      console.error('Exception in loadAccountById:', e);
     }
     return false;
   };
@@ -217,10 +320,11 @@ export default function Settings() {
       console.log("Settings component - useEffect triggered");
       console.log("ID from params:", id);
       console.log("Accounts length:", accounts.length);
+      console.log("isPlatformAdmin:", isPlatformAdmin);
       if (!id) return;
 
-      // Try cache first when available
-      if (accounts.length > 0) {
+      // For platform admins: try cache first when available
+      if (isPlatformAdmin && accounts.length > 0) {
         const account = accounts.find(acc => acc.id === id);
         console.log("Found account in cache:", account);
         if (account) {
@@ -229,7 +333,8 @@ export default function Settings() {
           setFormData({
             name: account.name,
             type: account.type,
-            category: account.category,
+            // For organizations, store the raw enum value to match Select items; otherwise keep category label
+            category: account.type === 'Organization' ? (account.organization_type || account.category) : account.category,
             primaryEmail: account.email,
             primaryPhone: account.phone,
             primaryContact: account.primaryContact || "",
@@ -245,7 +350,7 @@ export default function Settings() {
         }
       }
 
-      // Fallback: fetch directly by id from DB before redirecting
+      // For non-platform admins or when not in cache: fetch directly by id from DB
       const loaded = await loadAccountById(id);
       if (!loaded) {
         toast({
@@ -253,17 +358,36 @@ export default function Settings() {
           description: "The requested account could not be found.",
           variant: "destructive"
         });
-        navigate('/accounts');
+        // Only redirect to /accounts if platform admin, otherwise go to their default page
+        if (isPlatformAdmin) {
+          navigate('/accounts');
+        } else {
+          navigate('/');
+        }
       }
     };
     run();
-  }, [id, accounts, navigate, toast]);
+  }, [id, accounts, navigate, toast, isPlatformAdmin]);
 
   // When the currentEnterprise changes (e.g., after save), ensure Enterprise-related pages show new orgs
   useEffect(() => {
     // No direct action here; relevant pages read live from Supabase on mount.
     // This effect is a placeholder to indicate dependency and potential future refetch hooks.
   }, [currentEnterprise]);
+
+  // Load enterprise subtypes when account is loaded and is an enterprise
+  useEffect(() => {
+    if (currentAccount && currentAccount.type === 'Enterprise') {
+      loadEnterpriseSubtypes();
+    }
+  }, [currentAccount?.id, currentAccount?.type, loadEnterpriseSubtypes]);
+
+  // Load organization subtypes when account is loaded and is an organization
+  useEffect(() => {
+    if (currentAccount && currentAccount.type === 'Organization') {
+      loadOrganizationSubtypes();
+    }
+  }, [currentAccount?.id, currentAccount?.type, loadOrganizationSubtypes]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -276,43 +400,115 @@ export default function Settings() {
     if (!currentAccount) return;
     
     try {
-      const success = await updateAccount(currentAccount.id, {
-        name: formData.name,
-        type: formData.type as 'Enterprise' | 'Organization',
-        category: formData.category,
-        email: formData.primaryEmail,
-        phone: formData.primaryPhone,
-        primaryContact: formData.primaryContact,
-        address: {
-          street: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zip: formData.zip,
-          country: 'USA'
-        } as any,
-        // When editing an Organization, allow platform admins to set tenant
-        ...(currentAccount.type === 'Organization' && pendingEnterpriseId ? { tenant_id: pendingEnterpriseId as any } : {})
-      });
-      
-      if (success) {
-        setIsEditing(false);
-        if (pendingEnterpriseId) {
-          setCurrentEnterprise(enterprises.find(e => e.id === pendingEnterpriseId) || currentEnterprise);
-          setPendingEnterpriseId(null);
-          // If we're in Enterprise Settings, refresh enterprise orgs list so the new org appears
-          if (currentAccount.type === 'Enterprise') {
-            refetchEnterpriseData();
-          }
-        }
-        toast({
-          title: "Settings Updated Successfully",
-          description: "Your changes have been saved.",
+      // Platform admins use the useAccounts hook
+      if (isPlatformAdmin) {
+        const success = await updateAccount(currentAccount.id, {
+          name: formData.name,
+          type: formData.type as 'Enterprise' | 'Organization',
+          category: formData.category,
+          email: formData.primaryEmail,
+          phone: formData.primaryPhone,
+          primaryContact: formData.primaryContact,
+          address: {
+            street: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zip: formData.zip,
+            country: 'USA'
+          } as any,
+          // When editing an Organization, allow platform admins to set tenant
+          ...(currentAccount.type === 'Organization' && pendingEnterpriseId ? { tenant_id: pendingEnterpriseId as any } : {})
         });
+        
+        if (!success) {
+          throw new Error("Update failed");
+        }
+      } else {
+        // Non-platform admins update directly via Supabase (RLS policies will enforce permissions)
+        if (currentAccount.type === 'Organization') {
+          // Map category to organization_type
+          let orgType: string = formData.category;
+          const legacyMap: { [key: string]: string } = {
+            'Search & Rescue': 'search_and_rescue',
+            'Lifeguard Service': 'lifeguard_service',
+            'Park Service': 'park_service',
+            'Event Medical': 'event_medical',
+            'Ski Patrol': 'ski_patrol',
+            'Harbor Master': 'harbor_master',
+            'Volunteer Emergency Services': 'volunteer_emergency_services'
+          };
+          if (legacyMap[formData.category]) {
+            orgType = legacyMap[formData.category];
+          }
+
+          const { error } = await supabase
+            .from('organizations')
+            .update({
+              name: formData.name,
+              contact_email: formData.primaryEmail,
+              contact_phone: formData.primaryPhone,
+              organization_type: orgType as any,
+              address: {
+                street: formData.address,
+                city: formData.city,
+                state: formData.state,
+                zip: formData.zip,
+                country: 'USA'
+              }
+            })
+            .eq('id', currentAccount.id);
+
+          if (error) throw error;
+        } else {
+          // For enterprises, update settings
+          const currentSettings = currentAccount.settings || {};
+          const { error } = await supabase
+            .from('enterprises')
+            .update({
+              name: formData.name,
+              settings: {
+                ...currentSettings,
+                contact_email: formData.primaryEmail,
+                contact_phone: formData.primaryPhone,
+                contact_primary_name: formData.primaryContact,
+                enterprise_subtype: formData.category,
+                address: {
+                  street: formData.address,
+                  city: formData.city,
+                  state: formData.state,
+                  zip: formData.zip,
+                  country: 'USA'
+                }
+              }
+            })
+            .eq('id', currentAccount.id);
+
+          if (error) throw error;
+        }
       }
-    } catch (error) {
+
+      setIsEditing(false);
+      if (pendingEnterpriseId) {
+        setCurrentEnterprise(enterprises.find(e => e.id === pendingEnterpriseId) || currentEnterprise);
+        setPendingEnterpriseId(null);
+        // If we're in Enterprise Settings, refresh enterprise orgs list so the new org appears
+        if (currentAccount.type === 'Enterprise') {
+          refetchEnterpriseData();
+        }
+      }
+      
+      // Reload the account data to reflect changes
+      await loadAccountById(currentAccount.id);
+      
+      toast({
+        title: "Settings Updated Successfully",
+        description: "Your changes have been saved.",
+      });
+    } catch (error: any) {
+      console.error("Error saving settings:", error);
       toast({
         title: "Error Saving Settings",
-        description: "Failed to save your changes. Please try again.",
+        description: error?.message || "Failed to save your changes. Please try again.",
         variant: "destructive",
       });
     }
@@ -371,15 +567,26 @@ export default function Settings() {
 
   const isEnterprise = formData.type === "Enterprise";
   const isOrganization = formData.type === "Organization";
-  const isRootEnterprise = isEnterprise && (formData.name === 'MissionLog Platform' || formData.name === 'MissionLog');
+  const isRootEnterprise = isEnterprise && (formData.name === 'Patroller Root' || formData.category === 'Root Account');
 
-  // Show loading state
-  if (loading || !currentAccount) {
+  // Show loading state - only show loading if we're waiting for platform admin accounts or if we don't have currentAccount yet
+  if ((isPlatformAdmin && loading) || (!currentAccount && id)) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span className="ml-2">Loading account settings...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // If we still don't have an account after loading, something went wrong
+  if (!currentAccount) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center p-8">
+          <span className="text-muted-foreground">Unable to load account settings</span>
         </div>
       </div>
     );
@@ -406,11 +613,11 @@ export default function Settings() {
                 Save Changes
               </Button>
             </>
-          ) : (
+          ) : canManageOrgSettings ? (
             <Button onClick={() => setIsEditing(true)}>
               Edit Settings
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -436,7 +643,7 @@ export default function Settings() {
               <Select 
                 value={formData.type} 
                 onValueChange={(value) => handleInputChange("type", value)}
-                disabled={!isEditing}
+                disabled={!isEditing || !isPlatformAdmin}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -456,28 +663,34 @@ export default function Settings() {
                 <Select 
                   value={formData.category} 
                   onValueChange={(value) => handleInputChange("category", value)}
-                  disabled={!isEditing}
+                  disabled={!isEditing || (isEnterprise && loadingEnterpriseSubtypes) || (isOrganization && loadingOrgSubtypes)}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {isEnterprise ? (
-                      <>
-                        <SelectItem value="Resort Chain">Resort Chain</SelectItem>
-                        <SelectItem value="Municipality">Municipality</SelectItem>
-                        <SelectItem value="Park Agency">Park Agency</SelectItem>
-                        <SelectItem value="Event Management">Event Management</SelectItem>
-                      </>
+                      loadingEnterpriseSubtypes ? (
+                        <SelectItem value="_loading" disabled>Loading subtypes...</SelectItem>
+                      ) : enterpriseSubtypes.length > 0 ? (
+                        enterpriseSubtypes.map((subtype) => (
+                          <SelectItem key={subtype} value={subtype}>
+                            {subtype}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="_none" disabled>No subtypes available</SelectItem>
+                      )
+                    ) : loadingOrgSubtypes ? (
+                      <SelectItem value="_loading" disabled>Loading subtypes...</SelectItem>
+                    ) : organizationSubtypes.length > 0 ? (
+                      organizationSubtypes.map((subtype) => (
+                        <SelectItem key={subtype} value={subtype}>
+                          {subtype}
+                        </SelectItem>
+                      ))
                     ) : (
-                      <>
-                        <SelectItem value="Search & Rescue">Search & Rescue</SelectItem>
-                        <SelectItem value="Lifeguard Service">Lifeguard Service</SelectItem>
-                        <SelectItem value="Park Service">Park Service</SelectItem>
-                        <SelectItem value="Event Medical">Event Medical</SelectItem>
-                        <SelectItem value="Ski Patrol">Ski Patrol</SelectItem>
-                        <SelectItem value="Harbor Master">Harbor Master</SelectItem>
-                      </>
+                      <SelectItem value="_none" disabled>No subtypes available</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
