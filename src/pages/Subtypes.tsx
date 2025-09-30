@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Plus, Pencil, Trash2, Tag, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Constants } from "@/integrations/supabase/types";
 
 type EnterpriseSubtypeRow = { id: string; name: string; is_active: boolean };
 type OrganizationSubtypeRow = { id: string; name: string; is_active: boolean };
@@ -40,10 +39,6 @@ export default function Subtypes() {
   // Pagination states for Organization subtypes
   const [organizationRowsPerPage, setOrganizationRowsPerPage] = useState(10);
   const [organizationCurrentPage, setOrganizationCurrentPage] = useState(1);
-
-  const orgEnumValues = useMemo(() => Constants.public.Enums.organization_type as readonly string[], []);
-
-  const isValidOrgSubtypeName = (value: string) => value.trim().length > 0;
 
   useEffect(() => {
     const load = async () => {
@@ -127,34 +122,20 @@ export default function Subtypes() {
           return (existsNew ? withoutOld : [...withoutOld, { id: crypto.randomUUID(), name: newName, is_active: true }]).sort((a, b) => a.name.localeCompare(b.name));
         });
       } else {
-        if (!isValidOrgSubtypeName(newName)) {
-          toast({ title: "Invalid name", description: "Use lowercase letters, numbers, and underscores only.", variant: "destructive" });
-          return;
-        }
-
-        // If the target name is already one of the enum values, try direct update.
-        const targetExistsInEnum = orgEnumValues.includes(newName as any);
-        if (targetExistsInEnum) {
-          const { error: updErr } = await supabase
-            .from("organization_subtypes")
-            .update({ name: newName as any })
-            .eq("tenant_id", tenantId)
-            .eq("name", originalValue as any);
-          if (updErr && (updErr as any).code === "23505") {
-            // Unique violation: row for newName already exists; just remove the old one
-            await supabase.from("organization_subtypes").delete().eq("tenant_id", tenantId).eq("name", originalValue as any);
-          } else if (updErr) {
-            throw updErr;
-          }
-        } else {
-          // Ensure enum label exists and create tenant row, then remove the old row
-          const { error: addErr } = await supabase.rpc("add_organization_subtype" as any, { p_name: newName });
-          if (addErr) throw addErr;
-          await supabase.from("organization_subtypes").delete().eq("tenant_id", tenantId).eq("name", originalValue as any);
+        // Use RPC to update organization subtype
+        const { error: updErr } = await supabase
+          .from("organization_subtypes")
+          .update({ name: newName })
+          .eq("tenant_id", tenantId)
+          .eq("name", originalValue);
+        if (updErr && (updErr as any).code === "23505") {
+          // Unique violation: row for newName already exists; just remove the old one
+          await supabase.from("organization_subtypes").delete().eq("tenant_id", tenantId).eq("name", originalValue);
+        } else if (updErr) {
+          throw updErr;
         }
 
         setOrganizationRows(prev => {
-          // Ensure a single entry with newName exists
           const withoutOld = prev.filter(r => r.name !== originalValue);
           const existsNew = withoutOld.some(r => r.name === newName);
           return (existsNew ? withoutOld : [...withoutOld, { id: crypto.randomUUID(), name: newName, is_active: true }]).sort((a, b) => a.name.localeCompare(b.name));
