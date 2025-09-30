@@ -445,7 +445,7 @@ export type Database = {
           organization_type: Database["public"]["Enums"]["organization_type"]
           settings: Json | null
           slug: string
-          tenant_id: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -461,7 +461,7 @@ export type Database = {
           organization_type: Database["public"]["Enums"]["organization_type"]
           settings?: Json | null
           slug: string
-          tenant_id: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -477,7 +477,7 @@ export type Database = {
           organization_type?: Database["public"]["Enums"]["organization_type"]
           settings?: Json | null
           slug?: string
-          tenant_id?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [

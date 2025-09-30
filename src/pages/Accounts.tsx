@@ -655,11 +655,12 @@ export default function Accounts() {
 
             {formData.type === 'Organization' && (
               <div className="space-y-2 md:col-span-2">
-                <Label>Assign to Enterprise</Label>
+                <Label>Assign to Enterprise (Optional)</Label>
+                <p className="text-sm text-muted-foreground mb-2">Organizations can exist independently or be assigned to an enterprise. This can be changed later in Settings.</p>
                 <Popover open={enterpriseSearchOpen} onOpenChange={setEnterpriseSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between">
-                      {formData.tenantId ? (enterprises.find(e => e.id === formData.tenantId)?.name || 'Selected enterprise') : 'Select enterprise...'}
+                      {formData.tenantId ? (enterprises.find(e => e.id === formData.tenantId)?.name || 'Selected enterprise') : 'No enterprise assigned (standalone)'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="p-0">
@@ -671,6 +672,14 @@ export default function Accounts() {
                       <CommandList>
                         <CommandEmpty>{loadingEnterprises ? 'Loading...' : 'No results found.'}</CommandEmpty>
                         <CommandGroup>
+                          {formData.tenantId && (
+                            <CommandItem value="none" onSelect={() => {
+                              handleInputChange('tenantId', '');
+                              setEnterpriseSearchOpen(false);
+                            }}>
+                              <span className="text-muted-foreground">Clear assignment (standalone)</span>
+                            </CommandItem>
+                          )}
                           {enterprises.map((ent) => (
                             <CommandItem key={ent.id} value={ent.name} onSelect={() => {
                               handleInputChange('tenantId', ent.id);

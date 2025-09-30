@@ -33,7 +33,7 @@ export interface CreateAccountRequest {
   city?: string;
   state?: string;
   zip?: string;
-  tenantId?: string; // Required when creating an Organization
+  tenantId?: string; // Optional - Organizations can exist independently without an Enterprise
 }
 
 // Map UI categories to database organization types
@@ -233,18 +233,28 @@ export const useAccounts = () => {
         }
       };
 
-      const getUniqueOrgSlug = async (tenantId: string, base: string): Promise<string> => {
+      const getUniqueOrgSlug = async (tenantId: string | null | undefined, base: string): Promise<string> => {
         let attempt = base;
         let counter = 2;
-        // UNIQUE constraint is (tenant_id, slug)
+        // UNIQUE constraint: if tenantId is present, (tenant_id, slug) must be unique
+        // If tenantId is NULL, slug must be globally unique
         // eslint-disable-next-line no-constant-condition
         while (true) {
-          const { data } = await supabase
+          let query = supabase
             .from('organizations')
             .select('id')
-            .eq('tenant_id', tenantId)
             .eq('slug', attempt)
             .limit(1);
+          
+          // If tenant_id is provided, scope uniqueness check to that tenant
+          if (tenantId) {
+            query = query.eq('tenant_id', tenantId);
+          } else {
+            // For standalone orgs (no tenant), check globally
+            query = query.is('tenant_id', null);
+          }
+          
+          const { data } = await query;
           if (!data || data.length === 0) return attempt;
           attempt = `${base}-${counter++}`;
           if (counter > 1000) return `${base}-${crypto.randomUUID().slice(0, 8)}`;
@@ -283,35 +293,8 @@ export const useAccounts = () => {
           description: `${accountData.name} has been created successfully`,
         });
       } else {
-        // Create Organization; if no enterprise selected, default to platform enterprise
-        let tenantId = accountData.tenantId as string | undefined;
-
-        if (!tenantId) {
-          const { data: platformBySlug } = await supabase
-            .from('enterprises')
-            .select('id, slug, name')
-            .eq('slug', 'missionlog-platform')
-            .maybeSingle();
-          if (platformBySlug?.id) {
-            tenantId = platformBySlug.id as string;
-          } else {
-            const { data: platformByName } = await supabase
-              .from('enterprises')
-              .select('id')
-              .eq('name', 'MissionLog Platform')
-              .maybeSingle();
-            if (platformByName?.id) tenantId = platformByName.id as string;
-          }
-        }
-
-        if (!tenantId) {
-          toast({
-            title: "Enterprise required",
-            description: "No default enterprise found. Please select an enterprise.",
-            variant: "destructive"
-          });
-          return false;
-        }
+        // Create Organization - enterprise assignment is optional
+        const tenantId = accountData.tenantId || null;
 
         const baseOrgSlug = slugify(accountData.name);
         const uniqueOrgSlug = await getUniqueOrgSlug(tenantId, baseOrgSlug);

@@ -56,6 +56,7 @@ export default function Settings() {
   const [loadingEnterprises, setLoadingEnterprises] = useState(false);
   const [currentEnterprise, setCurrentEnterprise] = useState<{ id: string; name: string } | null>(null);
   const [pendingEnterpriseId, setPendingEnterpriseId] = useState<string | null>(null);
+  const [unassigningOrgId, setUnassigningOrgId] = useState<string | null>(null);
 
   // Subtypes state
   const [enterpriseSubtypes, setEnterpriseSubtypes] = useState<string[]>([]);
@@ -328,34 +329,9 @@ export default function Settings() {
       console.log("Force DB reload:", forceDbReload);
       if (!id) return;
 
-      // For platform admins: try cache first when available (unless forcing DB reload)
-      if (isPlatformAdmin && accounts.length > 0 && !forceDbReload) {
-        const account = accounts.find(acc => acc.id === id);
-        console.log("Found account in cache:", account);
-        if (account) {
-          setCurrentAccount(account);
-          const addr = (account.address || {}) as any;
-          setFormData({
-            name: account.name,
-            type: account.type,
-            // Use the category which already contains organization_subtype or mapped organization_type
-            category: account.category,
-            primaryEmail: account.email,
-            primaryPhone: account.phone,
-            primaryContact: account.primaryContact || "",
-            secondaryEmail: "",
-            secondaryPhone: "",
-            secondaryContact: "",
-            address: addr.street || "",
-            city: addr.city || "",
-            state: addr.state || "",
-            zip: addr.zip || ""
-          });
-          return;
-        }
-      }
-
-      // For non-platform admins or when not in cache or forcing reload: fetch directly by id from DB
+      // Always fetch directly from DB to ensure we have the latest data
+      // This ensures that if the organization was unassigned from Enterprise Settings,
+      // we see the updated state when viewing Organization Settings
       const loaded = await loadAccountById(id);
       if (!loaded) {
         toast({
@@ -377,7 +353,7 @@ export default function Settings() {
       }
     };
     run();
-  }, [id, accounts, navigate, toast, isPlatformAdmin, forceDbReload]);
+  }, [id, navigate, toast, isPlatformAdmin, forceDbReload]);
 
   // When the currentEnterprise changes (e.g., after save), ensure Enterprise-related pages show new orgs
   useEffect(() => {
@@ -412,6 +388,13 @@ export default function Settings() {
     try {
       // Platform admins use the useAccounts hook
       if (isPlatformAdmin) {
+        // Determine the tenant_id value to send
+        let tenantIdUpdate = {};
+        if (currentAccount.type === 'Organization' && pendingEnterpriseId !== undefined && pendingEnterpriseId !== null) {
+          // 'CLEAR' means set to null, otherwise use the actual ID
+          tenantIdUpdate = { tenant_id: (pendingEnterpriseId === 'CLEAR' ? null : pendingEnterpriseId) as any };
+        }
+
         const success = await updateAccount(currentAccount.id, {
           name: formData.name,
           type: formData.type as 'Enterprise' | 'Organization',
@@ -426,8 +409,7 @@ export default function Settings() {
             zip: formData.zip,
             country: 'USA'
           } as any,
-          // When editing an Organization, allow platform admins to set tenant
-          ...(currentAccount.type === 'Organization' && pendingEnterpriseId ? { tenant_id: pendingEnterpriseId as any } : {})
+          ...tenantIdUpdate
         });
         
         if (!success) {
@@ -500,10 +482,14 @@ export default function Settings() {
       }
 
       setIsEditing(false);
-      if (pendingEnterpriseId) {
-        setCurrentEnterprise(enterprises.find(e => e.id === pendingEnterpriseId) || currentEnterprise);
+      if (pendingEnterpriseId !== undefined && pendingEnterpriseId !== null) {
+        if (pendingEnterpriseId === 'CLEAR') {
+          setCurrentEnterprise(null);
+        } else {
+          setCurrentEnterprise(enterprises.find(e => e.id === pendingEnterpriseId) || currentEnterprise);
+        }
         setPendingEnterpriseId(null);
-        // If we're in Enterprise Settings, refresh enterprise orgs list so the new org appears
+        // If we're in Enterprise Settings, refresh enterprise orgs list
         if (currentAccount.type === 'Enterprise') {
           refetchEnterpriseData();
         }
@@ -523,6 +509,46 @@ export default function Settings() {
         description: error?.message || "Failed to save your changes. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleUnassignOrganization = async (orgId: string) => {
+    if (!isPlatformAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "Only Platform Admins can unassign organizations from enterprises.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setUnassigningOrgId(orgId);
+
+      // Update the organization to set tenant_id to null
+      const { error } = await supabase
+        .from('organizations')
+        .update({ tenant_id: null })
+        .eq('id', orgId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Organization Unassigned",
+        description: "The organization has been unassigned from this enterprise and is now standalone.",
+      });
+
+      // Refresh the enterprise organizations list
+      refetchEnterpriseData();
+    } catch (error: any) {
+      console.error("Error unassigning organization:", error);
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to unassign organization. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUnassigningOrgId(null);
     }
   };
 
@@ -724,13 +750,16 @@ export default function Settings() {
           <CardContent>
             {isPlatformAdmin && isEditing ? (
               <div className="space-y-2">
-                <Label>Assign to Enterprise</Label>
+                <Label>Assign to Enterprise (Optional)</Label>
+                <p className="text-sm text-muted-foreground mb-2">Organizations can exist independently or be assigned to an enterprise.</p>
                 <Popover open={enterpriseSearchOpen} onOpenChange={setEnterpriseSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between">
-                      {pendingEnterpriseId
+                      {pendingEnterpriseId === 'CLEAR'
+                        ? 'No enterprise assigned (standalone)'
+                        : pendingEnterpriseId
                         ? (enterprises.find(e => e.id === pendingEnterpriseId)?.name || 'Selected enterprise')
-                        : (currentEnterprise?.name || 'Select enterprise...')}
+                        : (currentEnterprise?.name || 'No enterprise assigned (standalone)')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="p-0">
@@ -742,6 +771,18 @@ export default function Settings() {
                       <CommandList>
                         <CommandEmpty>{loadingEnterprises ? 'Loading...' : 'No results found.'}</CommandEmpty>
                         <CommandGroup>
+                          {(currentEnterprise || pendingEnterpriseId) && (
+                            <CommandItem 
+                              value="clear-assignment" 
+                              onSelect={() => {
+                                setPendingEnterpriseId('CLEAR');
+                                setEnterpriseSearchOpen(false);
+                              }}
+                              className="text-muted-foreground border-b"
+                            >
+                              Clear assignment (standalone)
+                            </CommandItem>
+                          )}
                           {enterprises.map((ent) => (
                             <CommandItem key={ent.id} value={ent.name} onSelect={() => {
                               setPendingEnterpriseId(ent.id);
@@ -756,7 +797,11 @@ export default function Settings() {
                   </PopoverContent>
                 </Popover>
                 {pendingEnterpriseId && (
-                  <p className="text-xs text-muted-foreground">Pending change. Click Save to apply.</p>
+                  <p className="text-xs text-muted-foreground">
+                    {pendingEnterpriseId === 'CLEAR' 
+                      ? 'Pending: Will remove enterprise assignment. Click Save to apply.' 
+                      : 'Pending change. Click Save to apply.'}
+                  </p>
                 )}
               </div>
             ) : (
@@ -796,6 +841,26 @@ export default function Settings() {
                     <Button variant="outline" size="sm" onClick={() => navigate(`/organization/${org.id}/mission-control`)}>
                       Manage
                     </Button>
+                    {isPlatformAdmin && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleUnassignOrganization(org.id)}
+                        disabled={unassigningOrgId === org.id}
+                      >
+                        {unassigningOrgId === org.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            Unassigning...
+                          </>
+                        ) : (
+                          <>
+                            <UserX className="h-4 w-4 mr-1" />
+                            Unassign
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
