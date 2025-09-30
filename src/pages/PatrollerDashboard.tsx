@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useOrganizationReportTemplates } from "@/hooks/useReportTemplates";
 import { supabase } from "@/integrations/supabase/client";
 
-export default function ResponderDashboard() {
+export default function PatrollerDashboard() {
   const { profile } = useUserProfile();
   const { createIncident } = useIncidents();
   const { toast } = useToast();
@@ -54,13 +54,13 @@ export default function ResponderDashboard() {
       if (!orgId || !tenantId) return;
       const { data } = await supabase
         .from('organization_report_settings')
-        .select('template_id, visible_to_responders')
+        .select('template_id, visible_to_patrollers')
         .eq('organization_id', orgId)
         .eq('tenant_id', tenantId);
       if (isCancelled) return;
       const map: Record<string, boolean> = {};
       templates.forEach(t => { map[t.id] = true; });
-      (data || []).forEach(r => { map[r.template_id as any] = !!r.visible_to_responders; });
+      (data || []).forEach(r => { map[r.template_id as any] = !!r.visible_to_patrollers; });
       setVisibilityByTemplate(map);
     };
     fetchVisibility();
@@ -132,7 +132,7 @@ export default function ResponderDashboard() {
       {/* Header */}
       <div className="text-center space-y-2 py-8">
         <h1 className="text-3xl font-bold">
-          {getGreeting()}, {profile?.fullName?.split(' ')[0] || 'Responder'}
+          {getGreeting()}, {profile?.fullName?.split(' ')[0] || 'Patroller'}
         </h1>
         <p className="text-muted-foreground">
           Ready to submit a report or log an incident

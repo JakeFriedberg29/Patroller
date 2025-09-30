@@ -6,7 +6,7 @@ import { Constants } from "@/integrations/supabase/types";
 import type { DateRange } from "react-day-picker";
 
 export type OrganizationSubtype = (typeof Constants.public.Enums.organization_type)[number];
-export type UserRoleFilter = "all" | "responder" | "enterprise_user" | "organization_user";
+export type UserRoleFilter = "all" | "patroller" | "enterprise_user" | "organization_user";
 export type ReportTypeFilter = "all" | "incident"; // Placeholder until report instances exist
 export type AccountTypeFilter = "all" | "organizations" | "enterprises";
 export type EnterpriseSubtype = "Resort Chain" | "Municipality" | "Park Agency" | "Event Management";

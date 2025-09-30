@@ -34,7 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  role: z.enum(["Admin", "User", "Responder"], {
+  role: z.enum(["Admin", "User", "Patroller"], {
     required_error: "Please select a role",
   }),
   email: z.string().email("Please enter a valid email address"),
@@ -180,7 +180,7 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
                     <SelectContent>
                       <SelectItem value="Admin">Admin</SelectItem>
                       <SelectItem value="User">User</SelectItem>
-                      <SelectItem value="Responder">Responder</SelectItem>
+                      <SelectItem value="Patroller">Patroller</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -49,7 +49,7 @@ const Index = () => {
   };
 
   const orgSubtypeOptions = [...Constants.public.Enums.organization_type] as OrganizationSubtype[];
-  const userRoleOptions: UserRoleFilter[] = ["responder", "enterprise_user", "organization_user"];
+  const userRoleOptions: UserRoleFilter[] = ["patroller", "enterprise_user", "organization_user"];
   const reportTypeOptions: ReportTypeFilter[] = ["incident"]; // Extend when report instances exist
 
   const { kpis, accountsOverTime, usersOverTime, reportsByType, loading } = useGlobalDashboardData(dateRange, {
@@ -107,7 +107,7 @@ const Index = () => {
         ) : (
           <>
             <MetricCard title="Total Accounts" value={kpis.totalAccounts.toLocaleString()} description="Enterprises + Organizations" icon={Building2} variant="neutral" />
-            <MetricCard title="Total Users" value={kpis.totalUsers.toLocaleString()} description="Includes responders" icon={Users} variant="neutral" />
+            <MetricCard title="Total Users" value={kpis.totalUsers.toLocaleString()} description="Includes patrollers" icon={Users} variant="neutral" />
             <MetricCard title="Total Reports Submitted" value={kpis.totalReports.toLocaleString()} description="All report types" icon={FileText} variant="neutral" />
           </>
         )}

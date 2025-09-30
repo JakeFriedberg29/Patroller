@@ -141,12 +141,12 @@ export default function OrganizationReports() {
       const tenantId = orgRow?.tenant_id as string | undefined;
       const { data } = await supabase
         .from('organization_report_settings')
-        .select('template_id, visible_to_responders')
+        .select('template_id, visible_to_patrollers')
         .eq('organization_id', id)
         .eq('tenant_id', tenantId || '');
       const map: Record<string, boolean> = {};
       templates.forEach(t => { map[t.id] = true; });
-      (data || []).forEach(r => { map[r.template_id as any] = !!r.visible_to_responders; });
+      (data || []).forEach(r => { map[r.template_id as any] = !!r.visible_to_patrollers; });
       setVisibilityByTemplate(map);
     };
     fetchVisibility();
@@ -173,21 +173,21 @@ export default function OrganizationReports() {
       if (existing?.id) {
         const { error } = await supabase
           .from('organization_report_settings')
-          .update({ visible_to_responders: next })
+          .update({ visible_to_patrollers: next })
           .eq('id', existing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('organization_report_settings')
-          .insert({ tenant_id: tenantId, organization_id: id, template_id: templateId, visible_to_responders: next });
+          .insert({ tenant_id: tenantId, organization_id: id, template_id: templateId, visible_to_patrollers: next });
         if (error) throw error;
       }
       const templateName = templates.find(t => t.id === templateId)?.name || 'Report';
       toast({
         title: "Settings Updated Successfully",
         description: next
-          ? `“${templateName}” is now visible to responders.`
-          : `“${templateName}” is now hidden from responders.`,
+          ? `"${templateName}" is now visible to patrollers.`
+          : `"${templateName}" is now hidden from patrollers.`,
       });
     } catch (e) {
       setVisibilityByTemplate(prev => ({ ...prev, [templateId]: !next }));

@@ -8,7 +8,7 @@ export interface EnterpriseData {
   description?: string;
   totalOrganizations: number;
   totalEnterpriseAdminsAndUsers: number;
-  totalOrganizationResponders: number;
+  totalOrganizationPatrollers: number;
   reportsSubmittedToday: number;
 }
 
@@ -75,7 +75,7 @@ export const useEnterpriseData = (tenantId?: string) => {
 
       // Count enterprise admins + enterprise users across tenant
       let totalEnterpriseAdminsAndUsers = 0;
-      let totalOrganizationResponders = 0;
+      let totalOrganizationPatrollers = 0;
 
       if (userIds.length > 0) {
         const { data: roleRows } = await supabase
@@ -88,10 +88,10 @@ export const useEnterpriseData = (tenantId?: string) => {
         const respSet = new Set<string>();
         (roleRows || []).forEach((r: any) => {
           if (r.role_type === 'enterprise_admin' || r.role_type === 'enterprise_user') entSet.add(r.user_id);
-          if (r.role_type === 'responder') respSet.add(r.user_id);
+          if (r.role_type === 'patroller') respSet.add(r.user_id);
         });
         totalEnterpriseAdminsAndUsers = entSet.size;
-        totalOrganizationResponders = respSet.size;
+        totalOrganizationPatrollers = respSet.size;
       }
 
       // Organization summaries with user counts per org
@@ -154,7 +154,7 @@ export const useEnterpriseData = (tenantId?: string) => {
         description: (tenant.settings as any)?.description || 'Enterprise organization',
         totalOrganizations: orgIds.length,
         totalEnterpriseAdminsAndUsers,
-        totalOrganizationResponders,
+        totalOrganizationPatrollers,
         reportsSubmittedToday: reportsToday || 0,
       });
 

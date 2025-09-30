@@ -76,7 +76,7 @@ const mockLogs = [
     user_email: "emily.rodriguez@organization.com",
     ip_address: "192.168.1.103",
     metadata: { setup_method: "admin_invite" },
-    new_values: { name: "New Team Member", role_type: "responder", status: "pending" },
+    new_values: { name: "New Team Member", role_type: "patroller", status: "pending" },
     old_values: null
   },
   {

@@ -261,7 +261,7 @@ export default function ReportBuilder() {
               )}
               {fieldRows.map((row, index) => {
                 if (isPreviewMode) {
-                  // Preview mode - show how responders will see it
+                  // Preview mode - show how patrollers will see it
                   if (row.type === 'divider') {
                     return <ReportDivider key={row.id} label={row.label} isPreview />;
                   }

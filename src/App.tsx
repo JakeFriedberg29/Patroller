@@ -34,7 +34,7 @@ const EnterpriseLogs = lazy(() => import("./pages/EnterpriseLogs"));
 const PlatformNotificationCenter = lazy(() => import("./pages/PlatformNotificationCenter"));
 const Repository = lazy(() => import("./pages/Repository"));
 const ReportBuilder = lazy(() => import("./pages/ReportBuilder"));
-const ResponderDashboard = lazy(() => import("./pages/ResponderDashboard"));
+const PatrollerDashboard = lazy(() => import("./pages/PatrollerDashboard"));
 
 const queryClient = new QueryClient();
 
@@ -75,7 +75,7 @@ const App = () => (
                           <Route path="accounts" element={<Accounts />} />
                           <Route path="organization/:id" element={<ProtectedRoute requireAssignment accountType="Organization"><AccountDetail /></ProtectedRoute>} />
                           <Route path="organization/:id/mission-control" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
-                          <Route path="organization/:id/responder-dashboard" element={<ProtectedRoute requireAssignment accountType="Organization"><ResponderDashboard /></ProtectedRoute>} />
+                          <Route path="organization/:id/patroller-dashboard" element={<ProtectedRoute requireAssignment accountType="Organization"><PatrollerDashboard /></ProtectedRoute>} />
                           <Route path="organization/:id/team-directory" element={<ProtectedRoute requireAssignment accountType="Organization"><TeamDirectory /></ProtectedRoute>} />
                           {/* Incidents route removed */}
                           <Route path="organization/:id/reports/create/:templateId" element={<ProtectedRoute requireAssignment accountType="Organization"><CreateReport /></ProtectedRoute>} />

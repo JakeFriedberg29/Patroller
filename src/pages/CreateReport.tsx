@@ -54,15 +54,15 @@ export const reportTemplates = [
         ]
       },
       {
-        name: "Responders / Witnesses",
+        name: "Patrollers / Witnesses",
         fields: [
           { name: "reportingPersonName", label: "Reporting Person Name", type: "text", required: true },
           { name: "reportingPersonRole", label: "Reporting Person Role", type: "text", required: true },
           { name: "reportingPersonContact", label: "Reporting Person Contact", type: "text", required: true },
           { name: "witnessNames", label: "Witness Name(s)", type: "textarea", required: false },
           { name: "witnessContact", label: "Witness Contact Info", type: "textarea", required: false },
-          { name: "responderNames", label: "Responder Name(s)", type: "textarea", required: false },
-          { name: "responderAgency", label: "Responder Agency", type: "text", required: false }
+          { name: "patrollerNames", label: "Patroller Name(s)", type: "textarea", required: false },
+          { name: "patrollerAgency", label: "Patroller Agency", type: "text", required: false }
         ]
       },
       {

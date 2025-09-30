@@ -14,15 +14,15 @@ export function Layout({ children }: LayoutProps) {
   const { signOut } = useAuth();
   const location = useLocation();
   
-  // Check if user is on responder dashboard
-  const isResponderView = location.pathname.includes('/responder-dashboard');
+  // Check if user is on patroller dashboard
+  const isPatrollerView = location.pathname.includes('/patroller-dashboard');
 
   const handleSignOut = async () => {
     await signOut();
   };
 
-  // If it's the responder view, don't use sidebar
-  if (isResponderView) {
+  // If it's the patroller view, don't use sidebar
+  if (isPatrollerView) {
     return (
       <div className="min-h-screen bg-background">
         {children}

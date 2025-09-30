@@ -94,7 +94,7 @@ export const useUserProfile = () => {
       case 'enterprise_admin': return 'Enterprise Administrator';
       case 'organization_admin': return 'Organization Administrator';
       case 'supervisor': return 'Supervisor';
-      case 'responder': return 'Responder';
+      case 'patroller': return 'Patroller';
       case 'member': return 'Member';
       default: return roleType;
     }

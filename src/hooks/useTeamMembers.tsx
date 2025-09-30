@@ -156,7 +156,7 @@ export const useTeamMembers = () => {
         throw new Error('No organization context found');
       }
 
-      const roleTitle = memberData.role === 'Admin' ? 'Organization Admin' : memberData.role === 'User' ? 'User' : 'Responder';
+      const roleTitle = memberData.role === 'Admin' ? 'Organization Admin' : memberData.role === 'User' ? 'User' : 'Patroller';
       const result = await createUser({
         email: memberData.email,
         fullName: memberData.full_name,

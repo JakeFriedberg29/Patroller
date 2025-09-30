@@ -292,7 +292,7 @@ export default function TeamDirectory() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Team Lead">Team Lead</SelectItem>
-                    <SelectItem value="Responder">Responder</SelectItem>
+                    <SelectItem value="Patroller">Patroller</SelectItem>
                     <SelectItem value="Observer">Observer</SelectItem>
                   </SelectContent>
                 </Select>

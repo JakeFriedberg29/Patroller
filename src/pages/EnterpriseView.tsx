@@ -72,8 +72,8 @@ export default function EnterpriseView() {
           icon={Users} 
         />
         <MetricCard 
-          title="Organization Responders" 
-          value={enterpriseData.totalOrganizationResponders.toLocaleString()} 
+          title="Organization Patrollers" 
+          value={enterpriseData.totalOrganizationPatrollers.toLocaleString()} 
           description="Across all orgs" 
           icon={Users} 
         />

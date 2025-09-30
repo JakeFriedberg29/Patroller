@@ -30,7 +30,7 @@ export const useReports = () => {
   const [reports, setReports] = useState<ReportRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
-  const { isPlatformAdmin, isEnterpriseAdmin, isOrganizationAdmin, isResponder, canSubmitReports } = usePermissions();
+  const { isPlatformAdmin, isEnterpriseAdmin, isOrganizationAdmin, isPatroller, canSubmitReports } = usePermissions();
   const { id: urlOrganizationId } = useParams();
 
   const fetchReports = async () => {
@@ -60,8 +60,8 @@ export const useReports = () => {
         } else {
           query = query.eq('tenant_id', currentUser?.tenant_id || '');
         }
-      } else if (isOrganizationAdmin || isResponder) {
-        // Org admins/responders: only their organization's reports
+      } else if (isOrganizationAdmin || isPatroller) {
+        // Org admins/patrollers: only their organization's reports
         if (isValidUuid(currentUser?.organization_id)) {
           query = query.eq('account_type', 'organization').eq('account_id', currentUser!.organization_id!);
         } else {
@@ -171,7 +171,7 @@ export const useReports = () => {
   useEffect(() => {
     fetchReports();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlOrganizationId, isPlatformAdmin, isEnterpriseAdmin, isOrganizationAdmin, isResponder]);
+  }, [urlOrganizationId, isPlatformAdmin, isEnterpriseAdmin, isOrganizationAdmin, isPatroller]);
 
   return {
     reports,

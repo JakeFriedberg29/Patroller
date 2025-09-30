@@ -27,7 +27,7 @@ const reportTemplates = [
   {
     id: 4,
     name: "Injury/Exposure Report",
-    description: "Responder injury or hazardous material exposure",
+    description: "Patroller injury or hazardous material exposure",
     icon: Users
   },
   {

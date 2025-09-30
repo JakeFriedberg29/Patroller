@@ -15,8 +15,8 @@ export interface CreateUserRequest {
 }
 
 // Map UI roles to database role types
-const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' => {
-  const roleMap: { [key: string]: 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'responder' | 'team_leader' } = {
+const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'patroller' | 'team_leader' => {
+  const roleMap: { [key: string]: 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'patroller' | 'team_leader' } = {
     'Platform Admin': 'platform_admin',
     'Enterprise Admin': 'enterprise_admin', 
     'Organization Admin': 'organization_admin',
@@ -24,10 +24,10 @@ const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' 
     'User': 'observer',
     'Team Leader': 'team_leader',
     'Supervisor': 'supervisor',
-    'Responder': 'responder',
+    'Patroller': 'patroller',
     'Observer': 'observer'
   };
-  return roleMap[uiRole] || 'responder';
+  return roleMap[uiRole] || 'patroller';
 };
 
 export const useUserManagement = () => {
@@ -97,7 +97,7 @@ export const useUserManagement = () => {
         p_phone: userData.phone || null,
         
         p_location: userData.location || null,
-        p_role_type: mapRoleToDbRole(userData.role || 'responder')
+        p_role_type: mapRoleToDbRole(userData.role || 'patroller')
       });
 
       if (error) {

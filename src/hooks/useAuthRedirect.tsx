@@ -43,11 +43,11 @@ export const useAuthRedirect = () => {
           navigate('/', { replace: true });
         }
         break;
-      case 'responder':
+      case 'patroller':
       case 'member':
       case 'observer':
         if (organizationId) {
-          navigate(`/organization/${organizationId}/responder-dashboard`, { replace: true });
+          navigate(`/organization/${organizationId}/patroller-dashboard`, { replace: true });
         } else {
           navigate('/', { replace: true });
         }
