@@ -81,51 +81,6 @@ export type Database = {
           },
         ]
       }
-      audit_logs_current_month: {
-        Row: {
-          action: string
-          created_at: string
-          id: string
-          ip_address: unknown | null
-          metadata: Json | null
-          new_values: Json | null
-          old_values: Json | null
-          resource_id: string | null
-          resource_type: string
-          tenant_id: string
-          user_agent: string | null
-          user_id: string | null
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          id?: string
-          ip_address?: unknown | null
-          metadata?: Json | null
-          new_values?: Json | null
-          old_values?: Json | null
-          resource_id?: string | null
-          resource_type: string
-          tenant_id: string
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          id?: string
-          ip_address?: unknown | null
-          metadata?: Json | null
-          new_values?: Json | null
-          old_values?: Json | null
-          resource_id?: string | null
-          resource_type?: string
-          tenant_id?: string
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       email_notification_logs: {
         Row: {
           error_message: string | null
@@ -222,7 +177,7 @@ export type Database = {
           is_enabled?: boolean
           last_sent_at?: string | null
           last_sent_to?: string | null
-          notification_key?: string
+          notification_key?: string | null
           subject?: string | null
           tenant_id?: string
           updated_at?: string
@@ -602,42 +557,6 @@ export type Database = {
           },
         ]
       }
-      platform_admin_account_assignments: {
-        Row: {
-          account_id: string
-          account_type: string
-          assigned_at: string
-          assigned_by: string | null
-          created_at: string
-          id: string
-          is_active: boolean
-          platform_admin_id: string
-          updated_at: string
-        }
-        Insert: {
-          account_id: string
-          account_type: string
-          assigned_at?: string
-          assigned_by?: string | null
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          platform_admin_id: string
-          updated_at?: string
-        }
-        Update: {
-          account_id?: string
-          account_type?: string
-          assigned_at?: string
-          assigned_by?: string | null
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          platform_admin_id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       report_templates: {
         Row: {
           created_at: string
@@ -783,6 +702,7 @@ export type Database = {
           element_type: Database["public"]["Enums"]["platform_element_type"]
           id: string
           target_organization_id: string | null
+          target_organization_subtype_id: string | null
           target_organization_type:
             | Database["public"]["Enums"]["organization_type"]
             | null
@@ -797,6 +717,7 @@ export type Database = {
           element_type: Database["public"]["Enums"]["platform_element_type"]
           id?: string
           target_organization_id?: string | null
+          target_organization_subtype_id?: string | null
           target_organization_type?:
             | Database["public"]["Enums"]["organization_type"]
             | null
@@ -811,6 +732,7 @@ export type Database = {
           element_type?: Database["public"]["Enums"]["platform_element_type"]
           id?: string
           target_organization_id?: string | null
+          target_organization_subtype_id?: string | null
           target_organization_type?:
             | Database["public"]["Enums"]["organization_type"]
             | null
@@ -845,6 +767,13 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repository_assignments_target_organization_subtype_id_fkey"
+            columns: ["target_organization_subtype_id"]
+            isOneToOne: false
+            referencedRelation: "organization_subtypes"
             referencedColumns: ["id"]
           },
         ]
@@ -1550,7 +1479,7 @@ export type Tables<
     ? R
     : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
+        DefaultSchema["Views"]) 
     ? (DefaultSchema["Tables"] &
         DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R

@@ -51,16 +51,26 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
           // Assignments via repository_assignments (type or org-level)
           let assignedTemplateIds: string[] = [];
           if (resolvedTenantId) {
-            // Type-based
-            if (orgType) {
-              const { data: typeAssignments } = await supabase
-                .from('repository_assignments')
-                .select('element_id')
+            // Subtype-based (FK)
+            if (orgSubtype) {
+              // Resolve subtype name for this org to id
+              const { data: subtypeRow } = await supabase
+                .from('organization_subtypes')
+                .select('id')
                 .eq('tenant_id', resolvedTenantId)
-                .eq('element_type', 'report_template')
-                .eq('target_type', 'organization_type')
-                .eq('target_organization_type', orgType as any);
-              assignedTemplateIds.push(...((typeAssignments || []).map((r: any) => r.element_id)));
+                .eq('name', orgSubtype)
+                .single();
+              const subtypeId = subtypeRow?.id as string | undefined;
+              if (subtypeId) {
+                const { data: typeAssignments } = await supabase
+                  .from('repository_assignments')
+                  .select('element_id')
+                  .eq('tenant_id', resolvedTenantId)
+                  .eq('element_type', 'report_template')
+                  .eq('target_type', 'organization_type')
+                  .eq('target_organization_subtype_id', subtypeId);
+                assignedTemplateIds.push(...((typeAssignments || []).map((r: any) => r.element_id)));
+              }
             }
             // Org-level
             const { data: orgAssignments } = await supabase
