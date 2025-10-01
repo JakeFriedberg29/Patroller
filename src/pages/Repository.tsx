@@ -36,6 +36,7 @@ export default function Repository() {
   const [platformTemplates, setPlatformTemplates] = useState<Array<{ id: string; name: string; description: string | null }>>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [assignedOrgCounts, setAssignedOrgCounts] = useState<Record<string, number>>({});
+  const [assignedSubtypeCounts, setAssignedSubtypeCounts] = useState<Record<string, number>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
@@ -79,17 +80,44 @@ export default function Repository() {
       }
       // Update state for any UI that depends on it, but use local orgTypes to avoid race conditions
       setAllOrgTypes(orgTypes);
-      // Show subtype as selected if ANY tenant currently has it assigned
-      const { data, error } = await supabase
+      // Show subtype as selected for current tenant assignments to this template
+      if (!tenantId) throw new Error('Missing tenant context');
+      // 1) Direct type-based assignments (repository_assignments)
+      const { data: typeAssignRows, error: typeAssignErr } = await supabase
         .from('repository_assignments')
         .select('target_organization_type')
+        .eq('tenant_id', tenantId)
         .eq('element_type', 'report_template')
         .eq('element_id', templateId)
         .eq('target_type', 'organization_type');
-      if (error) throw error;
-      const assignedDistinct = Array.from(new Set((data || [])
+      if (typeAssignErr) throw typeAssignErr;
+      const typeAssigned = (typeAssignRows || [])
         .map((r: any) => String(r.target_organization_type))
-        .filter(Boolean)));
+        .filter(Boolean);
+
+      // 2) Organization-level assignments -> map back to subtypes via organizations.organization_subtype
+      let orgSubtypeAssigned: string[] = [];
+      const { data: orgAssignRows } = await supabase
+        .from('repository_assignments')
+        .select('target_organization_id')
+        .eq('tenant_id', tenantId)
+        .eq('element_type', 'report_template')
+        .eq('element_id', templateId)
+        .eq('target_type', 'organization');
+      const orgIds = Array.from(new Set((orgAssignRows || []).map((r: any) => r.target_organization_id).filter(Boolean)));
+      if (orgIds.length > 0) {
+        const { data: orgRows } = await supabase
+          .from('organizations')
+          .select('organization_subtype')
+          .eq('tenant_id', tenantId)
+          .in('id', orgIds as any);
+        orgSubtypeAssigned = Array.from(new Set((orgRows || []).map((o: any) => String(o.organization_subtype)).filter(Boolean)));
+      }
+
+      const assignedDistinct = Array.from(new Set([
+        ...typeAssigned,
+        ...orgSubtypeAssigned,
+      ]));
       const available = orgTypes.filter(t => !assignedDistinct.includes(t));
       setAssignTemplateId(templateId);
       setInitialAssignedTypes(assignedDistinct);
@@ -105,39 +133,32 @@ export default function Repository() {
 
   const handleInlineStatusChange = async (templateId: string, next: 'draft' | 'ready' | 'published' | 'unpublished' | 'archive') => {
     try {
-      // Direct update using RLS policies (simpler and more reliable than RPC)
-      const { data, error } = await supabase
+      // Use RPC which enforces tenancy/role checks
+      const { data: rpc, error: rpcErr } = await supabase.rpc('set_report_template_status' as any, {
+        p_template_id: templateId,
+        p_status: next,
+      });
+      if (rpcErr) throw rpcErr;
+      const rpcObj = (rpc || {}) as any;
+      if (rpcObj?.success === false) {
+        const err = rpcObj?.error || 'Update failed';
+        throw new Error(typeof err === 'string' ? err : JSON.stringify(err));
+      }
+
+      // Refetch the updated status from DB to ensure UI consistency
+      const { data: fresh, error: fetchErr } = await supabase
         .from('report_templates')
-        .update({ status: next })
-        .eq('id', templateId)
         .select('status')
+        .eq('id', templateId)
         .single();
-      
-      if (error) {
-        console.error('Status update error:', error);
-        throw error;
-      }
-      
-      // Update local state with confirmed status from database
+      if (fetchErr) throw fetchErr;
+
       setPlatformTemplates(prev => prev.map(t => 
-        t.id === templateId ? ({ ...t, status: data.status } as any) : t
+        t.id === templateId ? ({ ...t, status: fresh?.status } as any) : t
       ));
-      toast({ title: 'Status updated', description: `Report status changed to ${data.status}.` });
+      toast({ title: 'Status updated', description: `Report status changed to ${fresh?.status}.` });
     } catch (e: any) {
-      console.error('Status change error:', e);
-      let errorMsg = 'Could not update status.';
-      
-      // Handle specific error types
-      if (e?.message?.includes('Invalid status transition')) {
-        errorMsg = `Invalid status change. ${e.message}`;
-      } else if (e?.message?.includes('permission')) {
-        errorMsg = 'You do not have permission to change report status.';
-      } else if (e?.code === 'PGRST301') {
-        errorMsg = 'Report not found or you do not have access.';
-      } else if (e?.message) {
-        errorMsg = `Update failed: ${e.message}`;
-      }
-      
+      const errorMsg = e?.message || 'Could not update status.';
       toast({ title: 'Update failed', description: errorMsg, variant: 'destructive' });
     }
   };
@@ -168,12 +189,16 @@ export default function Repository() {
       const userId = profile?.profileData?.user_id || null;
       const requestId = crypto.randomUUID();
       await safeMutation(`del-template:${deleteTemplateId}`, {
-        op: () => supabase.rpc('delete_report_template', {
-          p_tenant_id: tenantId,
-          p_template_id: deleteTemplateId,
-          p_actor_id: userId,
-          p_request_id: requestId,
-        }),
+        op: async () => {
+          const { data, error } = await supabase.rpc('delete_report_template', {
+            p_tenant_id: tenantId,
+            p_template_id: deleteTemplateId,
+            p_actor_id: userId,
+            p_request_id: requestId,
+          });
+          if (error) throw error;
+          return data;
+        },
         refetch: async () => {
           const { data } = await supabase
             .from('report_templates')
@@ -207,96 +232,86 @@ export default function Repository() {
   };
 
   const saveAssignments = async () => {
-    if (!assignTemplateId) return;
+    if (!assignTemplateId || !tenantId) return;
     setSavingAssign(true);
     const toAdd = rightList.filter(t => !initialAssignedTypes.includes(t));
     const toRemove = initialAssignedTypes.filter(t => !rightList.includes(t));
     try {
-      // 0) Load source template (name/description/schema) so we can replicate per-tenant
-      const { data: srcTemplate, error: srcErr } = await supabase
-        .from('report_templates')
-        .select('id, name, description, template_schema')
-        .eq('id', assignTemplateId)
-        .single();
-      if (srcErr || !srcTemplate) throw (srcErr || new Error('Source template not found'));
+      const quoteForIn = (v: string) => `"${v.replace(/\"/g, '\\"')}"`;
+      const isEnumValue = (v: string) => (Constants.public.Enums.organization_type as readonly string[]).includes(v as any);
+      const useEnumTypes = rightList.length > 0 && rightList.every(isEnumValue);
 
-      // 1) Expand selected subtypes to ALL tenant_ids that have orgs of those subtypes
-      let tenantsForSelected: string[] = [];
-      if (rightList.length > 0) {
-        const { data: tenantRows, error: tenantErr } = await supabase
-          .from('organizations')
-          .select('tenant_id, organization_type')
-          .in('organization_type', rightList as any);
-        if (tenantErr) throw tenantErr;
-        tenantsForSelected = Array.from(new Set((tenantRows || []).map((r: any) => r.tenant_id))).filter(Boolean);
-      }
-
-      // 2) Ensure a tenant-local report_template exists per tenant (by name) and map tenant -> template_id
-      const tenantToTemplateId: Record<string, string> = {};
-      if (tenantsForSelected.length > 0) {
-        // Fetch any existing tenant-local templates by name in bulk
-        const { data: existingTemplates } = await supabase
-          .from('report_templates')
-          .select('id, tenant_id')
-          .in('tenant_id', tenantsForSelected)
-          .eq('name', srcTemplate.name)
-          .is('organization_id', null);
-        (existingTemplates || []).forEach((rt: any) => {
-          if (rt.tenant_id && rt.id) tenantToTemplateId[rt.tenant_id] = rt.id;
-        });
-        // Insert missing tenant-local templates
-        const missingTenants = tenantsForSelected.filter(t => !tenantToTemplateId[t]);
-        if (missingTenants.length > 0) {
-          const rows = missingTenants.map(t => ({
-            tenant_id: t,
-            name: srcTemplate.name,
-            description: srcTemplate.description,
-            template_schema: (srcTemplate as any).template_schema,
-            is_active: true,
-            organization_id: null,
-            created_by: profile?.profileData?.user_id || null,
-          }));
-          const { data: inserted, error: insErr } = await supabase
-            .from('report_templates')
-            .insert(rows)
-            .select('id, tenant_id');
-          if (insErr) throw insErr;
-          (inserted || []).forEach((rt: any) => {
-            if (rt.tenant_id && rt.id) tenantToTemplateId[rt.tenant_id] = rt.id;
-          });
-        }
-      }
-
-      // 3) Fetch existing assignments for these tenants/subtypes referencing the tenant-local template ids
-      let existing: Array<{ tenant_id: string; target_organization_type: string; element_id: string }> = [];
-      const templateIdsAcrossTenants = Object.values(tenantToTemplateId);
-      if (tenantsForSelected.length > 0 && rightList.length > 0 && templateIdsAcrossTenants.length > 0) {
+      // 0) Gather existing assignments in this tenant for this template
+      let existingTypeAssignments: Array<{ tenant_id: string; target_organization_type: string; element_id: string }> = [];
+      let existingOrgAssignments: Array<{ tenant_id: string; target_organization_id: string; element_id: string }> = [];
+      if (useEnumTypes) {
         const { data: existingRows, error: existErr } = await supabase
           .from('repository_assignments')
           .select('tenant_id, target_organization_type, element_id')
+          .eq('tenant_id', tenantId)
           .eq('element_type', 'report_template')
           .eq('target_type', 'organization_type')
-          .in('tenant_id', tenantsForSelected)
-          .in('element_id', templateIdsAcrossTenants)
+          .eq('element_id', assignTemplateId)
           .in('target_organization_type', rightList as any);
         if (existErr) throw existErr;
-        existing = (existingRows || []) as any;
+        existingTypeAssignments = (existingRows || []) as any;
+      } else {
+        // Custom subtype path: find organizations in this tenant with those subtypes
+        const inCriteria = `(${rightList.map(quoteForIn).join(',')})`;
+        const { data: orgRows, error: orgErr } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .filter('organization_subtype', 'in', inCriteria);
+        if (orgErr) throw orgErr;
+        const orgIdsForSelected = Array.from(new Set((orgRows || []).map((r: any) => r.id))).filter(Boolean);
+        if (orgIdsForSelected.length > 0) {
+          const { data: existingRows, error: existErr } = await supabase
+            .from('repository_assignments')
+            .select('tenant_id, target_organization_id, element_id')
+            .eq('tenant_id', tenantId)
+            .eq('element_type', 'report_template')
+            .eq('target_type', 'organization')
+            .eq('element_id', assignTemplateId)
+            .in('target_organization_id', orgIdsForSelected as any);
+          if (existErr) throw existErr;
+          existingOrgAssignments = (existingRows || []) as any;
+        }
       }
 
       // 4) Build missing assignment rows across all relevant tenants for all SELECTED subtypes
       const missingRows: any[] = [];
-      for (const t of tenantsForSelected) {
-        const templateId = tenantToTemplateId[t];
-        if (!templateId) continue;
+      if (useEnumTypes) {
         for (const subtype of rightList) {
-          const already = existing.some(e => e.tenant_id === t && e.target_organization_type === subtype && e.element_id === templateId);
+          const already = existingTypeAssignments.some(e => e.tenant_id === tenantId && e.target_organization_type === subtype && e.element_id === assignTemplateId);
           if (!already) {
             missingRows.push({
-              tenant_id: t,
+              tenant_id: tenantId,
               element_type: 'report_template',
-              element_id: templateId,
+              element_id: assignTemplateId,
               target_type: 'organization_type',
               target_organization_type: subtype,
+            });
+          }
+        }
+      } else {
+        // Recompute org ids for the selected subtypes in this tenant
+        const inCriteria = `(${rightList.map(quoteForIn).join(',')})`;
+        const { data: orgRows } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .filter('organization_subtype', 'in', inCriteria);
+        const orgIdsForSelected = Array.from(new Set((orgRows || []).map((r: any) => r.id))).filter(Boolean);
+        for (const orgId of orgIdsForSelected) {
+          const already = existingOrgAssignments.some(e => e.tenant_id === tenantId && e.target_organization_id === orgId && e.element_id === assignTemplateId);
+          if (!already) {
+            missingRows.push({
+              tenant_id: tenantId,
+              element_type: 'report_template',
+              element_id: assignTemplateId,
+              target_type: 'organization',
+              target_organization_id: orgId,
             });
           }
         }
@@ -308,21 +323,35 @@ export default function Repository() {
 
       // 5) Remove deselected subtypes across ALL tenants for all tenant-local template ids sharing this name
       if (toRemove.length > 0) {
-        const { data: allRt } = await supabase
-          .from('report_templates')
-          .select('id')
-          .eq('name', srcTemplate.name)
-          .is('organization_id', null);
-        const allTemplateIds = (allRt || []).map((r: any) => r.id);
-        if (allTemplateIds.length > 0) {
+        if (useEnumTypes) {
           const { error: delErr } = await supabase
             .from('repository_assignments')
             .delete()
+            .eq('tenant_id', tenantId)
             .eq('element_type', 'report_template')
             .eq('target_type', 'organization_type')
-            .in('element_id', allTemplateIds)
+            .eq('element_id', assignTemplateId)
             .in('target_organization_type', toRemove as any);
           if (delErr) throw delErr;
+        } else {
+          const inCriteria = `(${toRemove.map(quoteForIn).join(',')})`;
+          const { data: orgRows } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .filter('organization_subtype', 'in', inCriteria);
+          const orgIds = (orgRows || []).map((r: any) => r.id);
+          if (orgIds.length > 0) {
+            const { error: delErr } = await supabase
+              .from('repository_assignments')
+              .delete()
+              .eq('tenant_id', tenantId)
+              .eq('element_type', 'report_template')
+              .eq('target_type', 'organization')
+              .eq('element_id', assignTemplateId)
+              .in('target_organization_id', orgIds as any);
+            if (delErr) throw delErr;
+          }
         }
       }
 
@@ -372,7 +401,11 @@ export default function Repository() {
       try {
         const templateIds = templates.map(t => t.id);
         if (templateIds.length > 0) {
-          const [{ data: assignments }, { data: orgs }] = await Promise.all([
+          const [
+            { data: typeAssignments },
+            { data: orgAssignments },
+            { data: orgs }
+          ] = await Promise.all([
             supabase
               .from('repository_assignments')
               .select('element_id, target_organization_type')
@@ -381,30 +414,64 @@ export default function Repository() {
               .eq('target_type', 'organization_type')
               .in('element_id', templateIds as any),
             supabase
+              .from('repository_assignments')
+              .select('element_id, target_organization_id')
+              .eq('tenant_id', tenantId)
+              .eq('element_type', 'report_template')
+              .eq('target_type', 'organization')
+              .in('element_id', templateIds as any),
+            supabase
               .from('organizations')
-              .select('organization_type')
+              .select('id, organization_type, organization_subtype')
               .eq('tenant_id', tenantId)
           ]);
 
+          // Map of organization_type -> count of orgs with that type (for org assignment expansion)
           const orgTypeCounts: Record<string, number> = {};
+          const orgIdToSubtype: Record<string, string | null> = {};
           (orgs || []).forEach((o: any) => {
             const ot = String(o.organization_type);
             orgTypeCounts[ot] = (orgTypeCounts[ot] || 0) + 1;
+            orgIdToSubtype[String(o.id)] = (o.organization_subtype != null ? String(o.organization_subtype) : null);
           });
 
-          const map: Record<string, number> = {};
-          (assignments || []).forEach((a: any) => {
+          // Organizations Assigned count
+          const orgAssignedMap: Record<string, number> = {};
+          (typeAssignments || []).forEach((a: any) => {
             const tpl = String(a.element_id);
             const ttype = String(a.target_organization_type);
-            map[tpl] = (map[tpl] || 0) + (orgTypeCounts[ttype] || 0);
+            orgAssignedMap[tpl] = (orgAssignedMap[tpl] || 0) + (orgTypeCounts[ttype] || 0);
           });
+          setAssignedOrgCounts(orgAssignedMap);
 
-          setAssignedOrgCounts(map);
+          // Subtypes Assigned count (distinct subtypes per template)
+          const subtypeSetByTemplate: Record<string, Set<string>> = {};
+          (typeAssignments || []).forEach((a: any) => {
+            const tpl = String(a.element_id);
+            const subtype = String(a.target_organization_type);
+            if (!subtypeSetByTemplate[tpl]) subtypeSetByTemplate[tpl] = new Set();
+            subtypeSetByTemplate[tpl].add(subtype);
+          });
+          (orgAssignments || []).forEach((a: any) => {
+            const tpl = String(a.element_id);
+            const orgId = String(a.target_organization_id);
+            const subtype = orgIdToSubtype[orgId];
+            if (!subtype) return;
+            if (!subtypeSetByTemplate[tpl]) subtypeSetByTemplate[tpl] = new Set();
+            subtypeSetByTemplate[tpl].add(subtype);
+          });
+          const subtypeCountMap: Record<string, number> = {};
+          Object.keys(subtypeSetByTemplate).forEach(tpl => {
+            subtypeCountMap[tpl] = subtypeSetByTemplate[tpl].size;
+          });
+          setAssignedSubtypeCounts(subtypeCountMap);
         } else {
           setAssignedOrgCounts({});
+          setAssignedSubtypeCounts({});
         }
       } catch {
         setAssignedOrgCounts({});
+        setAssignedSubtypeCounts({});
       }
       setIsLoading(false);
     };
@@ -473,6 +540,7 @@ export default function Repository() {
                   <TableRow>
                     <TableHead className="font-semibold">Report Name</TableHead>
                     <TableHead className="font-semibold">Description</TableHead>
+                    <TableHead className="font-semibold">Subtypes Assigned</TableHead>
                     <TableHead className="font-semibold">Organizations Assigned</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
                     <TableHead className="w-20 text-right">Actions</TableHead>
@@ -483,6 +551,7 @@ export default function Repository() {
                     <TableRow key={t.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">{t.name}</TableCell>
                       <TableCell className="text-muted-foreground">{t.description || ''}</TableCell>
+                      <TableCell className="text-muted-foreground">{assignedSubtypeCounts[t.id] || 0}</TableCell>
                       <TableCell className="text-muted-foreground">{assignedOrgCounts[t.id] || 0}</TableCell>
                       <TableCell className="text-muted-foreground">
                         <Select value={(t as any).status || 'draft'} onValueChange={(v) => handleInlineStatusChange(t.id, v as any)}>

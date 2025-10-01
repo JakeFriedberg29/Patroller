@@ -40,37 +40,47 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
           // Determine this organization's type
           const { data: org, error: orgErr } = await supabase
             .from('organizations')
-            .select('organization_type, tenant_id')
+            .select('organization_type, organization_subtype, tenant_id')
             .eq('id', orgId)
             .single();
           if (orgErr) throw orgErr;
           const orgType = org?.organization_type as string | undefined;
+          const orgSubtype = (org?.organization_subtype as string | undefined) || undefined;
           const resolvedTenantId = org?.tenant_id as string | undefined || viewerTenantId;
 
-          // 1) Direct org assignments (legacy) -> optional table; ignore errors
-          let directTemplateIds: string[] = [];
-          // Skip organization_report_templates table as it doesn't exist
-          
-          // 2) Subtype-based assignments via platform_assignments
-          let typeTemplateIds: string[] = [];
-          if (orgType && resolvedTenantId) {
-            const { data: typeAssignments } = await supabase
-              .from('platform_assignments')
+          // Assignments via repository_assignments (type or org-level)
+          let assignedTemplateIds: string[] = [];
+          if (resolvedTenantId) {
+            // Type-based
+            if (orgType) {
+              const { data: typeAssignments } = await supabase
+                .from('repository_assignments')
+                .select('element_id')
+                .eq('tenant_id', resolvedTenantId)
+                .eq('element_type', 'report_template')
+                .eq('target_type', 'organization_type')
+                .eq('target_organization_type', orgType as any);
+              assignedTemplateIds.push(...((typeAssignments || []).map((r: any) => r.element_id)));
+            }
+            // Org-level
+            const { data: orgAssignments } = await supabase
+              .from('repository_assignments')
               .select('element_id')
               .eq('tenant_id', resolvedTenantId)
               .eq('element_type', 'report_template')
-              .eq('target_type', 'organization_type')
-              .eq('target_organization_type', orgType as any);
-            typeTemplateIds = (typeAssignments || []).map((r: any) => r.element_id);
+              .eq('target_type', 'organization')
+              .eq('target_organization_id', orgId);
+            assignedTemplateIds.push(...((orgAssignments || []).map((r: any) => r.element_id)));
           }
 
-          const allIds = [...new Set([...directTemplateIds, ...typeTemplateIds])];
+          const allIds = [...new Set(assignedTemplateIds)];
           if (allIds.length > 0) {
             const { data: templatesData } = await supabase
               .from('report_templates')
-              .select('id, name, description, tenant_id')
+              .select('id, name, description, tenant_id, status')
               .in('id', allIds)
-              .eq('tenant_id', resolvedTenantId as string);
+              .eq('tenant_id', resolvedTenantId as string)
+              .eq('status', 'published');
             if (templatesData && templatesData.length > 0) {
               setTemplates(templatesData.map(t => ({ id: t.id as any, name: t.name as any, description: (t.description as any) || '' })));
               setLoading(false);
