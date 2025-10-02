@@ -19,7 +19,7 @@ const Subtypes = lazy(() => import("./pages/Subtypes"));
 const Logs = lazy(() => import("./pages/Logs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const MissionControl = lazy(() => import("./pages/MissionControl"));
-const TeamDirectory = lazy(() => import("./pages/TeamDirectory"));
+const OrganizationUsers = lazy(() => import("./pages/OrganizationUsers"));
 const OrganizationReports = lazy(() => import("./pages/OrganizationReports"));
 const OrganizationLogs = lazy(() => import("./pages/OrganizationLogs"));
 const CreateReport = lazy(() => import("./pages/CreateReport"));
@@ -28,7 +28,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const UserSettings = lazy(() => import("./pages/UserSettings"));
 const EnterpriseView = lazy(() => import("./pages/EnterpriseView"));
 const EnterpriseOrganizations = lazy(() => import("./pages/EnterpriseOrganizations"));
-const EnterpriseAdmins = lazy(() => import("./pages/EnterpriseAdmins"));
+const EnterpriseUsers = lazy(() => import("./pages/EnterpriseUsers"));
 const EnterpriseNotificationCenter = lazy(() => import("./pages/EnterpriseNotificationCenter"));
 const EnterpriseLogs = lazy(() => import("./pages/EnterpriseLogs"));
 const PlatformNotificationCenter = lazy(() => import("./pages/PlatformNotificationCenter"));
@@ -80,7 +80,9 @@ const App = () => (
                           {/* Backward-compat: support old path */}
                           <Route path="organization/:id/mission-control" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
                           <Route path="organization/:id/patroller-dashboard" element={<ProtectedRoute requireAssignment accountType="Organization"><PatrollerDashboard /></ProtectedRoute>} />
-                          <Route path="organization/:id/team-directory" element={<ProtectedRoute requireAssignment accountType="Organization"><TeamDirectory /></ProtectedRoute>} />
+                          <Route path="organization/:id/users" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationUsers /></ProtectedRoute>} />
+                          {/* Backward-compat: old Team Directory path */}
+                          <Route path="organization/:id/team-directory" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationUsers /></ProtectedRoute>} />
                           {/* Incidents route removed */}
                           <Route path="organization/:id/reports/create/:templateId" element={<ProtectedRoute requireAssignment accountType="Organization"><CreateReport /></ProtectedRoute>} />
                           <Route path="organization/:id/reports" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationReports /></ProtectedRoute>} />
@@ -92,7 +94,9 @@ const App = () => (
                           {/* Backward-compat: support old path */}
                           <Route path="enterprises/:id/enterprise-view" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseView /></ProtectedRoute>} />
                           <Route path="enterprises/:id/organizations" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseOrganizations /></ProtectedRoute>} />
-                          <Route path="enterprises/:id/enterprise-admins" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseAdmins /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/users" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseUsers /></ProtectedRoute>} />
+                          {/* Backward-compat: old Enterprise Admins path */}
+                          <Route path="enterprises/:id/enterprise-admins" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseUsers /></ProtectedRoute>} />
                           <Route path="enterprises/:id/notifications" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseNotificationCenter /></ProtectedRoute>} />
                           <Route path="enterprises/:id/logs" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseLogs /></ProtectedRoute>} />
                           <Route path="enterprises/:id/licenses" element={<ProtectedRoute requireAssignment accountType="Enterprise"><LicensesCatalog /></ProtectedRoute>} />

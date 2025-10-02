@@ -60,7 +60,7 @@ interface OrganizationAdmin {
   activation_sent_at?: string;
 }
 
-export default function OrganizationAdmins() {
+export default function OrganizationUsers() {
   const { id: organizationId } = useParams();
   const { toast } = useToast();
   const [admins, setAdmins] = useState<OrganizationAdmin[]>([]);
@@ -73,7 +73,7 @@ export default function OrganizationAdmins() {
   const [selectedAdmin, setSelectedAdmin] = useState<OrganizationAdmin | null>(null);
   const [rowsPerPage, setRowsPerPage] = useState("10");
 
-  // Load organization admins from database
+  // Load organization users from database
   useEffect(() => {
     loadOrganizationAdmins();
   }, [organizationId]);
@@ -82,15 +82,10 @@ export default function OrganizationAdmins() {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('users')
-        .select(`
-          *,
-          user_roles!user_roles_user_id_fkey!inner(role_type, is_active)
-        `)
-        .eq('user_roles.role_type', 'organization_admin')
-        .eq('user_roles.is_active', true)
+        .from('v_account_users')
+        .select('*')
         .eq('organization_id', organizationId)
-        .neq('status', 'inactive') // Exclude soft-deleted users
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -119,7 +114,7 @@ export default function OrganizationAdmins() {
           lastName: user.last_name || user.full_name?.split(' ').slice(1).join(' ') || '',
           email: user.email,
           phone: user.phone || '',
-          role: 'Organization Admin',
+          role: 'User',
           activation_status: user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended',
           
           location: profileData.location || '',
@@ -199,9 +194,9 @@ export default function OrganizationAdmins() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
             <Users className="h-8 w-8" />
-            Organization Admins
+            Users
           </h1>
-          <p className="text-muted-foreground">Manage administrators for this organization</p>
+          <p className="text-muted-foreground">Manage users for this organization</p>
         </div>
         <Button onClick={() => setIsAddModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
@@ -211,7 +206,7 @@ export default function OrganizationAdmins() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Administrator Directory</CardTitle>
+          <CardTitle>User Directory</CardTitle>
           
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-4">

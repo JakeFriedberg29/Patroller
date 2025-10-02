@@ -7,6 +7,7 @@ export interface CreateUserRequest {
   email: string;
   fullName: string;
   role?: string;
+  accessRole?: 'read' | 'write';
   tenantId?: string;
   organizationId?: string;
   
@@ -125,6 +126,31 @@ export const useUserManagement = () => {
 
       console.log('User created successfully, sending activation email for userId:', result.user_id);
       
+      // Insert account access (unified) after user creation if accessRole provided
+      try {
+        if (result?.user_id && userData.accessRole) {
+          if (userData.organizationId) {
+            await supabase.from('account_users').upsert({
+              user_id: result.user_id,
+              tenant_id: tenantId,
+              organization_id: userData.organizationId,
+              access_role: userData.accessRole,
+              is_active: true
+            }, { onConflict: 'tenant_id,organization_id,user_id' });
+          } else {
+            await supabase.from('account_users').upsert({
+              user_id: result.user_id,
+              tenant_id: tenantId,
+              organization_id: null,
+              access_role: userData.accessRole,
+              is_active: true
+            }, { onConflict: 'tenant_id,organization_id,user_id' });
+          }
+        }
+      } catch (e) {
+        console.error('Failed to upsert account_users access for new user', e);
+      }
+
       // Send activation email using the configured email service
       const emailResult = await sendActivationEmail({
         userId: result.user_id,

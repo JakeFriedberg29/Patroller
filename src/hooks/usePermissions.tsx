@@ -1,33 +1,72 @@
+import { useEffect, useState } from 'react';
 import { useUserProfile } from './useUserProfile';
+import { supabase } from '@/integrations/supabase/client';
 
 export const usePermissions = () => {
   const { profile } = useUserProfile();
 
-  const isPlatformAdmin = profile?.roleType === 'platform_admin';
-  const isEnterpriseAdmin = profile?.roleType === 'enterprise_admin';
-  const isOrganizationAdmin = profile?.roleType === 'organization_admin' || profile?.roleType === 'team_leader';
-  const isPatroller = profile?.roleType === 'patroller' || profile?.roleType === 'member';
-  const isOrgViewer = profile?.roleType === 'observer';
+  const [hasTenantWrite, setHasTenantWrite] = useState(false);
+  const [hasTenantRead, setHasTenantRead] = useState(false);
+  const [hasOrgWrite, setHasOrgWrite] = useState(false);
+  const [hasOrgRead, setHasOrgRead] = useState(false);
 
-  const orgAdminPermission = (profile?.profileData?.org_admin_permission as 'full' | 'view' | undefined) || 'full';
-  const isOrgAdminViewOnly = isOrganizationAdmin && orgAdminPermission === 'view';
-  
-  const canManageUsers = (isPlatformAdmin || isEnterpriseAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly)) && !isOrgViewer;
-  const canManageIncidents = (isPlatformAdmin || isEnterpriseAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly)) && !isOrgViewer;
-  const canReportIncidents = isPatroller || isOrganizationAdmin || isEnterpriseAdmin || isPlatformAdmin; // viewers cannot report
+  useEffect(() => {
+    const loadAccess = async () => {
+      setHasTenantWrite(false);
+      setHasTenantRead(false);
+      setHasOrgWrite(false);
+      setHasOrgRead(false);
+
+      const userId = profile?.profileData?.user_id as string | undefined;
+      const tenantId = profile?.profileData?.tenant_id as string | undefined;
+      const organizationId = profile?.profileData?.organization_id as string | undefined;
+      if (!userId || !tenantId) return;
+
+      const { data, error } = await supabase
+        .from('account_users')
+        .select('tenant_id, organization_id, access_role, is_active')
+        .eq('user_id', userId)
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true);
+
+      if (error || !data) return;
+
+      const tenantRow = data.find(r => r.tenant_id === tenantId && r.organization_id == null);
+      const orgRow = organizationId ? data.find(r => r.organization_id === organizationId) : undefined;
+
+      setHasTenantWrite(!!tenantRow && tenantRow.access_role === 'write');
+      setHasTenantRead(!!tenantRow);
+      setHasOrgWrite(!!orgRow && orgRow.access_role === 'write');
+      setHasOrgRead(!!orgRow);
+    };
+
+    loadAccess();
+  }, [profile?.profileData?.user_id, profile?.profileData?.tenant_id, profile?.profileData?.organization_id]);
+
+  const isPlatformAdmin = profile?.roleType === 'platform_admin';
+  const isPatroller = profile?.roleType === 'patroller' || profile?.roleType === 'member';
+
+  const canManageUsers = isPlatformAdmin || hasTenantWrite || hasOrgWrite;
+  const canManageIncidents = isPlatformAdmin || hasOrgWrite || isPatroller;
+  const canReportIncidents = isPatroller || hasOrgWrite || isPlatformAdmin;
   const canSubmitReports = isPatroller; // only Patrollers submit reports
   const canViewAllData = isPlatformAdmin;
-  const canManageOrganizations = isPlatformAdmin || isEnterpriseAdmin;
-  const canManageEnterprise = isPlatformAdmin || isEnterpriseAdmin;
-  const canManageOrgSettings = (isPlatformAdmin || (isOrganizationAdmin && !isOrgAdminViewOnly)) && !isOrgViewer;
+  const canManageOrganizations = isPlatformAdmin || hasTenantWrite;
+  const canManageEnterprise = isPlatformAdmin || hasTenantWrite;
+  const canManageOrgSettings = isPlatformAdmin || hasOrgWrite;
 
   return {
+    // core actors
     isPlatformAdmin,
-    isEnterpriseAdmin,
-    isOrganizationAdmin,
     isPatroller,
-    isOrgAdminViewOnly,
-    isOrgViewer,
+
+    // new access model
+    hasTenantWrite,
+    hasTenantRead,
+    hasOrgWrite,
+    hasOrgRead,
+
+    // capabilities
     canManageUsers,
     canManageIncidents,
     canViewAllData,
@@ -36,6 +75,7 @@ export const usePermissions = () => {
     canReportIncidents,
     canSubmitReports,
     canManageOrgSettings,
+
     profile
   };
 };

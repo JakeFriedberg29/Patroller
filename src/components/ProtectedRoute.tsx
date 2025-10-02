@@ -50,7 +50,7 @@ const ProtectedRoute = ({ children, requireAssignment, accountType }: ProtectedR
     }
   }
 
-  // Enterprise admins: prevent navigating to other enterprises
+  // Tenant write: prevent navigating to other enterprises
   if (!isPlatformAdmin && accountType === 'Enterprise' && params.id && profile?.profileData?.tenant_id) {
     if (params.id !== profile.profileData.tenant_id) {
       return <Navigate to="/" replace />;

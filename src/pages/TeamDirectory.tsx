@@ -33,7 +33,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AddMemberModal } from "@/components/AddMemberModal";
 import { useToast } from "@/hooks/use-toast";
 
-export default function TeamDirectory() {
+export default function OrganizationUsers() {
   const { id } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All Status");
@@ -79,13 +79,13 @@ export default function TeamDirectory() {
         <div className="flex items-center gap-3">
           <Users className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold">Team Directory</h1>
-            <p className="text-muted-foreground">Manage team members and contacts</p>
+            <h1 className="text-3xl font-bold">Users</h1>
+            <p className="text-muted-foreground">Manage users and contacts</p>
           </div>
         </div>
         <Button className="gap-2" onClick={() => setIsAddModalOpen(true)}>
           <Plus className="h-4 w-4" />
-          Add Member
+          Add User
         </Button>
       </div>
 

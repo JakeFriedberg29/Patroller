@@ -33,7 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  role: z.string().optional(),
+  accessRole: z.enum(["read","write"]).default("read"),
 });
 
 interface AddAdminModalProps {
@@ -57,12 +57,11 @@ export function AddAdminModal({
     defaultValues: {
       fullName: "",
       email: "",
-      role: "Enterprise Admin",
+      accessRole: "read",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const roleTitle = accountType === "enterprise" ? (values.role || "Enterprise Admin") : "Organization Admin";
 
     // Resolve tenant id correctly when creating users for an organization
     let tenantIdToUse: string | undefined = accountId;
@@ -81,7 +80,8 @@ export function AddAdminModal({
     const result = await createUser({
       email: values.email,
       fullName: values.fullName,
-      role: roleTitle,
+      role: 'User',
+      accessRole: values.accessRole,
       tenantId: tenantIdToUse,
       organizationId: accountType === "organization" ? accountId : undefined,
     });
@@ -94,12 +94,12 @@ export function AddAdminModal({
   };
 
   const getTitle = () => {
-    return accountType === "enterprise" ? "Add Enterprise Admin" : "Add Organization Admin";
+    return "Add User";
   };
 
   const getDescription = () => {
     const type = accountType === "enterprise" ? "enterprise" : "organization";
-    return `Add a new administrator to your ${type}. They will receive an activation email with password setup instructions.`;
+    return `Add a new user to your ${type}. They will receive an activation email with password setup instructions.`;
   };
 
   
@@ -146,25 +146,24 @@ export function AddAdminModal({
 
             <FormField
               control={form.control}
-              name="role"
+              name="accessRole"
               render={({ field }) => (
-                accountType === "enterprise" ? (
-                  <FormItem>
-                    <FormLabel>Role *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Enterprise Admin">Enterprise Admin (Edit permissions)</SelectItem>
-                        <SelectItem value="Enterprise User">Enterprise User (View-only)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                ) : null
+                <FormItem>
+                  <FormLabel>Access *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select access" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="write">Write (manage)
+                      </SelectItem>
+                      <SelectItem value="read">Read (view only)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
               )}
             />
 
@@ -173,7 +172,7 @@ export function AddAdminModal({
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
               <h4 className="font-medium text-sm">Account Creation Process</h4>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>• Admin will receive an activation email with temporary login credentials</p>
+                <p>• User will receive an activation email with temporary login credentials</p>
                 <p>• They must click the activation link to confirm their account</p>
                 <p>• Temporary password will be shown in the activation email</p>
                 <p>• Admin can log in immediately after activation</p>
@@ -191,7 +190,7 @@ export function AddAdminModal({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : `Add ${accountType === "enterprise" ? "Enterprise" : "Organization"} Admin`}
+                {isLoading ? "Creating..." : `Add ${accountType === "enterprise" ? "Enterprise" : "Organization"} User`}
               </Button>
             </div>
           </form>

@@ -73,12 +73,12 @@ export const useTeamMembers = () => {
         return;
       }
 
-      let query = supabase
+      // Join through account_users to ensure only org-scoped users appear
+      const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('organization_id', organizationId);
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       setTeamMembers((data || []) as TeamMember[]);
@@ -156,11 +156,13 @@ export const useTeamMembers = () => {
         throw new Error('No organization context found');
       }
 
-      const roleTitle = memberData.role === 'Admin' ? 'Organization Admin' : memberData.role === 'User' ? 'User' : 'Patroller';
+      const roleTitle = memberData.role === 'Admin' ? 'User' : memberData.role === 'User' ? 'User' : 'Patroller';
+      const accessRole: 'read' | 'write' = memberData.role === 'Admin' ? 'write' : memberData.role === 'User' ? 'read' : 'read';
       const result = await createUser({
         email: memberData.email,
         fullName: memberData.full_name,
         role: roleTitle,
+        accessRole,
         tenantId,
         organizationId,
         phone: memberData.phone

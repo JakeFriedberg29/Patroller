@@ -56,7 +56,7 @@ const adminItems = [
 const enterpriseItems = [
   { title: "Analytics", url: "/analytics", icon: Building2 },
   { title: "Organizations", url: "/organizations", icon: Users },
-  { title: "Enterprise Admins", url: "/enterprise-admins", icon: Shield },
+  { title: "Users", url: "/users", icon: Shield },
   { title: "Notification Center", url: "/notifications", icon: Bell },
   { title: "Logs", url: "/logs", icon: BarChart3 },
   { title: "Account Details", url: "/settings", icon: Settings },
@@ -64,7 +64,7 @@ const enterpriseItems = [
 
 const organizationItems = [
   { title: "Analytics", url: "/analytics", icon: Monitor },
-  { title: "Team Directory", url: "/team-directory", icon: Users },
+  { title: "Users", url: "/users", icon: Users },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Logs", url: "/logs", icon: BarChart3 },
   { title: "Account Details", url: "/settings", icon: Settings },
@@ -77,7 +77,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { profile } = useUserProfile();
-  const { isPatroller, isOrgViewer, isPlatformAdmin } = usePermissions();
+  const { isPatroller, hasOrgRead, isPlatformAdmin } = usePermissions();
   const currentPath = location.pathname;
   
   const isCollapsed = state === "collapsed";
@@ -260,9 +260,9 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {(
-                    isPatroller || isOrgViewer
-                      ? organizationItems.filter(i => ["Analytics","Incidents","Reports","Logs"].includes(i.title))
-                      : organizationItems
+                    (isPlatformAdmin || hasOrgRead)
+                      ? organizationItems
+                      : organizationItems.filter(i => ["Analytics","Incidents","Reports","Logs"].includes(i.title))
                   ).map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>

@@ -66,7 +66,7 @@ export default function EnterpriseView() {
           icon={Building2} 
         />
         <MetricCard 
-          title="Enterprise Users/Admins" 
+          title="Users" 
           value={enterpriseData.totalEnterpriseAdminsAndUsers.toLocaleString()} 
           description="Across the enterprise" 
           icon={Users} 

@@ -60,7 +60,7 @@ interface EnterpriseAdmin {
   activation_sent_at?: string;
 }
 
-export default function EnterpriseAdmins() {
+export default function EnterpriseUsers() {
   const { toast } = useToast();
   // Force rebuild to clear cache
   const { createUser, isLoading: isCreatingUser } = useUserManagement();
@@ -79,7 +79,7 @@ export default function EnterpriseAdmins() {
   const [isResending, setIsResending] = useState(false);
   const { sendActivationEmail } = useEmailService();
 
-  // Load enterprise admins from database
+  // Load enterprise users from database
   useEffect(() => {
     loadEnterpriseAdmins();
   }, []);
@@ -88,14 +88,10 @@ export default function EnterpriseAdmins() {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('users')
-        .select(`
-          *,
-          user_roles!user_roles_user_id_fkey!inner(role_type, is_active)
-        `)
-        .eq('user_roles.role_type', 'enterprise_admin')
-        .eq('user_roles.is_active', true)
-        .neq('status', 'inactive') // Exclude soft-deleted users
+        .from('v_account_users')
+        .select('*')
+        .is('organization_id', null)
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -124,7 +120,7 @@ export default function EnterpriseAdmins() {
           lastName: user.last_name || user.full_name?.split(' ').slice(1).join(' ') || '',
           email: user.email,
           phone: user.phone || '',
-          role: 'Enterprise Admin',
+          role: 'User',
           activation_status: user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended',
           
           location: profileData.location || '',
@@ -253,13 +249,13 @@ export default function EnterpriseAdmins() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Shield className="h-8 w-8 text-primary" />
-            Enterprise Admins
+            Users
           </h1>
-          <p className="text-muted-foreground">Manage administrators across your enterprise</p>
+          <p className="text-muted-foreground">Manage users across your enterprise</p>
         </div>
         <Button onClick={() => setIsAddModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Add Admin
+          Add User
         </Button>
       </div>
 
