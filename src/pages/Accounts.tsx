@@ -510,7 +510,7 @@ export default function Accounts() {
               <Label htmlFor="name">Name *</Label>
               <Input
                 id="name"
-                className="border-2"
+                className="border-2 bg-white"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
               />
@@ -525,7 +525,7 @@ export default function Accounts() {
                 // Reset selected enterprise when switching away from Organization
                 if (value === 'Enterprise') handleInputChange('tenantId', "");
               }}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border-2 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -538,7 +538,7 @@ export default function Accounts() {
             <div className="space-y-2">
               <Label htmlFor="category">Subtype *</Label>
               <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
-                <SelectTrigger className="border-2">
+                <SelectTrigger className="border-2 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -574,7 +574,7 @@ export default function Accounts() {
               <Input
                 id="primaryEmail"
                 type="email"
-                className="border-2"
+                className="border-2 bg-white"
                 value={formData.primaryEmail}
                 onChange={(e) => handleInputChange("primaryEmail", e.target.value)}
               />
@@ -585,7 +585,7 @@ export default function Accounts() {
               <Input
                 id="primaryPhone"
                 type="tel"
-                className="border-2"
+                className="border-2 bg-white"
                 value={formData.primaryPhone}
                 onChange={(e) => handleInputChange("primaryPhone", e.target.value)}
               />
@@ -596,7 +596,7 @@ export default function Accounts() {
               <Input
                 id="secondaryEmail"
                 type="email"
-                className="border-2"
+                className="border-2 bg-white"
                 value={formData.secondaryEmail}
                 onChange={(e) => handleInputChange("secondaryEmail", e.target.value)}
               />
@@ -607,7 +607,7 @@ export default function Accounts() {
               <Input
                 id="secondaryPhone"
                 type="tel"
-                className="border-2"
+                className="border-2 bg-white"
                 value={formData.secondaryPhone}
                 onChange={(e) => handleInputChange("secondaryPhone", e.target.value)}
               />
@@ -617,7 +617,7 @@ export default function Accounts() {
               <Label htmlFor="address">Address</Label>
               <Input
                 id="address"
-                className="border-2"
+                className="border-2 bg-white"
                 value={formData.address}
                 onChange={(e) => handleInputChange("address", e.target.value)}
               />
@@ -627,7 +627,7 @@ export default function Accounts() {
               <Label htmlFor="city">City</Label>
               <Input
                 id="city"
-                className="border-2"
+                className="border-2 bg-white"
                 value={formData.city}
                 onChange={(e) => handleInputChange("city", e.target.value)}
               />
@@ -637,7 +637,7 @@ export default function Accounts() {
               <Label htmlFor="state">State</Label>
               <Input
                 id="state"
-                className="border-2"
+                className="border-2 bg-white"
                 value={formData.state}
                 onChange={(e) => handleInputChange("state", e.target.value)}
               />
@@ -647,7 +647,7 @@ export default function Accounts() {
               <Label htmlFor="zip">ZIP Code</Label>
               <Input
                 id="zip"
-                className="border-2"
+                className="border-2 bg-white"
                 value={formData.zip}
                 onChange={(e) => handleInputChange("zip", e.target.value)}
               />
