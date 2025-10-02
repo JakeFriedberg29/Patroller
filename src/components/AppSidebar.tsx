@@ -54,9 +54,9 @@ const adminItems = [
 ];
 
 const enterpriseItems = [
-  { title: "Analytics", url: "/analytics", icon: Building2 },
-  { title: "Organizations", url: "/organizations", icon: Users },
-  { title: "Users", url: "/users", icon: Shield },
+  { title: "Analytics", url: "/analytics", icon: Monitor },
+  { title: "Organizations", url: "/organizations", icon: Building2 },
+  { title: "Users", url: "/users", icon: Users },
   { title: "Notification Center", url: "/notifications", icon: Bell },
   { title: "Logs", url: "/logs", icon: BarChart3 },
   { title: "Account Details", url: "/settings", icon: Settings },
