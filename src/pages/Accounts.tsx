@@ -73,7 +73,7 @@ export default function Accounts() {
   };
   const [formData, setFormData] = useState<CreateAccountRequest>({
     name: "",
-    type: "Enterprise",
+    type: "" as any,
     category: "",
     primaryEmail: "",
     primaryPhone: "",
