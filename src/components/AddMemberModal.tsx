@@ -223,7 +223,7 @@ export function AddMemberModal({
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Adding..." : "Add Member"}
+                {isSubmitting ? "Adding..." : "Add User"}
               </Button>
             </div>
           </form>
