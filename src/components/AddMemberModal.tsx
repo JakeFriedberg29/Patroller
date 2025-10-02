@@ -19,6 +19,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -34,8 +35,8 @@ import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  role: z.enum(["Admin", "User", "Patroller"], {
-    required_error: "Please select a role",
+  role: z.enum(["write", "read", "patroller"], {
+    required_error: "Please select an access role",
   }),
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().min(1, "Phone number is required"),
@@ -61,6 +62,7 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
     defaultValues: {
       firstName: "",
       lastName: "",
+      role: "read",
       email: "",
       phone: "",
       radioCallSign: "",
@@ -85,11 +87,17 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
         throw new Error('No organization found');
       }
 
-      const roleTitle = values.role;
+      const roleMap: { [key: string]: string } = {
+        write: 'User',
+        read: 'User',
+        patroller: 'Patroller'
+      };
+      
       const result = await createUser({
         email: values.email,
         fullName: `${values.firstName} ${values.lastName}`,
-        role: roleTitle,
+        role: roleMap[values.role],
+        accessRole: values.role === 'patroller' ? undefined : (values.role as 'read' | 'write'),
         tenantId: currentUser.tenant_id,
         organizationId: currentUser.organization_id,
         phone: values.phone
@@ -169,20 +177,40 @@ export function AddMemberModal({ open, onOpenChange }: AddMemberModalProps) {
               control={form.control}
               name="role"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="User">User</SelectItem>
-                      <SelectItem value="Patroller">Patroller</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <FormItem className="space-y-3">
+                  <FormLabel>Access *</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      className="flex flex-col space-y-1"
+                    >
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="write" />
+                        </FormControl>
+                        <FormLabel className="font-normal cursor-pointer">
+                          Write (manage)
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="read" />
+                        </FormControl>
+                        <FormLabel className="font-normal cursor-pointer">
+                          Read (view only)
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="patroller" />
+                        </FormControl>
+                        <FormLabel className="font-normal cursor-pointer">
+                          Patroller
+                        </FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
