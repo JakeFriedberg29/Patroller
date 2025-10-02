@@ -133,6 +133,16 @@ export function AddMemberModal({
                   <FormMessage />
                 </FormItem>} />
 
+            <FormField control={form.control} name="email" render={({
+            field
+          }) => <FormItem>
+                  <FormLabel>Email Address *</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="Enter email address" className="bg-white" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>} />
+
             <FormField control={form.control} name="role" render={({
             field
           }) => <FormItem className="space-y-3">
@@ -168,29 +178,17 @@ export function AddMemberModal({
                   <FormMessage />
                 </FormItem>} />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="email" render={({
+            {selectedRole === "patroller" && (
+              <FormField control={form.control} name="phone" render={({
               field
             }) => <FormItem>
-                    <FormLabel>Email Address *</FormLabel>
+                    <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Enter email address" className="bg-white" {...field} />
+                      <Input placeholder="(555) 123-4567" className="bg-white" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
-
-              {selectedRole === "patroller" && (
-                <FormField control={form.control} name="phone" render={({
-                field
-              }) => <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="(555) 123-4567" className="bg-white" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>} />
-              )}
-            </div>
+            )}
 
             {selectedRole === "patroller" && (
               <FormField control={form.control} name="radioCallSign" render={({
