@@ -13,8 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
   role: z.enum(["write", "read", "patroller"], {
     required_error: "Please select an access role"
   }),
@@ -44,8 +43,7 @@ export function AddMemberModal({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      fullName: "",
       role: "read",
       email: "",
       phone: "",
@@ -78,7 +76,7 @@ export function AddMemberModal({
       };
       const result = await createUser({
         email: values.email,
-        fullName: `${values.firstName} ${values.lastName}`,
+        fullName: values.fullName,
         role: roleMap[values.role],
         accessRole: values.role === 'patroller' ? undefined : values.role as 'read' | 'write',
         tenantId: currentUser.tenant_id,
@@ -90,7 +88,7 @@ export function AddMemberModal({
       }
       toast({
         title: "Member Added",
-        description: `${values.firstName} ${values.lastName} has been added to the team.`
+        description: `${values.fullName} has been added to the team.`
       });
       form.reset();
       onOpenChange(false);
@@ -123,27 +121,15 @@ export function AddMemberModal({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="firstName" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>First Name *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter first name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>} />
-
-              <FormField control={form.control} name="lastName" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>Last Name *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter last name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>} />
-            </div>
+            <FormField control={form.control} name="fullName" render={({
+            field
+          }) => <FormItem>
+                  <FormLabel>Full Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter full name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>} />
 
             <FormField control={form.control} name="role" render={({
             field
