@@ -471,8 +471,8 @@ export default function Accounts() {
               // Reset selected enterprise when switching away from Organization
               if (value === 'Enterprise') handleInputChange('tenantId', "");
             }}>
-                <SelectTrigger className="border-2">
-                  <SelectValue placeholder="Select type..." />
+                <SelectTrigger className="border-2 bg-white">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Enterprise">Enterprise</SelectItem>
