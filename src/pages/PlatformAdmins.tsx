@@ -452,7 +452,7 @@ export default function PlatformAdmins() {
           <div className="space-y-4 mt-6">
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name *</Label>
-              <Input id="fullName" value={newAdmin.fullName} onChange={e => setNewAdmin({
+              <Input id="fullName" className="bg-white" value={newAdmin.fullName} onChange={e => setNewAdmin({
                 ...newAdmin,
                 fullName: e.target.value
               })} placeholder="John Doe" />
@@ -460,7 +460,7 @@ export default function PlatformAdmins() {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email Address *</Label>
-              <Input id="email" type="email" value={newAdmin.email} onChange={e => setNewAdmin({
+              <Input id="email" type="email" className="bg-white" value={newAdmin.email} onChange={e => setNewAdmin({
               ...newAdmin,
               email: e.target.value
             })} placeholder="admin@platform.com" />
@@ -468,7 +468,7 @@ export default function PlatformAdmins() {
 
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" type="tel" value={newAdmin.phone} onChange={e => setNewAdmin({
+              <Input id="phone" type="tel" className="bg-white" value={newAdmin.phone} onChange={e => setNewAdmin({
               ...newAdmin,
               phone: e.target.value
             })} placeholder="(555) 123-4567" />
