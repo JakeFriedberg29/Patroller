@@ -459,7 +459,7 @@ export default function Accounts() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="name">Name *</Label>
-              <Input id="name" className="border-2" value={formData.name} onChange={e => handleInputChange("name", e.target.value)} />
+              <Input id="name" className="border-2 bg-white" value={formData.name} onChange={e => handleInputChange("name", e.target.value)} />
             </div>
 
             <div className="space-y-2">
@@ -499,42 +499,42 @@ export default function Accounts() {
 
             <div className="space-y-2">
               <Label htmlFor="primaryEmail">Primary Email *</Label>
-              <Input id="primaryEmail" type="email" className="border-2" value={formData.primaryEmail} onChange={e => handleInputChange("primaryEmail", e.target.value)} />
+              <Input id="primaryEmail" type="email" className="border-2 bg-white" value={formData.primaryEmail} onChange={e => handleInputChange("primaryEmail", e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="primaryPhone">Primary Phone *</Label>
-              <Input id="primaryPhone" type="tel" className="border-2" value={formData.primaryPhone} onChange={e => handleInputChange("primaryPhone", e.target.value)} />
+              <Input id="primaryPhone" type="tel" className="border-2 bg-white" value={formData.primaryPhone} onChange={e => handleInputChange("primaryPhone", e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="secondaryEmail">Secondary Email</Label>
-              <Input id="secondaryEmail" type="email" className="border-2" value={formData.secondaryEmail} onChange={e => handleInputChange("secondaryEmail", e.target.value)} />
+              <Input id="secondaryEmail" type="email" className="border-2 bg-white" value={formData.secondaryEmail} onChange={e => handleInputChange("secondaryEmail", e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="secondaryPhone">Secondary Phone</Label>
-              <Input id="secondaryPhone" type="tel" className="border-2" value={formData.secondaryPhone} onChange={e => handleInputChange("secondaryPhone", e.target.value)} />
+              <Input id="secondaryPhone" type="tel" className="border-2 bg-white" value={formData.secondaryPhone} onChange={e => handleInputChange("secondaryPhone", e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
-              <Input id="address" className="border-2" value={formData.address} onChange={e => handleInputChange("address", e.target.value)} />
+              <Input id="address" className="border-2 bg-white" value={formData.address} onChange={e => handleInputChange("address", e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="city">City</Label>
-              <Input id="city" className="border-2" value={formData.city} onChange={e => handleInputChange("city", e.target.value)} />
+              <Input id="city" className="border-2 bg-white" value={formData.city} onChange={e => handleInputChange("city", e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="state">State</Label>
-              <Input id="state" className="border-2" value={formData.state} onChange={e => handleInputChange("state", e.target.value)} />
+              <Input id="state" className="border-2 bg-white" value={formData.state} onChange={e => handleInputChange("state", e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="zip">ZIP Code</Label>
-              <Input id="zip" className="border-2" value={formData.zip} onChange={e => handleInputChange("zip", e.target.value)} />
+              <Input id="zip" className="border-2 bg-white" value={formData.zip} onChange={e => handleInputChange("zip", e.target.value)} />
             </div>
 
             {formData.type === 'Organization' && <div className="space-y-2 md:col-span-2">
