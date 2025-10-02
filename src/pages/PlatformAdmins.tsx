@@ -43,7 +43,10 @@ export default function PlatformAdmins() {
     createUser,
     isLoading: isCreatingUser
   } = useUserManagement();
-  const { createAuthUsers, isLoading: isCreatingAuthUsers } = useSeedData();
+  const {
+    createAuthUsers,
+    isLoading: isCreatingAuthUsers
+  } = useSeedData();
   const [admins, setAdmins] = useState<PlatformAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -57,7 +60,9 @@ export default function PlatformAdmins() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAdmins, setSelectedAdmins] = useState<string[]>([]);
   const [isResending, setIsResending] = useState(false);
-  const { sendActivationEmail } = useEmailService();
+  const {
+    sendActivationEmail
+  } = useEmailService();
   const [currentAdmin, setCurrentAdmin] = useState<PlatformAdmin | null>(null);
   const [newAdmin, setNewAdmin] = useState({
     firstName: "",
@@ -74,9 +79,10 @@ export default function PlatformAdmins() {
     setIsLoading(true);
     try {
       // Load platform admins from users table with role information
-      const { data, error } = await supabase
-        .from('users')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('users').select(`
           id,
           email,
           full_name,
@@ -87,12 +93,9 @@ export default function PlatformAdmins() {
           created_at,
           profile_data,
           user_roles!user_roles_user_id_fkey!inner(role_type)
-        `)
-        .eq('user_roles.role_type', 'platform_admin')
-        .eq('user_roles.is_active', true)
-        .neq('status', 'inactive')
-        .order('created_at', { ascending: false });
-
+        `).eq('user_roles.role_type', 'platform_admin').eq('user_roles.is_active', true).neq('status', 'inactive').order('created_at', {
+        ascending: false
+      });
       if (error) {
         console.error('Error loading platform admins:', error);
         toast({
@@ -102,10 +105,10 @@ export default function PlatformAdmins() {
         });
         return;
       }
-
       const transformedAdmins: PlatformAdmin[] = data.map((user: any) => ({
         id: user.id,
-        user_id: user.id, // In our new structure, user_id is same as id
+        user_id: user.id,
+        // In our new structure, user_id is same as id
         firstName: user.first_name || user.full_name?.split(' ')[0] || '',
         lastName: user.last_name || user.full_name?.split(' ').slice(1).join(' ') || '',
         email: user.email,
@@ -114,7 +117,6 @@ export default function PlatformAdmins() {
         activation_status: user.status as "pending" | "active" | "suspended",
         activation_sent_at: user.profile_data?.activation_sent_at
       }));
-
       setAdmins(transformedAdmins);
     } catch (error) {
       console.error('Error loading platform admins:', error);
@@ -133,37 +135,32 @@ export default function PlatformAdmins() {
       let tenantIdToUse: string | undefined;
       try {
         // Prefer a known platform tenant slug if it exists
-        const { data: platformTenant } = await supabase
-          .from('enterprises')
-          .select('id, slug')
-          .eq('slug', 'patroller-console')
-          .maybeSingle();
-
+        const {
+          data: platformTenant
+        } = await supabase.from('enterprises').select('id, slug').eq('slug', 'patroller-console').maybeSingle();
         if (platformTenant?.id) {
           tenantIdToUse = platformTenant.id;
         } else {
           // Fallback: pick the first existing tenant
-          const { data: anyTenant } = await supabase
-            .from('enterprises')
-            .select('id, slug')
-            .order('created_at', { ascending: true })
-            .limit(1);
-
+          const {
+            data: anyTenant
+          } = await supabase.from('enterprises').select('id, slug').order('created_at', {
+            ascending: true
+          }).limit(1);
           if (anyTenant && anyTenant.length > 0) {
             tenantIdToUse = anyTenant[0].id;
           } else {
             // If no tenants exist, create a platform tenant
-            const { data: createdTenant, error: createTenantErr } = await supabase
-              .from('enterprises')
-              .insert({
-                name: 'Patroller Console',
-                slug: 'patroller-console',
-                subscription_tier: 'enterprise',
-                subscription_status: 'active',
-                settings: {}
-              })
-              .select('id')
-              .single();
+            const {
+              data: createdTenant,
+              error: createTenantErr
+            } = await supabase.from('enterprises').insert({
+              name: 'Patroller Console',
+              slug: 'patroller-console',
+              subscription_tier: 'enterprise',
+              subscription_status: 'active',
+              settings: {}
+            }).select('id').single();
             if (createTenantErr) {
               throw createTenantErr;
             }
@@ -179,7 +176,6 @@ export default function PlatformAdmins() {
         });
         return;
       }
-
       if (!tenantIdToUse) {
         toast({
           title: 'No Tenant Found',
@@ -188,7 +184,6 @@ export default function PlatformAdmins() {
         });
         return;
       }
-
       const result = await createUser({
         email: newAdmin.email,
         fullName: `${newAdmin.firstName} ${newAdmin.lastName}`,
@@ -319,13 +314,7 @@ export default function PlatformAdmins() {
               <SelectItem value="suspended">Suspended</SelectItem>
             </SelectContent>
           </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={handleBulkResend}
-            disabled={selectedAdmins.length === 0 || isResending}
-          >
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleBulkResend} disabled={selectedAdmins.length === 0 || isResending}>
             <Send className="h-4 w-4" />
             {isResending ? 'Resending...' : `Resend Activation Email${selectedAdmins.length ? ` (${selectedAdmins.length})` : ''}`}
           </Button>
@@ -387,17 +376,11 @@ export default function PlatformAdmins() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
-                          onClick={() => handleEditAdmin(admin)} 
-                          className="cursor-pointer"
-                        >
+                        <DropdownMenuItem onClick={() => handleEditAdmin(admin)} className="cursor-pointer">
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleDeleteAdmin(admin)} 
-                          className="cursor-pointer text-destructive focus:text-destructive"
-                        >
+                        <DropdownMenuItem onClick={() => handleDeleteAdmin(admin)} className="cursor-pointer text-destructive focus:text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
@@ -502,15 +485,7 @@ export default function PlatformAdmins() {
             })} placeholder="(555) 123-4567" />
             </div>
 
-            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-              <h4 className="font-medium text-sm">Account Creation Process</h4>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p>• Admin will receive an activation email with temporary login credentials</p>
-                <p>• They must click the activation link to confirm their account</p>
-                <p>• After creation, you can assign specific accounts for this admin to oversee</p>
-                <p>• Account activation link expires in 24 hours</p>
-              </div>
-            </div>
+            
           </div>
 
           <div className="flex justify-between mt-6">
@@ -525,26 +500,10 @@ export default function PlatformAdmins() {
       </Dialog>
 
       {/* Edit Admin Dialog */}
-      {currentAdmin && (
-        <EditAdminModal
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          admin={currentAdmin}
-          accountType="platform"
-          onSuccess={handleEditSuccess}
-        />
-      )}
+      {currentAdmin && <EditAdminModal open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} admin={currentAdmin} accountType="platform" onSuccess={handleEditSuccess} />}
 
       {/* Delete Admin Dialog */}
-      {currentAdmin && (
-        <DeleteAdminModal
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          admin={currentAdmin as any}
-          accountType="platform"
-          onSuccess={handleDeleteSuccess}
-        />
-      )}
+      {currentAdmin && <DeleteAdminModal open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} admin={currentAdmin as any} accountType="platform" onSuccess={handleDeleteSuccess} />}
       {/* BulkDelete coming soon */}
     </div>;
 }
