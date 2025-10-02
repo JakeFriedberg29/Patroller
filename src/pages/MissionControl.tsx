@@ -29,8 +29,8 @@ export default function MissionControl() {
         <div className="flex items-center gap-3">
           <Monitor className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold">Mission Control</h1>
-            <p className="text-muted-foreground">Real-time operations dashboard</p>
+            <h1 className="text-3xl font-bold">Analytics</h1>
+            <p className="text-muted-foreground">Organization analytics</p>
           </div>
         </div>
         <div className="flex gap-2">

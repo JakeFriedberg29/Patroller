@@ -54,7 +54,7 @@ const adminItems = [
 ];
 
 const enterpriseItems = [
-  { title: "Enterprise View", url: "/enterprise-view", icon: Building2 },
+  { title: "Analytics", url: "/analytics", icon: Building2 },
   { title: "Organizations", url: "/organizations", icon: Users },
   { title: "Enterprise Admins", url: "/enterprise-admins", icon: Shield },
   { title: "Notification Center", url: "/notifications", icon: Bell },
@@ -63,7 +63,7 @@ const enterpriseItems = [
 ];
 
 const organizationItems = [
-  { title: "Mission Control", url: "/mission-control", icon: Monitor },
+  { title: "Analytics", url: "/analytics", icon: Monitor },
   { title: "Team Directory", url: "/team-directory", icon: Users },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Logs", url: "/logs", icon: BarChart3 },
@@ -182,7 +182,7 @@ export function AppSidebar() {
             <div>
               <h2 className="text-lg font-bold text-sidebar-foreground">Patroller Console</h2>
               <p className="text-xs text-sidebar-foreground/70">
-                {isInEnterprise ? 'Enterprise View' : isInOrganization ? 'Organization View' : 'Platform View'}
+                {(isInEnterprise || isInOrganization) ? 'Analytics' : 'Platform View'}
               </p>
             </div>
           )}
@@ -261,7 +261,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                   {(
                     isPatroller || isOrgViewer
-                      ? organizationItems.filter(i => ["Mission Control","Incidents","Reports","Logs"].includes(i.title))
+                      ? organizationItems.filter(i => ["Analytics","Incidents","Reports","Logs"].includes(i.title))
                       : organizationItems
                   ).map((item) => (
                     <SidebarMenuItem key={item.title}>

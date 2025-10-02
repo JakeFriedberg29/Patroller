@@ -199,11 +199,11 @@ export default function Accounts() {
     }
     
     if (account?.type === "Enterprise") {
-      console.log("Navigating to enterprise:", `/enterprises/${accountId}/enterprise-view`);
-      navigate(`/enterprises/${accountId}/enterprise-view`);
+      console.log("Navigating to enterprise:", `/enterprises/${accountId}/analytics`);
+      navigate(`/enterprises/${accountId}/analytics`);
     } else {
-      console.log("Navigating to organization:", `/organization/${accountId}/mission-control`);
-      navigate(`/organization/${accountId}/mission-control`);
+      console.log("Navigating to organization:", `/organization/${accountId}/analytics`);
+      navigate(`/organization/${accountId}/analytics`);
     }
   };
 

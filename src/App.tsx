@@ -76,6 +76,8 @@ const App = () => (
                           <Route index element={<Index />} />
                           <Route path="accounts" element={<Accounts />} />
                           <Route path="organization/:id" element={<ProtectedRoute requireAssignment accountType="Organization"><AccountDetail /></ProtectedRoute>} />
+                          <Route path="organization/:id/analytics" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
+                          {/* Backward-compat: support old path */}
                           <Route path="organization/:id/mission-control" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
                           <Route path="organization/:id/patroller-dashboard" element={<ProtectedRoute requireAssignment accountType="Organization"><PatrollerDashboard /></ProtectedRoute>} />
                           <Route path="organization/:id/team-directory" element={<ProtectedRoute requireAssignment accountType="Organization"><TeamDirectory /></ProtectedRoute>} />
@@ -86,6 +88,8 @@ const App = () => (
                           <Route path="organization/:id/licenses" element={<ProtectedRoute requireAssignment accountType="Organization"><LicensesCatalog /></ProtectedRoute>} />
                           <Route path="organization/:id/billing" element={<ProtectedRoute requireAssignment accountType="Organization"><Billing /></ProtectedRoute>} />
                           <Route path="organization/:id/settings" element={<ProtectedRoute requireAssignment accountType="Organization"><Settings /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/analytics" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseView /></ProtectedRoute>} />
+                          {/* Backward-compat: support old path */}
                           <Route path="enterprises/:id/enterprise-view" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseView /></ProtectedRoute>} />
                           <Route path="enterprises/:id/organizations" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseOrganizations /></ProtectedRoute>} />
                           <Route path="enterprises/:id/enterprise-admins" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseAdmins /></ProtectedRoute>} />

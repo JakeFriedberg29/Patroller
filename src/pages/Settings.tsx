@@ -886,7 +886,7 @@ export default function Settings() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="default">Active</Badge>
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/organization/${org.id}/mission-control`)}>
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/organization/${org.id}/analytics`)}>
                       Manage
                     </Button>
                     {isPlatformAdmin && (

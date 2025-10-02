@@ -30,7 +30,7 @@ export const useAuthRedirect = () => {
         break;
       case 'enterprise_admin':
         if (tenantId) {
-          navigate(`/enterprises/${tenantId}/enterprise-view`, { replace: true });
+          navigate(`/enterprises/${tenantId}/analytics`, { replace: true });
         } else {
           navigate('/', { replace: true });
         }
@@ -38,7 +38,7 @@ export const useAuthRedirect = () => {
       case 'organization_admin':
       case 'team_leader':
         if (organizationId) {
-          navigate(`/organization/${organizationId}/mission-control`, { replace: true });
+          navigate(`/organization/${organizationId}/analytics`, { replace: true });
         } else {
           navigate('/', { replace: true });
         }
@@ -54,7 +54,7 @@ export const useAuthRedirect = () => {
         break;
       default:
         if (organizationId) {
-          navigate(`/organization/${organizationId}/mission-control`, { replace: true });
+          navigate(`/organization/${organizationId}/analytics`, { replace: true });
         } else {
           navigate('/', { replace: true });
         }

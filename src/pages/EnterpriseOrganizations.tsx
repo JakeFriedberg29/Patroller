@@ -56,7 +56,7 @@ export default function EnterpriseOrganizations() {
 
   const handleViewOrg = (orgId: string) => {
     if (!orgId) return;
-    navigate(`/organization/${orgId}/mission-control`);
+    navigate(`/organization/${orgId}/analytics`);
   };
 
   const filtered = useMemo(() => {
