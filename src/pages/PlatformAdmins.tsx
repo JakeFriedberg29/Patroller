@@ -65,8 +65,7 @@ export default function PlatformAdmins() {
   } = useEmailService();
   const [currentAdmin, setCurrentAdmin] = useState<PlatformAdmin | null>(null);
   const [newAdmin, setNewAdmin] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     email: "",
     phone: ""
   });
@@ -130,7 +129,7 @@ export default function PlatformAdmins() {
     }
   };
   const handleAddAdmin = async () => {
-    if (newAdmin.firstName && newAdmin.lastName && newAdmin.email) {
+    if (newAdmin.fullName && newAdmin.email) {
       // Resolve a valid tenant_id for platform admins
       let tenantIdToUse: string | undefined;
       try {
@@ -186,15 +185,14 @@ export default function PlatformAdmins() {
       }
       const result = await createUser({
         email: newAdmin.email,
-        fullName: `${newAdmin.firstName} ${newAdmin.lastName}`,
+        fullName: newAdmin.fullName,
         role: 'Platform Admin',
         tenantId: tenantIdToUse,
         phone: newAdmin.phone
       });
       if (result.success) {
         setNewAdmin({
-          firstName: "",
-          lastName: "",
+          fullName: "",
           email: "",
           phone: ""
         });
@@ -452,21 +450,12 @@ export default function PlatformAdmins() {
           </DialogHeader>
 
           <div className="space-y-4 mt-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input id="firstName" value={newAdmin.firstName} onChange={e => setNewAdmin({
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name *</Label>
+              <Input id="fullName" value={newAdmin.fullName} onChange={e => setNewAdmin({
                 ...newAdmin,
-                firstName: e.target.value
-              })} placeholder="John" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input id="lastName" value={newAdmin.lastName} onChange={e => setNewAdmin({
-                ...newAdmin,
-                lastName: e.target.value
-              })} placeholder="Doe" />
-              </div>
+                fullName: e.target.value
+              })} placeholder="John Doe" />
             </div>
 
             <div className="space-y-2">
@@ -492,7 +481,7 @@ export default function PlatformAdmins() {
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddAdmin} disabled={!newAdmin.firstName || !newAdmin.lastName || !newAdmin.email || isCreatingUser}>
+            <Button onClick={handleAddAdmin} disabled={!newAdmin.fullName || !newAdmin.email || isCreatingUser}>
               {isCreatingUser ? 'Creating...' : 'Add Admin'}
             </Button>
           </div>
