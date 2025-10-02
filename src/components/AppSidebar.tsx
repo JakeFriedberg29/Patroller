@@ -145,14 +145,8 @@ export function AppSidebar() {
   };
 
   const handleSettingsClick = () => {
-    if (isInOrganization && routeId) {
-      navigate(`/organization/${routeId}/settings`);
-    } else if (isInEnterprise && routeId) {
-      navigate(`/enterprises/${routeId}/settings`);
-    } else {
-      // Fallback to user settings when we don't have an account id/context
-      navigate('/settings');
-    }
+    // Always navigate to user settings, not account settings
+    navigate('/settings');
   };
 
   const handleSignOut = async () => {
