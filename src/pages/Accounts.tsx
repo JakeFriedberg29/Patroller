@@ -539,7 +539,7 @@ export default function Accounts() {
               <Label htmlFor="category">Subtype *</Label>
               <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
                 <SelectTrigger className="border-2">
-                  <SelectValue placeholder="Select a subtype..." />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {loadingSubtypes ? (
