@@ -113,9 +113,9 @@ export function AddMemberModal({
   return <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Team Member</DialogTitle>
+          <DialogTitle>Add User</DialogTitle>
           <DialogDescription>
-            Add a new member to your team directory. Fill in all required information.
+            Add a new user to your organization. They will receive an activation email with password setup instructions.
           </DialogDescription>
         </DialogHeader>
 
@@ -197,12 +197,6 @@ export function AddMemberModal({
                   </FormControl>
                   <FormMessage />
                 </FormItem>} />
-
-            <FormField control={form.control} name="specialization" render={({
-            field
-          }) => {}} />
-
-            <FormField control={form.control} name="certifications" render={() => {}} />
 
             <div className="flex justify-between pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
