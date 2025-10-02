@@ -196,7 +196,7 @@ export function AddAdminModal({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : `Add ${accountType === "enterprise" ? "Enterprise" : "Organization"} User`}
+                {isLoading ? "Creating..." : "Add User"}
               </Button>
             </div>
           </form>
