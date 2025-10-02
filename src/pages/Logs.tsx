@@ -54,7 +54,8 @@ export default function Logs() {
     searchTerm,
     actionFilter,
     resourceFilter,
-    limit: rowsPerPage * 10 // Get more logs for proper pagination
+    limit: rowsPerPage * 10, // Get more logs for proper pagination
+    accountType: "platform",
   });
 
   const getActionIcon = (action: string) => {

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useAuditLogs } from "@/hooks/useAuditLogs";
 import { formatDistanceToNow } from "date-fns";
 
 const actionOptions = [
@@ -41,57 +42,7 @@ const resourceOptions = [
   { value: "session", label: "Sessions" }
 ];
 
-// Mock data for organization logs
-const mockLogs = [
-  {
-    id: "org-log-001",
-    action: "CREATE",
-    resource_type: "report",
-    created_at: "2024-01-15T14:32:15Z",
-    user_name: "Sarah Johnson",
-    user_email: "sarah.johnson@organization.com",
-    ip_address: "192.168.1.100",
-    metadata: { setup_method: "manual_entry" },
-    new_values: { title: "Search and Rescue Operation", status: "active" },
-    old_values: null
-  },
-  {
-    id: "org-log-003",
-    action: "LOGIN",
-    resource_type: "session",
-    created_at: "2024-01-15T13:45:18Z",
-    user_name: "Mike Chen",
-    user_email: "mike.chen@organization.com",
-    ip_address: "192.168.1.102",
-    metadata: {},
-    new_values: {},
-    old_values: {}
-  },
-  {
-    id: "org-log-004",
-    action: "CREATE",
-    resource_type: "user",
-    created_at: "2024-01-15T12:22:03Z",
-    user_name: "Emily Rodriguez",
-    user_email: "emily.rodriguez@organization.com",
-    ip_address: "192.168.1.103",
-    metadata: { setup_method: "admin_invite" },
-    new_values: { name: "New Team Member", role_type: "patroller", status: "pending" },
-    old_values: null
-  },
-  {
-    id: "org-log-005",
-    action: "UPDATE",
-    resource_type: "location",
-    created_at: "2024-01-15T11:30:17Z",
-    user_name: "Sarah Johnson",
-    user_email: "sarah.johnson@organization.com",
-    ip_address: "192.168.1.100",
-    metadata: { training_type: "water_rescue" },
-    new_values: { status: "training_complete", equipment_count: "15" },
-    old_values: { status: "training_in_progress", equipment_count: "12" }
-  }
-];
+// Removed mock logs; page now uses database-backed logs via useAuditLogs
 
 export default function OrganizationLogs() {
   const { id } = useParams();
@@ -101,6 +52,15 @@ export default function OrganizationLogs() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
+
+  const { logs, loading, error, refetch } = useAuditLogs({
+    searchTerm,
+    actionFilter,
+    resourceFilter,
+    limit: rowsPerPage * 10,
+    accountType: "organization",
+    accountId: id,
+  });
 
   const getActionIcon = (action: string) => {
     const iconClass = "h-4 w-4";
@@ -179,7 +139,7 @@ export default function OrganizationLogs() {
   };
 
   // Filter and pagination logic
-  const filteredLogs = mockLogs.filter(log => {
+  const filteredLogs = logs.filter(log => {
     const matchesSearch = log.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          log.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          log.action?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -194,7 +154,7 @@ export default function OrganizationLogs() {
   const paginatedLogs = filteredLogs.slice(startIndex, startIndex + rowsPerPage);
 
   const handleExportLogs = () => {
-    if (mockLogs.length === 0) {
+    if (logs.length === 0) {
       toast({
         title: "No Data",
         description: "No logs available to export.",
@@ -203,7 +163,7 @@ export default function OrganizationLogs() {
       return;
     }
 
-    const csvData = mockLogs.map(log => ({
+    const csvData = logs.map(log => ({
       Timestamp: new Date(log.created_at).toISOString(),
       Action: log.action,
       Resource: log.resource_type,
@@ -252,10 +212,11 @@ export default function OrganizationLogs() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => window.location.reload()}
+            onClick={refetch}
+            disabled={loading}
             className="gap-2"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Button
@@ -355,7 +316,23 @@ export default function OrganizationLogs() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLogs.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="text-muted-foreground mt-4">Loading audit logs...</p>
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <p className="text-destructive mb-4">Error: {error}</p>
+                    <Button onClick={refetch} variant="outline">
+                      Try Again
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ) : filteredLogs.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
                     <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

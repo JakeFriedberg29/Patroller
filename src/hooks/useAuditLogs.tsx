@@ -21,13 +21,17 @@ interface UseAuditLogsProps {
   actionFilter?: string;
   resourceFilter?: string;
   limit?: number;
+  accountType?: "platform" | "enterprise" | "organization";
+  accountId?: string;
 }
 
 export const useAuditLogs = ({ 
   searchTerm = "", 
   actionFilter = "ALL", 
   resourceFilter = "ALL",
-  limit = 100 
+  limit = 100,
+  accountType,
+  accountId
 }: UseAuditLogsProps = {}) => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +80,38 @@ export const useAuditLogs = ({
       if (normalizedResource !== "all") {
         // resource_type is typically lowercase; use ilike for safety
         query = query.ilike('resource_type', normalizedResource);
+      }
+
+      // Account scoping
+      if (accountType === 'platform') {
+        const { data: adminUsers, error: adminError } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role_type', 'platform_admin');
+
+        if (adminError) throw adminError;
+
+        const adminUserIds = adminUsers.map((u) => u.user_id);
+        query = query.in('user_id', adminUserIds);
+      } else if (accountType === 'enterprise' && accountId) {
+        query = query.eq('tenant_id', accountId);
+      } else if (accountType === 'organization' && accountId) {
+        const { data: orgUsers, error: usersError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('organization_id', accountId);
+
+        if (usersError) throw usersError;
+
+        const orgUserIds = orgUsers.map(u => u.id);
+        
+        const orConditions = [
+          `user_id.in.(${orgUserIds.join(',')})`,
+          `and(resource_type.eq.organization,resource_id.eq.${accountId})`,
+          `and(resource_type.eq.user,resource_id.in.(${orgUserIds.join(',')}))`
+        ].join(',');
+
+        query = query.or(orConditions);
       }
 
       const { data, error } = await query;

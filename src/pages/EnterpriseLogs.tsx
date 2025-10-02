@@ -20,7 +20,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useAuditLogs } from "@/hooks/useAuditLogs";
 import { formatDistanceToNow } from "date-fns";
+import { useParams } from "react-router-dom";
 
 const actionOptions = [
   { value: "ALL", label: "All Actions" },
@@ -41,69 +43,7 @@ const resourceOptions = [
   { value: "session", label: "Sessions" }
 ];
 
-// Mock data for enterprise logs
-const mockLogs = [
-  {
-    id: "log-001",
-    action: "CREATE",
-    resource_type: "organization",
-    created_at: "2024-01-15T14:30:25Z",
-    user_name: "Sarah Johnson",
-    user_email: "sarah.johnson@enterprise.com",
-    ip_address: "192.168.1.100",
-    metadata: { setup_method: "admin_panel" },
-    new_values: { name: "New Organization", status: "active" },
-    old_values: null
-  },
-  {
-    id: "log-002",
-    action: "UPDATE",
-    resource_type: "user",
-    created_at: "2024-01-15T13:45:12Z",
-    user_name: "Mike Chen",
-    user_email: "mike.chen@enterprise.com",
-    ip_address: "192.168.1.105",
-    metadata: {},
-    new_values: { role_type: "enterprise_admin", status: "active" },
-    old_values: { role_type: "organization_admin" }
-  },
-  {
-    id: "log-003",
-    action: "LOGIN",
-    resource_type: "session",
-    created_at: "2024-01-15T12:20:33Z",
-    user_name: null,
-    user_email: "robert.davis@enterprise.com",
-    ip_address: "203.0.113.45",
-    metadata: {},
-    new_values: {},
-    old_values: {}
-  },
-  {
-    id: "log-004",
-    action: "CREATE",
-    resource_type: "report",
-    created_at: "2024-01-15T11:15:48Z",
-    user_name: "Dr. Emily Rodriguez",
-    user_email: "emily.rodriguez@enterprise.com",
-    ip_address: "192.168.1.110",
-    metadata: { setup_method: "bulk_import" },
-    new_values: { title: "Monthly Safety Report", status: "draft" },
-    old_values: null
-  },
-  {
-    id: "log-005",
-    action: "UPDATE",
-    resource_type: "organization",
-    created_at: "2024-01-15T10:05:17Z",
-    user_name: "Robert Davis",
-    user_email: "robert.davis@enterprise.com",
-    ip_address: "192.168.1.120",
-    metadata: {},
-    new_values: { settings: "updated", status: "active" },
-    old_values: { settings: "default" }
-  }
-];
+// Removed mock logs; page now uses database-backed logs via useAuditLogs
 
 export default function EnterpriseLogs() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -112,6 +52,16 @@ export default function EnterpriseLogs() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
+  const { id } = useParams();
+
+  const { logs, loading, error, refetch } = useAuditLogs({
+    searchTerm,
+    actionFilter,
+    resourceFilter,
+    limit: rowsPerPage * 10,
+    accountType: "enterprise",
+    accountId: id,
+  });
 
   const getActionIcon = (action: string) => {
     const iconClass = "h-4 w-4";
@@ -200,7 +150,7 @@ export default function EnterpriseLogs() {
   };
 
   // Filter and pagination logic
-  const filteredLogs = mockLogs.filter(log => {
+  const filteredLogs = logs.filter(log => {
     const matchesSearch = log.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          log.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          log.action?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -215,7 +165,7 @@ export default function EnterpriseLogs() {
   const paginatedLogs = filteredLogs.slice(startIndex, startIndex + rowsPerPage);
 
   const handleExportLogs = () => {
-    if (mockLogs.length === 0) {
+    if (logs.length === 0) {
       toast({
         title: "No Data",
         description: "No logs available to export.",
@@ -224,7 +174,7 @@ export default function EnterpriseLogs() {
       return;
     }
 
-    const csvData = mockLogs.map(log => ({
+    const csvData = logs.map(log => ({
       Timestamp: new Date(log.created_at).toISOString(),
       Action: log.action,
       Resource: log.resource_type,
@@ -273,10 +223,11 @@ export default function EnterpriseLogs() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => window.location.reload()}
+            onClick={refetch}
+            disabled={loading}
             className="gap-2"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Button
@@ -376,7 +327,23 @@ export default function EnterpriseLogs() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLogs.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="text-muted-foreground mt-4">Loading audit logs...</p>
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <p className="text-destructive mb-4">Error: {error}</p>
+                    <Button onClick={refetch} variant="outline">
+                      Try Again
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ) : filteredLogs.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
                     <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
