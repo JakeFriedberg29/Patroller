@@ -92,7 +92,7 @@ export function AddAdminModal({
           }) => <FormItem>
                   <FormLabel>Full Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter full name" {...field} />
+                    <Input placeholder="Enter full name" className="bg-white" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>} />
@@ -102,7 +102,7 @@ export function AddAdminModal({
           }) => <FormItem>
                   <FormLabel>Email Address *</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Enter email address" {...field} />
+                    <Input type="email" placeholder="Enter email address" className="bg-white" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>} />
