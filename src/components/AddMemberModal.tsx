@@ -128,7 +128,7 @@ export function AddMemberModal({
           }) => <FormItem>
                   <FormLabel>Full Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter full name" {...field} />
+                    <Input placeholder="Enter full name" className="bg-white" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>} />
@@ -174,7 +174,7 @@ export function AddMemberModal({
             }) => <FormItem>
                     <FormLabel>Email Address *</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Enter email address" {...field} />
+                      <Input type="email" placeholder="Enter email address" className="bg-white" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
@@ -185,7 +185,7 @@ export function AddMemberModal({
               }) => <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="(555) 123-4567" {...field} />
+                        <Input placeholder="(555) 123-4567" className="bg-white" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>} />
@@ -198,7 +198,7 @@ export function AddMemberModal({
             }) => <FormItem>
                     <FormLabel>Radio Call Sign</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter radio call sign" {...field} />
+                      <Input placeholder="Enter radio call sign" className="bg-white" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
