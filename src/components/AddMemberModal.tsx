@@ -18,12 +18,12 @@ const formSchema = z.object({
     required_error: "Please select an access role"
   }),
   email: z.string().email("Please enter a valid email address"),
-  phone: z.string().min(1, "Phone number is required"),
-  radioCallSign: z.string().min(1, "Radio call sign is required"),
+  phone: z.string().optional(),
+  radioCallSign: z.string().optional(),
   specialization: z.enum(["Medical", "Water Rescue", "Climbing", "Navigation"], {
     required_error: "Please select a specialization"
-  }),
-  certifications: z.array(z.string()).min(1, "At least one certification is required")
+  }).optional(),
+  certifications: z.array(z.string()).optional()
 });
 interface AddMemberModalProps {
   open: boolean;
@@ -51,6 +51,8 @@ export function AddMemberModal({
       certifications: []
     }
   });
+
+  const selectedRole = form.watch("role");
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
@@ -177,26 +179,30 @@ export function AddMemberModal({
                     <FormMessage />
                   </FormItem>} />
 
-              <FormField control={form.control} name="phone" render={({
+              {selectedRole === "patroller" && (
+                <FormField control={form.control} name="phone" render={({
+                field
+              }) => <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(555) 123-4567" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>} />
+              )}
+            </div>
+
+            {selectedRole === "patroller" && (
+              <FormField control={form.control} name="radioCallSign" render={({
               field
             }) => <FormItem>
-                    <FormLabel>Phone Number *</FormLabel>
+                    <FormLabel>Radio Call Sign</FormLabel>
                     <FormControl>
-                      <Input placeholder="(555) 123-4567" {...field} />
+                      <Input placeholder="Enter radio call sign" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
-            </div>
-
-            <FormField control={form.control} name="radioCallSign" render={({
-            field
-          }) => <FormItem>
-                  <FormLabel>Radio Call Sign *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter radio call sign" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>} />
+            )}
 
             <div className="flex justify-between pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
