@@ -472,7 +472,7 @@ export default function Accounts() {
               if (value === 'Enterprise') handleInputChange('tenantId', "");
             }}>
                 <SelectTrigger className="border-2">
-                  <SelectValue />
+                  <SelectValue placeholder="Select type..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Enterprise">Enterprise</SelectItem>
