@@ -69,7 +69,7 @@ const Index = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <Shield className="h-8 w-8 text-primary" />
-            Global View
+            Global Analytics
           </h1>
           <p className="text-muted-foreground mt-1">Platform-wide operations overview • {format(headerDate, "EEEE, LLL dd, yyyy • HH:mm")}</p>
         </div>

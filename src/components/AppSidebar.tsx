@@ -41,7 +41,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const mainItems = [
-  { title: "Global View", url: "/", icon: Shield },
+  { title: "Global Analytics", url: "/", icon: Shield },
 ];
 
 const adminItems = [
