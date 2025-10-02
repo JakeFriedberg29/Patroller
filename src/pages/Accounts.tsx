@@ -339,7 +339,7 @@ export default function Accounts() {
                 <TableHead className="font-semibold">Name</TableHead>
                 <TableHead className="font-semibold">Type</TableHead>
                 <TableHead className="font-semibold">Subtype</TableHead>
-                <TableHead className="font-semibold">Team MemUbers</TableHead>
+                <TableHead className="font-semibold">Users</TableHead>
                 <TableHead className="font-semibold">Contact</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
