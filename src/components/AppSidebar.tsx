@@ -13,13 +13,16 @@ import {
   MoreHorizontal,
   LogOut,
   Layers,
-  Tag
+  Tag,
+  CreditCard,
+  Package
 } from "lucide-react";
 import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   Sidebar,
@@ -92,6 +95,27 @@ export function AppSidebar() {
   };
   const routeId = id ?? deriveRouteIdFromPath();
 
+  // Fetch organization data to check if it's standalone
+  const { data: organizationData } = useQuery({
+    queryKey: ['organization', routeId],
+    queryFn: async () => {
+      if (!routeId || !isInOrganization) return null;
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('tenant_id')
+        .eq('id', routeId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: isInOrganization && !!routeId
+  });
+
+  // Determine if licenses/billing should be shown
+  const showLicensesAndBilling = isInEnterprise || (isInOrganization && !organizationData?.tenant_id);
+
+
+
   const isActive = (path: string) => {
     if (isInOrganization || isInEnterprise) {
       return currentPath.includes(path);
@@ -103,6 +127,22 @@ export function AppSidebar() {
     isActive 
       ? "bg-primary/20 text-primary font-semibold border-r-2 border-primary shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-primary/30" 
       : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1";
+
+  const handleLicensesClick = () => {
+    if (isInOrganization && routeId) {
+      navigate(`/organization/${routeId}/licenses`);
+    } else if (isInEnterprise && routeId) {
+      navigate(`/enterprises/${routeId}/licenses`);
+    }
+  };
+
+  const handleBillingClick = () => {
+    if (isInOrganization && routeId) {
+      navigate(`/organization/${routeId}/billing`);
+    } else if (isInEnterprise && routeId) {
+      navigate(`/enterprises/${routeId}/billing`);
+    }
+  };
 
   const handleSettingsClick = () => {
     if (isInOrganization && routeId) {
@@ -293,6 +333,18 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
+                    {showLicensesAndBilling && (
+                      <>
+                        <DropdownMenuItem onClick={handleLicensesClick}>
+                          <Package className="mr-2 h-4 w-4" />
+                          Licenses Catalog
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleBillingClick}>
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Billing
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuItem onClick={handleSettingsClick}>
                       <Settings className="mr-2 h-4 w-4" />
                       Settings

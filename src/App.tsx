@@ -35,6 +35,8 @@ const PlatformNotificationCenter = lazy(() => import("./pages/PlatformNotificati
 const Repository = lazy(() => import("./pages/Repository"));
 const ReportBuilder = lazy(() => import("./pages/ReportBuilder"));
 const PatrollerDashboard = lazy(() => import("./pages/PatrollerDashboard"));
+const LicensesCatalog = lazy(() => import("./pages/LicensesCatalog"));
+const Billing = lazy(() => import("./pages/Billing"));
 
 const queryClient = new QueryClient();
 
@@ -81,12 +83,16 @@ const App = () => (
                           <Route path="organization/:id/reports/create/:templateId" element={<ProtectedRoute requireAssignment accountType="Organization"><CreateReport /></ProtectedRoute>} />
                           <Route path="organization/:id/reports" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationReports /></ProtectedRoute>} />
                           <Route path="organization/:id/logs" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationLogs /></ProtectedRoute>} />
+                          <Route path="organization/:id/licenses" element={<ProtectedRoute requireAssignment accountType="Organization"><LicensesCatalog /></ProtectedRoute>} />
+                          <Route path="organization/:id/billing" element={<ProtectedRoute requireAssignment accountType="Organization"><Billing /></ProtectedRoute>} />
                           <Route path="organization/:id/settings" element={<ProtectedRoute requireAssignment accountType="Organization"><Settings /></ProtectedRoute>} />
                           <Route path="enterprises/:id/enterprise-view" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseView /></ProtectedRoute>} />
                           <Route path="enterprises/:id/organizations" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseOrganizations /></ProtectedRoute>} />
                           <Route path="enterprises/:id/enterprise-admins" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseAdmins /></ProtectedRoute>} />
                           <Route path="enterprises/:id/notifications" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseNotificationCenter /></ProtectedRoute>} />
                           <Route path="enterprises/:id/logs" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseLogs /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/licenses" element={<ProtectedRoute requireAssignment accountType="Enterprise"><LicensesCatalog /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/billing" element={<ProtectedRoute requireAssignment accountType="Enterprise"><Billing /></ProtectedRoute>} />
                           <Route path="enterprises/:id/settings" element={<ProtectedRoute requireAssignment accountType="Enterprise"><Settings /></ProtectedRoute>} />
                           <Route path="reports" element={<Reports />} />
                           <Route path="reports/:templateId" element={<ReportDetail />} />
