@@ -484,8 +484,8 @@ export default function Accounts() {
             <div className="space-y-2">
               <Label htmlFor="category">Subtype *</Label>
               <Select value={formData.category} onValueChange={value => handleInputChange("category", value)}>
-                <SelectTrigger className="border-2">
-                  <SelectValue placeholder="Select a subtype..." />
+                <SelectTrigger className="border-2 bg-white">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {loadingSubtypes ? <div className="py-6 text-center text-sm text-muted-foreground">Loading subtypes...</div> : formData.type === "Enterprise" ? enterpriseSubtypes.length > 0 ? enterpriseSubtypes.map(subtype => <SelectItem key={subtype.id} value={subtype.name}>
