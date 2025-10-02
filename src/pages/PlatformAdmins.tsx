@@ -482,7 +482,7 @@ export default function PlatformAdmins() {
               Cancel
             </Button>
             <Button onClick={handleAddAdmin} disabled={!newAdmin.fullName || !newAdmin.email || isCreatingUser}>
-              {isCreatingUser ? 'Creating...' : 'Add Admin'}
+              {isCreatingUser ? 'Creating...' : 'Add Platform Admin'}
             </Button>
           </div>
         </DialogContent>
