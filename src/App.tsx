@@ -9,6 +9,7 @@ import { Suspense, lazy } from "react";
 import { Layout } from "@/components/Layout";
 const Auth = lazy(() => import("@/pages/Auth"));
 const ActivateAccount = lazy(() => import("@/pages/ActivateAccount"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Index = lazy(() => import("./pages/Index"));
 const Accounts = lazy(() => import("./pages/Accounts"));
@@ -57,6 +58,7 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/activate" element={<ActivateAccount />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/repository" element={
                 <ProtectedRoute>
