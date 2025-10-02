@@ -59,7 +59,7 @@ const enterpriseItems = [
   { title: "Enterprise Admins", url: "/enterprise-admins", icon: Shield },
   { title: "Notification Center", url: "/notifications", icon: Bell },
   { title: "Logs", url: "/logs", icon: BarChart3 },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Account Details", url: "/settings", icon: Settings },
 ];
 
 const organizationItems = [
@@ -67,7 +67,7 @@ const organizationItems = [
   { title: "Team Directory", url: "/team-directory", icon: Users },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Logs", url: "/logs", icon: BarChart3 },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Account Details", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -347,7 +347,7 @@ export function AppSidebar() {
                     )}
                     <DropdownMenuItem onClick={handleSettingsClick}>
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      Account Details
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
