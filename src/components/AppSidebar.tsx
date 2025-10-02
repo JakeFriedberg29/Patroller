@@ -347,7 +347,7 @@ export function AppSidebar() {
                     )}
                     <DropdownMenuItem onClick={handleSettingsClick}>
                       <Settings className="mr-2 h-4 w-4" />
-                      Profile
+                      Settings
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
