@@ -678,7 +678,7 @@ export default function Settings() {
         <div className="flex items-center gap-3">
           <SettingsIcon className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold">{isEnterprise ? 'Enterprise' : 'Organization'} Account Details</h1>
+            <h1 className="text-3xl font-bold">Account Details</h1>
             <p className="text-muted-foreground">Manage {isEnterprise ? 'enterprise' : 'organization'} details and configuration</p>
           </div>
         </div>
