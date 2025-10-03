@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
@@ -67,7 +68,8 @@ export default function PlatformAdmins() {
   const [newAdmin, setNewAdmin] = useState({
     fullName: "",
     email: "",
-    phone: ""
+    phone: "",
+    accessRole: "read" as "read" | "write"
   });
 
   // Load platform admins from database
@@ -187,6 +189,7 @@ export default function PlatformAdmins() {
         email: newAdmin.email,
         fullName: newAdmin.fullName,
         role: 'Platform Admin',
+        accessRole: newAdmin.accessRole,
         tenantId: tenantIdToUse,
         phone: newAdmin.phone
       });
@@ -194,7 +197,8 @@ export default function PlatformAdmins() {
         setNewAdmin({
           fullName: "",
           email: "",
-          phone: ""
+          phone: "",
+          accessRole: "read"
         });
         setIsAddDialogOpen(false);
         loadPlatformAdmins(); // Refresh the list
@@ -474,7 +478,30 @@ export default function PlatformAdmins() {
             })} placeholder="(555) 123-4567" />
             </div>
 
-            
+            <div className="space-y-3">
+              <Label>Access *</Label>
+              <RadioGroup 
+                value={newAdmin.accessRole} 
+                onValueChange={(value: "read" | "write") => setNewAdmin({
+                  ...newAdmin,
+                  accessRole: value
+                })}
+                className="flex flex-col space-y-1"
+              >
+                <div className="flex items-center space-x-3 space-y-0">
+                  <RadioGroupItem value="write" id="write" />
+                  <Label htmlFor="write" className="font-normal cursor-pointer">
+                    Write (manage)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 space-y-0">
+                  <RadioGroupItem value="read" id="read" />
+                  <Label htmlFor="read" className="font-normal cursor-pointer">
+                    Read (view only)
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
 
           <div className="flex justify-between mt-6">

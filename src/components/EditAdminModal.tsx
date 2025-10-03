@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
@@ -20,7 +21,7 @@ const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  
+  accessRole: z.enum(["read", "write"]).optional(),
   location: z.string().optional()
 });
 
@@ -58,6 +59,7 @@ export const EditAdminModal = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
   const [autoAssignAll, setAutoAssignAll] = useState<boolean | null>(null);
+  const [currentAccessRole, setCurrentAccessRole] = useState<"read" | "write">("read");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -65,9 +67,29 @@ export const EditAdminModal = ({
       fullName: admin ? `${admin.firstName} ${admin.lastName}` : '',
       email: admin?.email || '',
       phone: admin?.phone || '',
+      accessRole: "read",
       location: ''
     }
   });
+
+  // Load current access role for platform admins
+  React.useEffect(() => {
+    const loadAccessRole = async () => {
+      if (admin && accountType === "platform") {
+        const { data } = await supabase
+          .from('account_users')
+          .select('access_role')
+          .eq('user_id', admin.id)
+          .maybeSingle();
+        
+        if (data?.access_role) {
+          setCurrentAccessRole(data.access_role as "read" | "write");
+          form.setValue('accessRole', data.access_role as "read" | "write");
+        }
+      }
+    };
+    loadAccessRole();
+  }, [admin, accountType]);
 
   React.useEffect(() => {
     if (admin) {
@@ -75,11 +97,11 @@ export const EditAdminModal = ({
         fullName: `${admin.firstName} ${admin.lastName}`,
         email: admin.email,
         phone: admin.phone || '',
-        
+        accessRole: currentAccessRole,
         location: ''
       });
     }
-  }, [admin, form]);
+  }, [admin, form, currentAccessRole]);
 
   const onSubmit = async (values: FormValues) => {
     if (!admin) return;
@@ -121,6 +143,30 @@ export const EditAdminModal = ({
           .from('users')
           .update({ profile_data: updatedProfileData })
           .eq('id', admin.id);
+      }
+
+      // Update access role for platform admins
+      if (accountType === "platform" && values.accessRole) {
+        // Get tenant_id for the platform admin
+        const { data: userData } = await supabase
+          .from('users')
+          .select('tenant_id')
+          .eq('id', admin.id)
+          .single();
+
+        if (userData?.tenant_id) {
+          await supabase
+            .from('account_users')
+            .upsert({
+              user_id: admin.id,
+              tenant_id: userData.tenant_id,
+              organization_id: null,
+              access_role: values.accessRole,
+              is_active: true
+            }, { 
+              onConflict: 'tenant_id,organization_id,user_id' 
+            });
+        }
       }
 
       toast.success('Administrator updated successfully');
@@ -301,6 +347,43 @@ export const EditAdminModal = ({
                 </FormItem>
               )}
             />
+
+            {accountType === "platform" && (
+              <FormField
+                control={form.control}
+                name="accessRole"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Access *</FormLabel>
+                    <FormControl>
+                      <RadioGroup 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="write" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">
+                            Write (manage)
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="read" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">
+                            Read (view only)
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {accountType !== "platform" && (
               <>
