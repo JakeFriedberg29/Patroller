@@ -200,7 +200,7 @@ function SortableFieldItem({
               <Textarea
                 placeholder="Option 1&#10;Option 2&#10;Option 3"
                 value={row.options?.join('\n') || ''}
-                onChange={(e) => updateFieldRow(row.id, { options: e.target.value.split('\n').filter(opt => opt.trim()) })}
+                onChange={(e) => updateFieldRow(row.id, { options: e.target.value.split('\n') })}
                 rows={4}
               />
             </div>
