@@ -539,8 +539,9 @@ export default function ReportBuilder() {
         </div>
       </div>
 
+      {/* Report Name and Description Card - separate from form */}
       <Card>
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Report Name</Label>
@@ -551,7 +552,12 @@ export default function ReportBuilder() {
               <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe this report template" />
             </div>
           </div>
+        </CardContent>
+      </Card>
 
+      {/* Form Elements Card */}
+      <Card>
+        <CardContent className="p-6 space-y-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Form Elements</Label>
@@ -568,6 +574,16 @@ export default function ReportBuilder() {
               {isPreviewMode ? (
                 // Preview mode - show with layout and pagination
                 <div className="space-y-6">
+                  {/* Show report name and description only on first page */}
+                  {currentPage === 0 && (
+                    <div className="p-6 border rounded-lg bg-muted/5 space-y-3">
+                      <h2 className="text-2xl font-semibold">{name || "Untitled Report"}</h2>
+                      {description && (
+                        <p className="text-muted-foreground">{description}</p>
+                      )}
+                    </div>
+                  )}
+                  
                   {pages.length > 1 && (
                     <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
                       <div className="text-sm text-muted-foreground">
