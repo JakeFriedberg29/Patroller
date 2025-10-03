@@ -8,6 +8,7 @@ export interface CreateUserRequest {
   fullName: string;
   role?: string;
   accessRole?: 'read' | 'write';
+  isPatroller?: boolean;
   tenantId?: string;
   organizationId?: string;
   
@@ -89,6 +90,9 @@ export const useUserManagement = () => {
         return { success: false, error: 'Email already exists in another account' };
       }
       
+      // Determine the role type based on whether user is patroller or admin
+      const roleType = userData.isPatroller ? 'patroller' : 'observer';
+      
       // Create user in the database first (without email confirmation)
       const { data, error } = await supabase.rpc('create_user_with_activation', {
         p_email: userData.email,
@@ -98,7 +102,7 @@ export const useUserManagement = () => {
         p_phone: userData.phone || null,
         
         p_location: userData.location || null,
-        p_role_type: mapRoleToDbRole(userData.role || 'patroller')
+        p_role_type: roleType
       });
 
       if (error) {
@@ -127,6 +131,7 @@ export const useUserManagement = () => {
       console.log('User created successfully, sending activation email for userId:', result.user_id);
       
       // Insert account access (unified) after user creation if accessRole provided
+      // Admin access is always required now
       try {
         if (result?.user_id && userData.accessRole) {
           if (userData.organizationId) {

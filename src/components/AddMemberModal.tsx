@@ -14,9 +14,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  role: z.enum(["write", "read", "patroller"], {
-    required_error: "Please select an access role"
+  accessLevel: z.enum(["write", "read"], {
+    required_error: "Please select an access level"
   }),
+  isPatroller: z.boolean().default(false),
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().optional(),
   radioCallSign: z.string().optional(),
@@ -44,7 +45,8 @@ export function AddMemberModal({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
-      role: "read",
+      accessLevel: "read",
+      isPatroller: false,
       email: "",
       phone: "",
       radioCallSign: "",
@@ -52,7 +54,7 @@ export function AddMemberModal({
     }
   });
 
-  const selectedRole = form.watch("role");
+  const isPatroller = form.watch("isPatroller");
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
@@ -69,18 +71,12 @@ export function AddMemberModal({
       if (!currentUser?.organization_id) {
         throw new Error('No organization found');
       }
-      const roleMap: {
-        [key: string]: string;
-      } = {
-        write: 'User',
-        read: 'User',
-        patroller: 'Patroller'
-      };
       const result = await createUser({
         email: values.email,
         fullName: values.fullName,
-        role: roleMap[values.role],
-        accessRole: values.role === 'patroller' ? undefined : values.role as 'read' | 'write',
+        role: values.isPatroller ? 'Patroller' : 'User',
+        accessRole: values.accessLevel,
+        isPatroller: values.isPatroller,
         tenantId: currentUser.tenant_id,
         organizationId: currentUser.organization_id,
         phone: values.phone
@@ -143,7 +139,7 @@ export function AddMemberModal({
                   <FormMessage />
                 </FormItem>} />
 
-            <FormField control={form.control} name="role" render={({
+            <FormField control={form.control} name="accessLevel" render={({
             field
           }) => <FormItem className="space-y-3">
                   <FormLabel>Access *</FormLabel>
@@ -165,20 +161,25 @@ export function AddMemberModal({
                           Read (view only)
                         </FormLabel>
                       </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="patroller" />
-                        </FormControl>
-                        <FormLabel className="font-normal cursor-pointer">
-                          Patroller
-                        </FormLabel>
-                      </FormItem>
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>} />
 
-            {selectedRole === "patroller" && (
+            <FormField control={form.control} name="isPatroller" render={({
+            field
+          }) => <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="font-normal cursor-pointer">
+                      Patroller
+                    </FormLabel>
+                  </div>
+                </FormItem>} />
+
+            {isPatroller && (
               <FormField control={form.control} name="phone" render={({
               field
             }) => <FormItem>
@@ -190,7 +191,7 @@ export function AddMemberModal({
                   </FormItem>} />
             )}
 
-            {selectedRole === "patroller" && (
+            {isPatroller && (
               <FormField control={form.control} name="radioCallSign" render={({
               field
             }) => <FormItem>
