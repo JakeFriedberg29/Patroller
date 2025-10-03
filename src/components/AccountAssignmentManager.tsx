@@ -13,11 +13,13 @@ import { usePlatformAdminAssignmentManager, type Account, type AccountAssignment
 interface AccountAssignmentManagerProps {
   platformAdminId: string;
   platformAdminName: string;
+  onAutoAssignChange?: (enabled: boolean) => void;
 }
 
 export const AccountAssignmentManager = ({ 
   platformAdminId, 
-  platformAdminName 
+  platformAdminName,
+  onAutoAssignChange
 }: AccountAssignmentManagerProps) => {
   const {
     assignments,
@@ -62,23 +64,6 @@ export const AccountAssignmentManager = ({
     }
   }, [platformAdminId]);
 
-  // Auto-assign new accounts if preference is enabled
-  useEffect(() => {
-    const autoAssignNewAccounts = async () => {
-      if (!autoAssignAll || isLoading || unassignedAccounts.length === 0) return;
-
-      try {
-        for (const account of unassignedAccounts) {
-          await addAssignment(platformAdminId, account.id, account.type);
-        }
-      } catch (error) {
-        console.error('Error auto-assigning new accounts:', error);
-      }
-    };
-
-    autoAssignNewAccounts();
-  }, [availableAccounts, autoAssignAll, isLoading]); // Trigger when new accounts are available
-
   // Filter out already assigned accounts
   const assignedAccountIds = assignments.map(a => a.account_id);
   const unassignedAccounts = availableAccounts.filter(account => !assignedAccountIds.includes(account.id));
@@ -110,66 +95,9 @@ export const AccountAssignmentManager = ({
     setAssignmentToRemove(null);
   };
 
-  const handleSelectAllAccounts = async (checked: boolean) => {
+  const handleSelectAllAccounts = (checked: boolean) => {
     setAutoAssignAll(checked);
-    
-    try {
-      // Update the admin's auto-assign preference in the database
-      const currentProfileData = await supabase
-        .from('users')
-        .select('profile_data')
-        .eq('id', platformAdminId)
-        .single();
-
-      const updatedProfileData = {
-        ...(currentProfileData.data?.profile_data as any || {}),
-        auto_assign_all_accounts: checked
-      };
-
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          profile_data: updatedProfileData
-        })
-        .eq('id', platformAdminId);
-
-      if (updateError) {
-        console.error('Error updating auto-assign preference:', updateError);
-        toast({
-          title: "Error",
-          description: "Failed to save auto-assign preference.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (checked) {
-        // Assign all unassigned accounts
-        setIsAssigningAll(true);
-        for (const account of unassignedAccounts) {
-          await addAssignment(platformAdminId, account.id, account.type);
-        }
-        setIsAssigningAll(false);
-        
-        toast({
-          title: "Auto-Assignment Enabled",
-          description: "All current and future accounts will be assigned to this admin."
-        });
-      } else {
-        toast({
-          title: "Auto-Assignment Disabled",
-          description: "Manual account assignment is now required."
-        });
-      }
-    } catch (error) {
-      console.error('Error handling select all accounts:', error);
-      setIsAssigningAll(false);
-      toast({
-        title: "Error",
-        description: "Failed to update account assignments.",
-        variant: "destructive"
-      });
-    }
+    onAutoAssignChange?.(checked);
   };
 
   const getAccountIcon = (type: string) => {
@@ -191,11 +119,11 @@ export const AccountAssignmentManager = ({
       <CardContent className="space-y-4">
         {/* Select All Accounts Option */}
         <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg">
-          <Checkbox
+            <Checkbox
             id="auto-assign-all"
             checked={autoAssignAll}
             onCheckedChange={handleSelectAllAccounts}
-            disabled={isLoading || isAssigningAll}
+            disabled={isLoading}
           />
           <div className="flex items-center gap-2 flex-1">
             <CheckSquare className="h-4 w-4 text-primary" />
@@ -205,15 +133,12 @@ export const AccountAssignmentManager = ({
               </label>
               <p className="text-xs text-muted-foreground">
                 {autoAssignAll 
-                  ? "This admin can oversee all accounts. New accounts will be auto-assigned." 
+                  ? "This admin can oversee all accounts. Changes will apply when you save." 
                   : "Enable to assign all current and future accounts to this admin."
                 }
               </p>
             </div>
           </div>
-          {isAssigningAll && (
-            <div className="text-xs text-muted-foreground">Assigning...</div>
-          )}
         </div>
 
         {/* Add New Assignment */}

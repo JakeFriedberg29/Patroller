@@ -57,6 +57,7 @@ export const EditAdminModal = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
+  const [autoAssignAll, setAutoAssignAll] = useState<boolean | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -101,6 +102,25 @@ export const EditAdminModal = ({
         console.error('Error updating admin:', error);
         toast.error('Failed to update administrator');
         return;
+      }
+
+      // Update auto-assign preference if it changed for platform admins
+      if (accountType === "platform" && autoAssignAll !== null) {
+        const { data: currentData } = await supabase
+          .from('users')
+          .select('profile_data')
+          .eq('id', admin.id)
+          .single();
+
+        const updatedProfileData = {
+          ...(currentData?.profile_data as any || {}),
+          auto_assign_all_accounts: autoAssignAll
+        };
+
+        await supabase
+          .from('users')
+          .update({ profile_data: updatedProfileData })
+          .eq('id', admin.id);
       }
 
       toast.success('Administrator updated successfully');
@@ -371,6 +391,7 @@ export const EditAdminModal = ({
                 <AccountAssignmentManager
                   platformAdminId={admin.id}
                   platformAdminName={`${admin.firstName} ${admin.lastName}`}
+                  onAutoAssignChange={setAutoAssignAll}
                 />
                 <Separator className="my-6" />
               </div>
