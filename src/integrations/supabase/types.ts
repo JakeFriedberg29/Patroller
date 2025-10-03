@@ -143,6 +143,96 @@ export type Database = {
           },
         ]
       }
+      audit_logs_2025_10: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          resource_id: string | null
+          resource_type: string
+          tenant_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          tenant_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          tenant_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      audit_logs_current_month: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          resource_id: string | null
+          resource_type: string
+          tenant_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          tenant_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          tenant_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       email_notification_logs: {
         Row: {
           error_message: string | null
@@ -239,7 +329,7 @@ export type Database = {
           is_enabled?: boolean
           last_sent_at?: string | null
           last_sent_to?: string | null
-          notification_key?: string | null
+          notification_key?: string
           subject?: string | null
           tenant_id?: string
           updated_at?: string
@@ -618,6 +708,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_admin_account_assignments: {
+        Row: {
+          account_id: string
+          account_type: string
+          assigned_at: string
+          assigned_by: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          platform_admin_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          account_type: string
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          platform_admin_id: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          account_type?: string
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          platform_admin_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       report_templates: {
         Row: {
@@ -1228,6 +1354,49 @@ export type Database = {
         }
         Relationships: []
       }
+      v_account_users: {
+        Row: {
+          access_role: Database["public"]["Enums"]["access_role"] | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          organization_id: string | null
+          status: Database["public"]["Enums"]["user_status"] | null
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_users_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_users_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_users_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       activate_user_account: {
@@ -1390,6 +1559,22 @@ export type Database = {
         Args: { p_limit?: number; p_query: string }
         Returns: Json
       }
+      has_org_read: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      has_org_write: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      has_tenant_read: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      has_tenant_write: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_platform_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1436,6 +1621,10 @@ export type Database = {
         }
         Returns: Json
       }
+      set_user_active_persona: {
+        Args: { p_persona: string }
+        Returns: undefined
+      }
       slugify: {
         Args: { p_text: string }
         Returns: string
@@ -1463,6 +1652,7 @@ export type Database = {
       }
     }
     Enums: {
+      access_role: "read" | "write"
       equipment_status:
         | "available"
         | "in_use"
@@ -1541,7 +1731,7 @@ export type Tables<
     ? R
     : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"]) 
+        DefaultSchema["Views"])
     ? (DefaultSchema["Tables"] &
         DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
@@ -1637,6 +1827,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      access_role: ["read", "write"],
       equipment_status: [
         "available",
         "in_use",

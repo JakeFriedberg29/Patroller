@@ -13,6 +13,8 @@ interface UserProfile {
   roleType: string;
   status: string;
   profileData: any;
+  availablePersonas: string[];
+  activePersona?: 'admin' | 'patroller';
 }
 
 export const useUserProfile = () => {
@@ -57,10 +59,19 @@ export const useUserProfile = () => {
         const activeRoles = data.user_roles?.filter((role: any) => role.is_active) || [];
         const primaryRole = activeRoles[0]?.role_type || 'member';
         
+        // Determine available personas based on roles
+        const availablePersonas = activeRoles.map((r: any) => r.role_type);
+        
         // Safely parse JSON data
         const profileData = typeof data.profile_data === 'object' && data.profile_data !== null 
           ? data.profile_data as any 
           : {};
+        
+        // Get active persona from preferences
+        const preferences = typeof data.preferences === 'object' && data.preferences !== null 
+          ? data.preferences as any 
+          : {};
+        const activePersona = preferences.active_persona as 'admin' | 'patroller' | undefined;
         
         setProfile({
           id: data.id,
@@ -77,7 +88,9 @@ export const useUserProfile = () => {
             tenant_id: data.tenant_id,
             organization_id: data.organization_id,
             user_id: data.id
-          }
+          },
+          availablePersonas,
+          activePersona
         });
       }
     } catch (error) {

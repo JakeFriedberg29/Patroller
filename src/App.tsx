@@ -11,6 +11,7 @@ const Auth = lazy(() => import("@/pages/Auth"));
 const ActivateAccount = lazy(() => import("@/pages/ActivateAccount"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const PersonaSelection = lazy(() => import("@/pages/PersonaSelection"));
 const Index = lazy(() => import("./pages/Index"));
 const Accounts = lazy(() => import("./pages/Accounts"));
 const AccountDetail = lazy(() => import("./pages/AccountDetail"));
@@ -60,6 +61,11 @@ const App = () => (
               <Route path="/activate" element={<ActivateAccount />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/persona-selection" element={
+                <ProtectedRoute>
+                  <PersonaSelection />
+                </ProtectedRoute>
+              } />
               <Route path="/repository" element={
                 <ProtectedRoute>
                   <Suspense fallback={<LoadingFallback />}>

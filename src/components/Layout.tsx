@@ -1,6 +1,7 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AccountHeader } from "@/components/AccountHeader";
+import { PersonaSwitcher } from "@/components/PersonaSwitcher";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,9 @@ export function Layout({ children }: LayoutProps) {
           {/* Account Context Header */}
           <div className="flex items-center justify-between">
             <AccountHeader />
+            <div className="flex items-center gap-2 px-6 py-2">
+              <PersonaSwitcher />
+            </div>
           </div>
           
           {/* Main Content */}

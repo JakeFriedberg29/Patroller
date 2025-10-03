@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const usePermissions = () => {
   const { profile } = useUserProfile();
+  
+  // Get active persona - defaults to admin if not set
+  const activePersona = profile?.activePersona || 'admin';
 
   const [hasTenantWrite, setHasTenantWrite] = useState(false);
   const [hasTenantRead, setHasTenantRead] = useState(false);
@@ -46,19 +49,28 @@ export const usePermissions = () => {
   const isPlatformAdmin = profile?.roleType === 'platform_admin';
   const isPatroller = profile?.roleType === 'patroller' || profile?.roleType === 'member';
 
-  const canManageUsers = isPlatformAdmin || hasTenantWrite || hasOrgWrite;
-  const canManageIncidents = isPlatformAdmin || hasOrgWrite || isPatroller;
-  const canReportIncidents = isPatroller || hasOrgWrite || isPlatformAdmin;
-  const canSubmitReports = isPatroller; // only Patrollers submit reports
-  const canViewAllData = isPlatformAdmin;
-  const canManageOrganizations = isPlatformAdmin || hasTenantWrite;
-  const canManageEnterprise = isPlatformAdmin || hasTenantWrite;
-  const canManageOrgSettings = isPlatformAdmin || hasOrgWrite;
+  // Respect active persona when determining capabilities
+  const isActiveAdmin = activePersona === 'admin';
+  const isActivePatroller = activePersona === 'patroller';
+
+  const canManageUsers = isActiveAdmin && (isPlatformAdmin || hasTenantWrite || hasOrgWrite);
+  const canManageIncidents = isActiveAdmin ? (isPlatformAdmin || hasOrgWrite) : isActivePatroller && isPatroller;
+  const canReportIncidents = isActivePatroller && isPatroller;
+  const canSubmitReports = isActivePatroller && isPatroller;
+  const canViewAllData = isActiveAdmin && isPlatformAdmin;
+  const canManageOrganizations = isActiveAdmin && (isPlatformAdmin || hasTenantWrite);
+  const canManageEnterprise = isActiveAdmin && (isPlatformAdmin || hasTenantWrite);
+  const canManageOrgSettings = isActiveAdmin && (isPlatformAdmin || hasOrgWrite);
 
   return {
     // core actors
     isPlatformAdmin,
     isPatroller,
+
+    // active persona
+    activePersona,
+    isActiveAdmin,
+    isActivePatroller,
 
     // new access model
     hasTenantWrite,
