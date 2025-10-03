@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ChevronLeft, Loader2, Plus, Trash2, Eye, Edit, Minus, FileText } from "lucide-react";
+import { ChevronLeft, Loader2, Plus, Trash2, Eye, Edit, Minus, FileText, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -41,6 +41,7 @@ export default function ReportBuilder() {
   const [saving, setSaving] = useState<boolean>(false);
   const [status, setStatus] = useState<'draft' | 'ready' | 'published' | 'unpublished'>("draft");
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(0);
 
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -125,6 +126,24 @@ export default function ReportBuilder() {
   const removeFieldRow = (id: string) => {
     setFieldRows(prev => prev.filter(r => r.id !== id));
   };
+
+  // Split fields into pages based on page_break positions
+  const pages = useMemo(() => {
+    const result: FieldRow[][] = [[]];
+    let currentPageIndex = 0;
+
+    fieldRows.forEach((field) => {
+      if (field.type === 'page_break') {
+        // Start a new page
+        currentPageIndex++;
+        result[currentPageIndex] = [];
+      } else {
+        result[currentPageIndex].push(field);
+      }
+    });
+
+    return result;
+  }, [fieldRows]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -259,7 +278,10 @@ export default function ReportBuilder() {
           <Button
             variant={isPreviewMode ? "default" : "outline"}
             size="sm"
-            onClick={() => setIsPreviewMode(!isPreviewMode)}
+            onClick={() => {
+              setIsPreviewMode(!isPreviewMode);
+              setCurrentPage(0); // Reset to first page when toggling preview
+            }}
             className="gap-2"
           >
             {isPreviewMode ? <Edit className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -313,26 +335,76 @@ export default function ReportBuilder() {
                 <div className="text-sm text-muted-foreground">No form elements configured.</div>
               )}
               {isPreviewMode ? (
-                // Preview mode - show with layout
-                <div className="flex flex-wrap gap-4">
-                  {fieldRows.map((row) => {
-                    if (row.type === 'divider') {
-                      return <div key={row.id} className="w-full"><ReportDivider label={row.label} isPreview /></div>;
-                    }
-                    if (row.type === 'page_break') {
-                      return <div key={row.id} className="w-full"><ReportPageBreak label={row.label} isPreview /></div>;
-                    }
-                    
-                    const widthClass = row.width === '1/3' ? 'w-full md:w-[calc(33.333%-0.67rem)]' : 
-                                       row.width === '1/2' ? 'w-full md:w-[calc(50%-0.5rem)]' : 
-                                       'w-full';
-                    
-                    return (
-                      <div key={row.id} className={`${widthClass} p-4 border rounded-lg bg-muted/10`}>
-                        <ReportFieldPreview field={row} />
+                // Preview mode - show with layout and pagination
+                <div className="space-y-6">
+                  {pages.length > 1 && (
+                    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                      <div className="text-sm text-muted-foreground">
+                        Step {currentPage + 1} of {pages.length}
                       </div>
-                    );
-                  })}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                          disabled={currentPage === 0}
+                          className="gap-2"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Back
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.min(pages.length - 1, prev + 1))}
+                          disabled={currentPage === pages.length - 1}
+                          className="gap-2"
+                        >
+                          Next
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-4">
+                    {pages[currentPage]?.map((row) => {
+                      if (row.type === 'divider') {
+                        return <div key={row.id} className="w-full"><ReportDivider label={row.label} isPreview /></div>;
+                      }
+                      
+                      const widthClass = row.width === '1/3' ? 'w-full md:w-[calc(33.333%-0.67rem)]' : 
+                                         row.width === '1/2' ? 'w-full md:w-[calc(50%-0.5rem)]' : 
+                                         'w-full';
+                      
+                      return (
+                        <div key={row.id} className={`${widthClass} p-4 border rounded-lg bg-muted/10`}>
+                          <ReportFieldPreview field={row} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {pages.length > 1 && (
+                    <div className="flex justify-end gap-2 pt-4 border-t">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                        disabled={currentPage === 0}
+                        className="gap-2"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Back
+                      </Button>
+                      <Button
+                        variant="default"
+                        onClick={() => setCurrentPage(prev => Math.min(pages.length - 1, prev + 1))}
+                        disabled={currentPage === pages.length - 1}
+                        className="gap-2"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 // Edit mode - show configuration
