@@ -629,7 +629,7 @@ export default function Settings() {
   const handleSelectOrganization = (org: { id: string; name: string; type: string }) => {
     // Add to pending organizations list
     setPendingOrgs(prev => [...prev, org]);
-    setOrgSearchOpen(false);
+    // Clear search query to reset the search but keep popover open
     setOrgQuery("");
     setSearchResults([]);
     
