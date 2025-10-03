@@ -539,21 +539,23 @@ export default function ReportBuilder() {
         </div>
       </div>
 
-      {/* Report Name and Description Card - separate from form */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Report Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Incident Report" />
+      {/* Report Name and Description Card - only shown in edit mode */}
+      {!isPreviewMode && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Report Name</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Incident Report" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Description</Label>
+                <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe this report template" />
+              </div>
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Description</Label>
-              <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe this report template" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Form Elements Card */}
       <Card>
