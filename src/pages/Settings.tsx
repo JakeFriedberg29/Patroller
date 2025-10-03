@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,9 +62,9 @@ export default function Settings() {
   // Assign organizations to enterprise state
   const [orgSearchOpen, setOrgSearchOpen] = useState(false);
   const [orgQuery, setOrgQuery] = useState("");
-  const [unassignedOrgs, setUnassignedOrgs] = useState<Array<{ id: string; name: string; type: string }>>([]);
-  const [loadingUnassignedOrgs, setLoadingUnassignedOrgs] = useState(false);
-  const [assigningOrgId, setAssigningOrgId] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; type: string; tenant_id: string | null }>>([]);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [pendingOrgs, setPendingOrgs] = useState<Array<{ id: string; name: string; type: string }>>([]);
 
   // Subtypes state
   const [enterpriseSubtypes, setEnterpriseSubtypes] = useState<string[]>([]);
@@ -111,35 +111,66 @@ export default function Settings() {
     }
   };
 
-  const loadUnassignedOrganizations = async (q: string) => {
+  // Debounced search for organizations
+  const searchOrganizations = useCallback(async (searchQuery: string) => {
+    if (!currentAccount?.id || currentAccount.type !== 'Enterprise') return;
+    
     try {
-      setLoadingUnassignedOrgs(true);
+      setLoadingSearch(true);
 
-      // Load all organizations that are NOT already assigned to this enterprise
+      // Get all organizations in the current enterprise
+      const { data: currentOrgData } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('tenant_id', currentAccount.id);
+      
+      const currentOrgIds = (currentOrgData || []).map(o => o.id);
+      const pendingOrgIds = pendingOrgs.map(o => o.id);
+      const excludeIds = [...currentOrgIds, ...pendingOrgIds];
+
+      // Search for organizations NOT already in this enterprise
       const query = supabase
         .from('organizations')
         .select('id, name, organization_type, organization_subtype, tenant_id')
-        .neq('tenant_id', accountId || '')
         .order('name', { ascending: true })
         .limit(20);
       
+      // Exclude already assigned organizations
+      if (excludeIds.length > 0) {
+        query.not('id', 'in', `(${excludeIds.join(',')})`);
+      }
+      
       // @ts-ignore - supabase-js supports ilike
-      if (q) query.ilike('name', `%${q}%`);
+      if (searchQuery.trim()) {
+        query.ilike('name', `%${searchQuery}%`);
+      }
       
       const { data } = await query;
-      setUnassignedOrgs(
+      setSearchResults(
         (data || []).map((org: any) => ({
           id: org.id,
           name: org.name,
-          type: org.organization_subtype || mapOrgTypeToCategory(org.organization_type)
+          type: org.organization_subtype || mapOrgTypeToCategory(org.organization_type),
+          tenant_id: org.tenant_id
         }))
       );
     } catch (e) {
-      console.error('Error loading organizations:', e);
+      console.error('Error searching organizations:', e);
     } finally {
-      setLoadingUnassignedOrgs(false);
+      setLoadingSearch(false);
     }
-  };
+  }, [currentAccount?.id, currentAccount?.type, pendingOrgs]);
+
+  // Debounce the search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (orgSearchOpen) {
+        searchOrganizations(orgQuery);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [orgQuery, orgSearchOpen, searchOrganizations]);
 
   const loadEnterpriseSubtypes = useCallback(async () => {
     try {
@@ -448,6 +479,25 @@ export default function Settings() {
           tenantIdUpdate = { tenant_id: (pendingEnterpriseId === 'CLEAR' ? null : pendingEnterpriseId) as any };
         }
 
+        // First, assign any pending organizations to this enterprise
+        if (currentAccount.type === 'Enterprise' && pendingOrgs.length > 0) {
+          for (const org of pendingOrgs) {
+            const requestId = crypto.randomUUID();
+            await safeMutation(`assign-org:${org.id}:${requestId}`, {
+              op: () => supabase.rpc('update_or_delete_organization_tx', {
+                p_org_id: org.id,
+                p_mode: 'update',
+                p_payload: { tenant_id: currentAccount.id },
+                p_request_id: requestId,
+              }),
+              name: 'update_or_delete_organization_tx',
+              tags: { request_id: requestId },
+            });
+          }
+          // Clear pending orgs after saving
+          setPendingOrgs([]);
+        }
+
         const success = await updateAccount(currentAccount.id, {
           name: formData.name,
           type: formData.type as 'Enterprise' | 'Organization',
@@ -571,49 +621,21 @@ export default function Settings() {
     }
   };
 
-  const handleAssignOrganization = async (orgId: string) => {
-    if (!isPlatformAdmin || !currentAccount || currentAccount.type !== 'Enterprise') return;
+  const handleSelectOrganization = (org: { id: string; name: string; type: string }) => {
+    // Add to pending organizations list
+    setPendingOrgs(prev => [...prev, org]);
+    setOrgSearchOpen(false);
+    setOrgQuery("");
+    setSearchResults([]);
+    
+    toast({
+      title: "Organization Added",
+      description: `${org.name} will be added when you save changes.`,
+    });
+  };
 
-    try {
-      setAssigningOrgId(orgId);
-
-      // Assign the organization to this enterprise
-      const requestId = crypto.randomUUID();
-      const ok = await safeMutation(`assign-org:${orgId}:${requestId}`, {
-        op: () => supabase.rpc('update_or_delete_organization_tx', {
-          p_org_id: orgId,
-          p_mode: 'update',
-          p_payload: { tenant_id: currentAccount.id },
-          p_request_id: requestId,
-        }),
-        name: 'update_or_delete_organization_tx',
-        tags: { request_id: requestId },
-        refetch: () => refetchEnterpriseData(),
-      });
-      
-      if (!ok) throw new Error('Assignment failed');
-
-      toast({
-        title: "Organization Assigned",
-        description: "The organization has been assigned to this enterprise.",
-      });
-
-      // Refresh the enterprise organizations list
-      refetchEnterpriseData();
-      // Clear the search to force reload of unassigned orgs
-      setOrgQuery("");
-      setUnassignedOrgs([]);
-      setOrgSearchOpen(false);
-    } catch (error: any) {
-      console.error("Error assigning organization:", error);
-      toast({
-        title: "Error",
-        description: error?.message || "Failed to assign organization. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setAssigningOrgId(null);
-    }
+  const handleRemovePendingOrg = (orgId: string) => {
+    setPendingOrgs(prev => prev.filter(o => o.id !== orgId));
   };
 
   const handleUnassignOrganization = async (orgId: string) => {
@@ -707,6 +729,7 @@ export default function Settings() {
     setPendingEnterpriseId(null);
     setEnterpriseSearchOpen(false);
     setEnterpriseQuery("");
+    setPendingOrgs([]);
     setIsEditing(false);
   };
 
@@ -915,7 +938,7 @@ export default function Settings() {
                 <Users className="h-5 w-5" />
                 Organizations
               </CardTitle>
-              {isPlatformAdmin && (
+              {isPlatformAdmin && isEditing && (
                 <Popover open={orgSearchOpen} onOpenChange={setOrgSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -924,34 +947,27 @@ export default function Settings() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="p-0 w-80">
-                    <Command>
+                    <Command shouldFilter={false}>
                       <CommandInput 
-                        placeholder="Search organizations..." 
+                        placeholder="Type to search organizations..." 
                         value={orgQuery} 
-                        onValueChange={(v) => {
-                          setOrgQuery(v);
-                          loadUnassignedOrganizations(v);
-                        }} 
+                        onValueChange={setOrgQuery}
                       />
                       <CommandList>
                         <CommandEmpty>
-                          {loadingUnassignedOrgs ? 'Loading...' : 'No organizations found.'}
+                          {loadingSearch ? 'Searching...' : 'No organizations found.'}
                         </CommandEmpty>
                         <CommandGroup>
-                          {unassignedOrgs.map((org) => (
+                          {searchResults.map((org) => (
                             <CommandItem 
                               key={org.id} 
                               value={org.name}
-                              onSelect={() => handleAssignOrganization(org.id)}
-                              disabled={assigningOrgId === org.id}
+                              onSelect={() => handleSelectOrganization(org)}
                             >
                               <div className="flex flex-col">
                                 <span className="font-medium">{org.name}</span>
                                 <span className="text-xs text-muted-foreground">{org.type}</span>
                               </div>
-                              {assigningOrgId === org.id && (
-                                <Loader2 className="ml-auto h-4 w-4 animate-spin" />
-                              )}
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -964,6 +980,28 @@ export default function Settings() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
+              {/* Pending organizations (not yet saved) */}
+              {pendingOrgs.map((org) => (
+                <div key={org.id} className="flex items-center justify-between p-4 border border-dashed rounded-lg bg-muted/30">
+                  <div>
+                    <h3 className="font-semibold">{org.name}</h3>
+                    <p className="text-sm text-muted-foreground">{org.type}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">Pending</Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleRemovePendingOrg(org.id)}
+                    >
+                      <UserX className="h-4 w-4 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Existing organizations */}
               {(enterpriseOrganizations || []).map((org) => (
                 <div key={org.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
@@ -975,7 +1013,7 @@ export default function Settings() {
                     <Button variant="outline" size="sm" onClick={() => navigate(`/organization/${org.id}/analytics`)}>
                       Manage
                     </Button>
-                    {isPlatformAdmin && (
+                    {isPlatformAdmin && isEditing && (
                       <Button 
                         variant="ghost" 
                         size="sm" 
@@ -998,10 +1036,10 @@ export default function Settings() {
                   </div>
                 </div>
               ))}
-              {(!enterpriseOrganizations || enterpriseOrganizations.length === 0) && (
+              {(!enterpriseOrganizations || enterpriseOrganizations.length === 0) && pendingOrgs.length === 0 && (
                 <div className="text-sm text-muted-foreground">
                   No organizations assigned to this enterprise.
-                  {isPlatformAdmin && ' Click "Add Organization" to add organizations.'}
+                  {isPlatformAdmin && isEditing && ' Click "Add Organization" to add organizations.'}
                 </div>
               )}
             </div>
