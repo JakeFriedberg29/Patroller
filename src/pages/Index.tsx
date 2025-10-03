@@ -7,22 +7,18 @@ import { AccountsOverTimeChart, UsersOverTimeChart, ReportsByTypeChart } from "@
 import { CleanupDataButton } from "@/components/CleanupDataButton";
 import { Users, FileText, Shield, RefreshCw, Calendar as CalendarIcon, Building2 } from "lucide-react";
 import { format } from "date-fns";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useGlobalDashboardData } from "@/hooks/useGlobalDashboardData";
 import type { OrganizationSubtype, ReportTypeFilter, UserRoleFilter, AccountTypeFilter, EnterpriseSubtype } from "@/hooks/useGlobalDashboardData";
-import { Constants } from "@/integrations/supabase/types";
-
-const ENTERPRISE_SUBTYPE_OPTIONS: EnterpriseSubtype[] = [
-  "Resort Chain",
-  "Municipality",
-  "Park Agency",
-  "Event Management",
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const Index = () => {
+  const { profile } = useUserProfile();
+  const tenantId = profile?.profileData?.tenant_id as string | undefined;
   // Redirect users to their tenant/organization dashboards based on role and profile
   useAuthRedirect();
 
@@ -40,6 +36,41 @@ const Index = () => {
   const [selectedReportTypes, setSelectedReportTypes] = useState<Set<ReportTypeFilter>>(new Set(["incident"]));
   const [selectedReportsOrgSubtypes, setSelectedReportsOrgSubtypes] = useState<Set<OrganizationSubtype>>(new Set());
 
+  // Dynamic subtype options from database
+  const [orgSubtypeOptions, setOrgSubtypeOptions] = useState<OrganizationSubtype[]>([]);
+  const [enterpriseSubtypeOptions, setEnterpriseSubtypeOptions] = useState<EnterpriseSubtype[]>([]);
+
+  // Fetch subtypes from database
+  useEffect(() => {
+    const fetchSubtypes = async () => {
+      if (!tenantId) return;
+
+      const [{ data: orgSubtypes }, { data: entSubtypes }] = await Promise.all([
+        supabase
+          .from('organization_subtypes')
+          .select('name')
+          .eq('tenant_id', tenantId)
+          .eq('is_active', true)
+          .order('name', { ascending: true }),
+        supabase
+          .from('enterprise_subtypes')
+          .select('name')
+          .eq('tenant_id', tenantId)
+          .eq('is_active', true)
+          .order('name', { ascending: true })
+      ]);
+
+      if (orgSubtypes) {
+        setOrgSubtypeOptions(orgSubtypes.map(s => s.name as OrganizationSubtype));
+      }
+      if (entSubtypes) {
+        setEnterpriseSubtypeOptions(entSubtypes.map(s => s.name as EnterpriseSubtype));
+      }
+    };
+
+    fetchSubtypes();
+  }, [tenantId]);
+
   const toggleSetValue = <T extends string>(setter: React.Dispatch<React.SetStateAction<Set<T>>>) => (value: T) => {
     setter(prev => {
       const next = new Set(prev);
@@ -48,7 +79,6 @@ const Index = () => {
     });
   };
 
-  const orgSubtypeOptions = [...Constants.public.Enums.organization_type] as OrganizationSubtype[];
   const userRoleOptions: UserRoleFilter[] = ["patroller", "enterprise_user", "organization_user"];
   const reportTypeOptions: ReportTypeFilter[] = ["incident"]; // Extend when report instances exist
 
@@ -122,7 +152,7 @@ const Index = () => {
           orgSubtypes={orgSubtypeOptions}
           selectedOrgSubtypes={selectedAccountOrgSubtypes}
           onToggleOrgSubtype={toggleSetValue(setSelectedAccountOrgSubtypes)}
-          enterpriseSubtypes={ENTERPRISE_SUBTYPE_OPTIONS}
+          enterpriseSubtypes={enterpriseSubtypeOptions}
           selectedEnterpriseSubtypes={selectedEnterpriseSubtypes}
           onToggleEnterpriseSubtype={toggleSetValue(setSelectedEnterpriseSubtypes)}
         />
