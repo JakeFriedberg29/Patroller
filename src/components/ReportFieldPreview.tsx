@@ -266,7 +266,7 @@ export function ReportFieldPreview({ field }: ReportFieldPreviewProps) {
       case 'checkbox':
         return (
           <div className="space-y-3">
-            {field.options?.map((option, index) => (
+            {field.options?.filter(opt => opt.trim()).map((option, index) => (
               <div key={index} className="flex items-center space-x-2">
                 <Checkbox id={`${field.id}-${index}`} />
                 <Label htmlFor={`${field.id}-${index}`} className="text-sm">
@@ -287,7 +287,7 @@ export function ReportFieldPreview({ field }: ReportFieldPreviewProps) {
                   <SelectValue placeholder="Select multiple options..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {field.options?.map((option, index) => (
+                  {field.options?.filter(opt => opt.trim()).map((option, index) => (
                     <SelectItem key={index} value={option}>
                       {option}
                     </SelectItem>
@@ -305,7 +305,7 @@ export function ReportFieldPreview({ field }: ReportFieldPreviewProps) {
                   <SelectValue placeholder="Select an option..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {field.options?.map((option, index) => (
+                  {field.options?.filter(opt => opt.trim()).map((option, index) => (
                     <SelectItem key={index} value={option}>
                       {option}
                     </SelectItem>
