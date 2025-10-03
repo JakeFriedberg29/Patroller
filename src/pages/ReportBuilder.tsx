@@ -8,7 +8,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ChevronLeft, Loader2, Plus, Trash2, Eye, Edit, Minus, FileText, ChevronRight } from "lucide-react";
+import { ChevronLeft, Loader2, Plus, Trash2, Eye, Edit, Minus, FileText, ChevronRight, GripVertical } from "lucide-react";
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -31,6 +48,200 @@ type FieldRow = {
   width?: FieldWidth; // layout width for the field
 };
 
+// Sortable field item component
+function SortableFieldItem({ 
+  row, 
+  index,
+  updateFieldRow, 
+  removeFieldRow,
+  addFieldRow 
+}: { 
+  row: FieldRow; 
+  index: number;
+  updateFieldRow: (id: string, patch: Partial<FieldRow>) => void;
+  removeFieldRow: (id: string) => void;
+  addFieldRow: (type: FieldType, insertAfterIndex?: number) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: row.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="space-y-4">
+      {row.type === 'divider' ? (
+        <div className="relative">
+          <ReportDivider 
+            label={row.label} 
+            onLabelChange={(label) => updateFieldRow(row.id, { label })} 
+          />
+          <div className="absolute top-2 left-2 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => removeFieldRow(row.id)} 
+            className="absolute top-2 right-2 text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : row.type === 'page_break' ? (
+        <div className="relative">
+          <ReportPageBreak 
+            label={row.label} 
+            onLabelChange={(label) => updateFieldRow(row.id, { label })} 
+          />
+          <div className="absolute top-2 left-2 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => removeFieldRow(row.id)} 
+            className="absolute top-2 right-2 text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4 p-4 border rounded-lg relative">
+          <div className="absolute top-2 left-2 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-8">
+            <div className="space-y-2">
+              <Label>
+                Field Name
+                {row.required && <span className="text-orange-500 ml-1">*</span>}
+              </Label>
+              <Input 
+                placeholder="Enter field name" 
+                value={row.name} 
+                onChange={(e) => updateFieldRow(row.id, { name: e.target.value })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Field Type</Label>
+              <Select value={row.type} onValueChange={(v) => updateFieldRow(row.id, { type: v as FieldType })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select field type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="short_answer">Short Answer</SelectItem>
+                  <SelectItem value="paragraph">Paragraph</SelectItem>
+                  <SelectItem value="date">Date Selector</SelectItem>
+                  <SelectItem value="dropdown">Dropdown</SelectItem>
+                  <SelectItem value="checkbox">Checkboxes</SelectItem>
+                  <SelectItem value="file_upload">File Upload</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Field Width</Label>
+              <Select value={row.width || 'full'} onValueChange={(v) => updateFieldRow(row.id, { width: v as FieldWidth })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select width" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">Full Width</SelectItem>
+                  <SelectItem value="1/2">Half Width (1/2)</SelectItem>
+                  <SelectItem value="1/3">Third Width (1/3)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 pl-8">
+            <Checkbox 
+              id={`required-${row.id}`}
+              checked={row.required} 
+              onCheckedChange={(checked) => updateFieldRow(row.id, { required: Boolean(checked) })} 
+            />
+            <Label htmlFor={`required-${row.id}`} className="text-sm">
+              Required field
+            </Label>
+          </div>
+
+          {row.type === 'dropdown' && (
+            <div className="space-y-3 pl-8">
+              <Label>Selection Type</Label>
+              <RadioGroup 
+                value={row.multiSelect ? "multi" : "single"} 
+                onValueChange={(value) => updateFieldRow(row.id, { multiSelect: value === "multi" })}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="single" id={`single-${row.id}`} />
+                  <Label htmlFor={`single-${row.id}`}>Single select</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="multi" id={`multi-${row.id}`} />
+                  <Label htmlFor={`multi-${row.id}`}>Multi-select</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}
+
+          {(row.type === 'dropdown' || row.type === 'checkbox') && (
+            <div className="space-y-2 pl-8">
+              <Label>Options (one per line)</Label>
+              <Textarea
+                placeholder="Option 1&#10;Option 2&#10;Option 3"
+                value={row.options?.join('\n') || ''}
+                onChange={(e) => updateFieldRow(row.id, { options: e.target.value.split('\n').filter(opt => opt.trim()) })}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.stopPropagation();
+                  }
+                }}
+                rows={4}
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end pl-8">
+            <Button variant="ghost" size="sm" onClick={() => removeFieldRow(row.id)} className="text-destructive hover:text-destructive">
+              <Trash2 className="h-4 w-4 mr-1" />
+              Remove
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Add Field button after each field */}
+      <div className="flex justify-center py-2">
+        <Select onValueChange={(type) => addFieldRow(type as FieldType, index)}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="+ Add Field" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="short_answer">Short Answer</SelectItem>
+            <SelectItem value="paragraph">Paragraph</SelectItem>
+            <SelectItem value="date">Date Selector</SelectItem>
+            <SelectItem value="dropdown">Dropdown</SelectItem>
+            <SelectItem value="checkbox">Checkboxes</SelectItem>
+            <SelectItem value="file_upload">File Upload</SelectItem>
+            <SelectItem value="divider">Section Divider</SelectItem>
+            <SelectItem value="page_break">Page Break</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
+
 export default function ReportBuilder() {
   const navigate = useNavigate();
   const { templateId } = useParams();
@@ -46,6 +257,26 @@ export default function ReportBuilder() {
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [fieldRows, setFieldRows] = useState<FieldRow[]>([]);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setFieldRows((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   const loadTemplate = async () => {
     try {
@@ -407,165 +638,28 @@ export default function ReportBuilder() {
                   )}
                 </div>
               ) : (
-                // Edit mode - show configuration
-                fieldRows.map((row, index) => {
-                  return (
-                    <div key={row.id} className="space-y-4">
-                      {row.type === 'divider' ? (
-                      <div className="relative">
-                        <ReportDivider 
-                          label={row.label} 
-                          onLabelChange={(label) => updateFieldRow(row.id, { label })} 
-                        />
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => removeFieldRow(row.id)} 
-                          className="absolute top-2 right-2 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : row.type === 'page_break' ? (
-                      <div className="relative">
-                        <ReportPageBreak 
-                          label={row.label} 
-                          onLabelChange={(label) => updateFieldRow(row.id, { label })} 
-                        />
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => removeFieldRow(row.id)} 
-                          className="absolute top-2 right-2 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      ) : (
-                        <div className="space-y-4 p-4 border rounded-lg">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                              <Label>
-                                Field Name
-                                {row.required && <span className="text-orange-500 ml-1">*</span>}
-                              </Label>
-                              <Input 
-                                placeholder="Enter field name" 
-                                value={row.name} 
-                                onChange={(e) => updateFieldRow(row.id, { name: e.target.value })} 
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Field Type</Label>
-                              <Select value={row.type} onValueChange={(v) => updateFieldRow(row.id, { type: v as FieldType })}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select field type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="short_answer">Short Answer</SelectItem>
-                                  <SelectItem value="paragraph">Paragraph</SelectItem>
-                                  <SelectItem value="date">Date Selector</SelectItem>
-                                  <SelectItem value="dropdown">Dropdown</SelectItem>
-                                  <SelectItem value="checkbox">Checkboxes</SelectItem>
-                                  <SelectItem value="file_upload">File Upload</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Field Width</Label>
-                              <Select value={row.width || 'full'} onValueChange={(v) => updateFieldRow(row.id, { width: v as FieldWidth })}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select width" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="full">Full Width</SelectItem>
-                                  <SelectItem value="1/2">Half Width (1/2)</SelectItem>
-                                  <SelectItem value="1/3">Third Width (1/3)</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id={`required-${row.id}`}
-                              checked={row.required} 
-                              onCheckedChange={(checked) => updateFieldRow(row.id, { required: Boolean(checked) })} 
-                            />
-                            <Label htmlFor={`required-${row.id}`} className="text-sm">
-                              Required field
-                            </Label>
-                          </div>
-
-                        {row.type === 'dropdown' && (
-                          <div className="space-y-3">
-                            <Label>Selection Type</Label>
-                            <RadioGroup 
-                              value={row.multiSelect ? "multi" : "single"} 
-                              onValueChange={(value) => updateFieldRow(row.id, { multiSelect: value === "multi" })}
-                              className="flex gap-6"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="single" id={`single-${row.id}`} />
-                                <Label htmlFor={`single-${row.id}`}>Single select</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="multi" id={`multi-${row.id}`} />
-                                <Label htmlFor={`multi-${row.id}`}>Multi-select</Label>
-                              </div>
-                            </RadioGroup>
-                          </div>
-                        )}
-
-                        {(row.type === 'dropdown' || row.type === 'checkbox') && (
-                          <div className="space-y-2">
-                            <Label>Options (one per line)</Label>
-                            <Textarea
-                              placeholder="Option 1&#10;Option 2&#10;Option 3"
-                              value={row.options?.join('\n') || ''}
-                              onChange={(e) => updateFieldRow(row.id, { options: e.target.value.split('\n').filter(opt => opt.trim()) })}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.stopPropagation();
-                                }
-                              }}
-                              rows={4}
-                            />
-                          </div>
-                        )}
-
-                        <div className="flex justify-end">
-                          <Button variant="ghost" size="sm" onClick={() => removeFieldRow(row.id)} className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Add Field button after each field in edit mode */}
-                    {!isPreviewMode && (
-                      <div className="flex justify-center py-2">
-                        <Select onValueChange={(type) => addFieldRow(type as FieldType, index)}>
-                          <SelectTrigger className="w-[200px]">
-                            <SelectValue placeholder="+ Add Field" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="short_answer">Short Answer</SelectItem>
-                            <SelectItem value="paragraph">Paragraph</SelectItem>
-                            <SelectItem value="date">Date Selector</SelectItem>
-                            <SelectItem value="dropdown">Dropdown</SelectItem>
-                            <SelectItem value="checkbox">Checkboxes</SelectItem>
-                            <SelectItem value="file_upload">File Upload</SelectItem>
-                            <SelectItem value="divider">Section Divider</SelectItem>
-                            <SelectItem value="page_break">Page Break</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+                // Edit mode - show configuration with drag-and-drop
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={fieldRows.map(row => row.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {fieldRows.map((row, index) => (
+                      <SortableFieldItem
+                        key={row.id}
+                        row={row}
+                        index={index}
+                        updateFieldRow={updateFieldRow}
+                        removeFieldRow={removeFieldRow}
+                        addFieldRow={addFieldRow}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               )}
             </div>
           </div>
