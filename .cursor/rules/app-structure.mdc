@@ -13,21 +13,23 @@ alwaysApply: true
   - Can assign Platform Admins to accounts.  
   - Cannot see accounts they are not assigned to.  
 
-## Enterprise Admin
+## Account-level User
+### Enterprise User
 - **Scope**: Access limited to their Enterprise + its Organizations.  
 - **Permissions**: Full or view-only.  
 - **Full Capabilities**:  
-  - Can assign Enterprise Admins within their Enterprise.  
+  - Can add Enterprise Admins within their Enterprise. 
+  - Can manage Enterprise settings.  
   - Cannot see Organizations outside their Enterprise or that they're not assigned to.   
 - **View-on Capabilities**:  
   - Can view and contribute.  
-  - Cannot manage users or accounts.  
-
-## Organization Admin
+  - Cannot manage users or accounts.
+  
+### Organization User 
 - **Scope**: Access limited to their Organization.  
 - **Permissions**: Full or view-only.  
 - **Full Capabilities**:  
-  - Can assign Organization Users (Admin, User, Responder).  
+  - Can add Organization Users (Admin, User, Patroller).  
   - Can manage Organization settings.  
 - **View-Only Capabilities**:  
   - Can log in and view Organization data.  
