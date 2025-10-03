@@ -18,6 +18,7 @@ import { ReportFieldPreview } from "@/components/ReportFieldPreview";
 import { getValidNextStates, type ReportStatus } from "@/utils/statusTransitions";
 
 type FieldType = 'short_answer' | 'paragraph' | 'date' | 'checkbox' | 'dropdown' | 'file_upload' | 'divider' | 'page_break';
+type FieldWidth = '1/3' | '1/2' | 'full';
 
 type FieldRow = { 
   id: string; 
@@ -27,6 +28,7 @@ type FieldRow = {
   options?: string[];
   multiSelect?: boolean; // for dropdown fields
   label?: string; // for divider/page_break elements
+  width?: FieldWidth; // layout width for the field
 };
 
 export default function ReportBuilder() {
@@ -78,7 +80,8 @@ export default function ReportBuilder() {
             required: Boolean(f.required || false),
             options: f.options || [],
             multiSelect: f.type === 'multi_select' || f.multiSelect,
-            label: f.label || ''
+            label: f.label || '',
+            width: f.width || 'full'
           }))
         : [];
       setFieldRows(rows);
@@ -102,7 +105,8 @@ export default function ReportBuilder() {
       required: false, 
       options: [],
       multiSelect: false,
-      label: ''
+      label: '',
+      width: 'full'
     };
     
     if (insertAfterIndex !== undefined) {
@@ -139,7 +143,8 @@ export default function ReportBuilder() {
       required: r.required,
       options: r.options?.filter(opt => opt.trim()) || [],
       multiSelect: r.multiSelect,
-      label: r.label || ''
+      label: r.label || '',
+      width: r.width || 'full'
     })) };
     setSaving(true);
     try {
@@ -307,26 +312,34 @@ export default function ReportBuilder() {
               {fieldRows.length === 0 && (
                 <div className="text-sm text-muted-foreground">No form elements configured.</div>
               )}
-              {fieldRows.map((row, index) => {
-                if (isPreviewMode) {
-                  // Preview mode - show how patrollers will see it
-                  if (row.type === 'divider') {
-                    return <ReportDivider key={row.id} label={row.label} isPreview />;
-                  }
-                  if (row.type === 'page_break') {
-                    return <ReportPageBreak key={row.id} label={row.label} isPreview />;
-                  }
-                  return (
-                    <div key={row.id} className="p-4 border rounded-lg bg-muted/10">
-                      <ReportFieldPreview field={row} />
-                    </div>
-                  );
-                }
-
+              {isPreviewMode ? (
+                // Preview mode - show with layout
+                <div className="flex flex-wrap gap-4">
+                  {fieldRows.map((row) => {
+                    if (row.type === 'divider') {
+                      return <div key={row.id} className="w-full"><ReportDivider label={row.label} isPreview /></div>;
+                    }
+                    if (row.type === 'page_break') {
+                      return <div key={row.id} className="w-full"><ReportPageBreak label={row.label} isPreview /></div>;
+                    }
+                    
+                    const widthClass = row.width === '1/3' ? 'w-full md:w-[calc(33.333%-0.67rem)]' : 
+                                       row.width === '1/2' ? 'w-full md:w-[calc(50%-0.5rem)]' : 
+                                       'w-full';
+                    
+                    return (
+                      <div key={row.id} className={`${widthClass} p-4 border rounded-lg bg-muted/10`}>
+                        <ReportFieldPreview field={row} />
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
                 // Edit mode - show configuration
-                return (
-                  <div key={row.id} className="space-y-4">
-                    {row.type === 'divider' ? (
+                fieldRows.map((row, index) => {
+                  return (
+                    <div key={row.id} className="space-y-4">
+                      {row.type === 'divider' ? (
                       <div className="relative">
                         <ReportDivider 
                           label={row.label} 
@@ -356,48 +369,61 @@ export default function ReportBuilder() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    ) : (
-                      <div className="space-y-4 p-4 border rounded-lg">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>
-                              Field Name
-                              {row.required && <span className="text-orange-500 ml-1">*</span>}
-                            </Label>
-                            <Input 
-                              placeholder="Enter field name" 
-                              value={row.name} 
-                              onChange={(e) => updateFieldRow(row.id, { name: e.target.value })} 
-                            />
+                      ) : (
+                        <div className="space-y-4 p-4 border rounded-lg">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <Label>
+                                Field Name
+                                {row.required && <span className="text-orange-500 ml-1">*</span>}
+                              </Label>
+                              <Input 
+                                placeholder="Enter field name" 
+                                value={row.name} 
+                                onChange={(e) => updateFieldRow(row.id, { name: e.target.value })} 
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Field Type</Label>
+                              <Select value={row.type} onValueChange={(v) => updateFieldRow(row.id, { type: v as FieldType })}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select field type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="short_answer">Short Answer</SelectItem>
+                                  <SelectItem value="paragraph">Paragraph</SelectItem>
+                                  <SelectItem value="date">Date Selector</SelectItem>
+                                  <SelectItem value="dropdown">Dropdown</SelectItem>
+                                  <SelectItem value="checkbox">Checkboxes</SelectItem>
+                                  <SelectItem value="file_upload">File Upload</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Field Width</Label>
+                              <Select value={row.width || 'full'} onValueChange={(v) => updateFieldRow(row.id, { width: v as FieldWidth })}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select width" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="full">Full Width</SelectItem>
+                                  <SelectItem value="1/2">Half Width (1/2)</SelectItem>
+                                  <SelectItem value="1/3">Third Width (1/3)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
-                          <div className="space-y-2">
-                            <Label>Field Type</Label>
-                            <Select value={row.type} onValueChange={(v) => updateFieldRow(row.id, { type: v as FieldType })}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select field type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="short_answer">Short Answer</SelectItem>
-                                <SelectItem value="paragraph">Paragraph</SelectItem>
-                                <SelectItem value="date">Date Selector</SelectItem>
-                                <SelectItem value="dropdown">Dropdown</SelectItem>
-                                <SelectItem value="checkbox">Checkboxes</SelectItem>
-                                <SelectItem value="file_upload">File Upload</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
 
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id={`required-${row.id}`}
-                            checked={row.required} 
-                            onCheckedChange={(checked) => updateFieldRow(row.id, { required: Boolean(checked) })} 
-                          />
-                          <Label htmlFor={`required-${row.id}`} className="text-sm">
-                            Required field
-                          </Label>
-                        </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`required-${row.id}`}
+                              checked={row.required} 
+                              onCheckedChange={(checked) => updateFieldRow(row.id, { required: Boolean(checked) })} 
+                            />
+                            <Label htmlFor={`required-${row.id}`} className="text-sm">
+                              Required field
+                            </Label>
+                          </div>
 
                         {row.type === 'dropdown' && (
                           <div className="space-y-3">
@@ -467,7 +493,8 @@ export default function ReportBuilder() {
                     )}
                   </div>
                 );
-              })}
+              })
+              )}
             </div>
           </div>
         </CardContent>

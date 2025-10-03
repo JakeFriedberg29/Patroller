@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 
 type FieldType = 'short_answer' | 'paragraph' | 'date' | 'checkbox' | 'dropdown' | 'file_upload' | 'divider' | 'page_break';
+type FieldWidth = '1/3' | '1/2' | 'full';
 
 interface FieldRow {
   id: string;
@@ -17,6 +18,7 @@ interface FieldRow {
   options?: string[];
   multiSelect?: boolean;
   label?: string; // for divider/page_break
+  width?: FieldWidth;
 }
 
 interface ReportFieldPreviewProps {

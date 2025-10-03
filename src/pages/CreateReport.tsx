@@ -529,19 +529,25 @@ export default function CreateReport() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-wrap gap-4">
             {currentSection.fields.map((field) => {
               // Skip rendering name/label for structural elements
               if (field.type === 'divider' || field.type === 'page_break') {
                 return (
-                  <div key={field.name} className="md:col-span-2">
+                  <div key={field.name} className="w-full">
                     {renderField(field)}
                   </div>
                 );
               }
 
+              // Determine width class based on field.width property
+              const width = (field as any).width || 'full';
+              const widthClass = width === '1/3' ? 'w-full md:w-[calc(33.333%-0.67rem)]' : 
+                                 width === '1/2' ? 'w-full md:w-[calc(50%-0.5rem)]' : 
+                                 'w-full';
+
               return (
-                <div key={field.name} className="space-y-2">
+                <div key={field.name} className={`${widthClass} space-y-2`}>
                   <Label htmlFor={field.name}>
                     {field.label}
                     {field.required && <span className="text-orange-500 ml-1">*</span>}
