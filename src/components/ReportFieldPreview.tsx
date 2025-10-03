@@ -1,11 +1,15 @@
-import { Calendar, Upload, Check, X, FileText, Image as ImageIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Upload, Check, X, FileText, Image as ImageIcon } from "lucide-react";
+import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 type FieldType = 'short_answer' | 'paragraph' | 'date' | 'checkbox' | 'dropdown' | 'file_upload' | 'divider' | 'page_break';
 type FieldWidth = '1/3' | '1/2' | 'full';
@@ -233,16 +237,30 @@ export function ReportFieldPreview({ field }: ReportFieldPreviewProps) {
         );
 
       case 'date':
+        const [date, setDate] = useState<Date>();
         return (
-          <div className="relative">
-            <Button
-              variant="outline"
-              className="w-full justify-start text-left font-normal text-muted-foreground"
-            >
-              <Calendar className="mr-2 h-4 w-4" />
-              Pick a date
-            </Button>
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "w-full justify-start text-left font-normal border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 rounded-md inline-flex items-center",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date ? format(date, "PPP") : <span>Pick a date</span>}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
         );
 
       case 'checkbox':
