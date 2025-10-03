@@ -212,6 +212,18 @@ export default function Repository() {
             .order('name', { ascending: true });
           const templates = (data || []) as Array<{ id: string; name: string; description: string | null }>;
           setPlatformTemplates(templates);
+          
+          // Clean up count states for deleted template
+          setAssignedOrgCounts(prev => {
+            const updated = { ...prev };
+            delete updated[deleteTemplateId];
+            return updated;
+          });
+          setAssignedSubtypeCounts(prev => {
+            const updated = { ...prev };
+            delete updated[deleteTemplateId];
+            return updated;
+          });
         },
       });
       toast({ title: 'Report deleted', description: `"${deleteTemplateName}" was permanently removed.` });
