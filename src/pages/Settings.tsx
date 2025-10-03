@@ -501,6 +501,14 @@ export default function Settings() {
           }
           // Clear pending orgs after saving
           setPendingOrgs([]);
+          
+          // Refetch enterprise data to show newly assigned organizations immediately
+          await refetchEnterpriseData();
+          
+          toast({
+            title: "Organizations Assigned",
+            description: `Successfully assigned ${pendingOrgs.length} organization(s) to this enterprise.`,
+          });
         }
 
         const success = await updateAccount(currentAccount.id, {
