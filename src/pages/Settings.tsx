@@ -927,7 +927,7 @@ export default function Settings() {
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm">
                       <Plus className="h-4 w-4 mr-2" />
-                      Assign Organization
+                      Add Organization
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="p-0 w-80">
@@ -1008,7 +1008,7 @@ export default function Settings() {
               {(!enterpriseOrganizations || enterpriseOrganizations.length === 0) && (
                 <div className="text-sm text-muted-foreground">
                   No organizations assigned to this enterprise.
-                  {isPlatformAdmin && ' Click "Assign Organization" to add organizations.'}
+                  {isPlatformAdmin && ' Click "Add Organization" to add organizations.'}
                 </div>
               )}
             </div>
