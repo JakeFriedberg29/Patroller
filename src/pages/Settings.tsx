@@ -114,19 +114,12 @@ export default function Settings() {
   const loadUnassignedOrganizations = async (q: string) => {
     try {
       setLoadingUnassignedOrgs(true);
-      // Get the platform root tenant ID
-      const { data: platformTenant } = await supabase
-        .from('enterprises')
-        .select('id')
-        .eq('slug', 'patroller-root')
-        .maybeSingle();
-      
-      if (!platformTenant) return;
 
+      // Load all organizations that are NOT already assigned to this enterprise
       const query = supabase
         .from('organizations')
-        .select('id, name, organization_type, organization_subtype')
-        .eq('tenant_id', platformTenant.id)
+        .select('id, name, organization_type, organization_subtype, tenant_id')
+        .neq('tenant_id', accountId || '')
         .order('name', { ascending: true })
         .limit(20);
       
@@ -142,7 +135,7 @@ export default function Settings() {
         }))
       );
     } catch (e) {
-      console.error('Error loading unassigned organizations:', e);
+      console.error('Error loading organizations:', e);
     } finally {
       setLoadingUnassignedOrgs(false);
     }
@@ -933,7 +926,7 @@ export default function Settings() {
                   <PopoverContent className="p-0 w-80">
                     <Command>
                       <CommandInput 
-                        placeholder="Search unassigned organizations..." 
+                        placeholder="Search organizations..." 
                         value={orgQuery} 
                         onValueChange={(v) => {
                           setOrgQuery(v);
@@ -942,7 +935,7 @@ export default function Settings() {
                       />
                       <CommandList>
                         <CommandEmpty>
-                          {loadingUnassignedOrgs ? 'Loading...' : 'No unassigned organizations found.'}
+                          {loadingUnassignedOrgs ? 'Loading...' : 'No organizations found.'}
                         </CommandEmpty>
                         <CommandGroup>
                           {unassignedOrgs.map((org) => (
