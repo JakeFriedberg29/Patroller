@@ -114,6 +114,10 @@ export default function Settings() {
   // Debounced search for organizations
   const searchOrganizations = useCallback(async (searchQuery: string) => {
     if (!currentAccount?.id || currentAccount.type !== 'Enterprise') return;
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
     
     try {
       setLoadingSearch(true);
@@ -141,9 +145,7 @@ export default function Settings() {
       }
       
       // @ts-ignore - supabase-js supports ilike
-      if (searchQuery.trim()) {
-        query.ilike('name', `%${searchQuery}%`);
-      }
+      query.ilike('name', `%${searchQuery}%`);
       
       const { data } = await query;
       setSearchResults(
@@ -164,8 +166,11 @@ export default function Settings() {
   // Debounce the search
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (orgSearchOpen) {
+      if (orgSearchOpen && orgQuery.trim()) {
         searchOrganizations(orgQuery);
+      } else if (!orgQuery.trim()) {
+        setSearchResults([]);
+        setLoadingSearch(false);
       }
     }, 300);
 
@@ -946,7 +951,7 @@ export default function Settings() {
                       Add Organization
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="p-0 w-80">
+                  <PopoverContent className="p-0 w-80 bg-popover z-50">
                     <Command shouldFilter={false}>
                       <CommandInput 
                         placeholder="Type to search organizations..." 
@@ -955,7 +960,11 @@ export default function Settings() {
                       />
                       <CommandList>
                         <CommandEmpty>
-                          {loadingSearch ? 'Searching...' : 'No organizations found.'}
+                          {loadingSearch 
+                            ? 'Searching...' 
+                            : orgQuery.trim() 
+                              ? 'No organizations found.' 
+                              : 'Start typing to search organizations...'}
                         </CommandEmpty>
                         <CommandGroup>
                           {searchResults.map((org) => (
