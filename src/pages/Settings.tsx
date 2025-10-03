@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Users, Loader2 } from "lucide-react";
+import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Users, Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAccounts, Account } from "@/hooks/useAccounts";
 import { useEnterpriseData } from "@/hooks/useEnterpriseData";
@@ -59,6 +59,13 @@ export default function Settings() {
   const [pendingEnterpriseId, setPendingEnterpriseId] = useState<string | null>(null);
   const [unassigningOrgId, setUnassigningOrgId] = useState<string | null>(null);
 
+  // Assign organizations to enterprise state
+  const [orgSearchOpen, setOrgSearchOpen] = useState(false);
+  const [orgQuery, setOrgQuery] = useState("");
+  const [unassignedOrgs, setUnassignedOrgs] = useState<Array<{ id: string; name: string; type: string }>>([]);
+  const [loadingUnassignedOrgs, setLoadingUnassignedOrgs] = useState(false);
+  const [assigningOrgId, setAssigningOrgId] = useState<string | null>(null);
+
   // Subtypes state
   const [enterpriseSubtypes, setEnterpriseSubtypes] = useState<string[]>([]);
   const [organizationSubtypes, setOrganizationSubtypes] = useState<string[]>([]);
@@ -101,6 +108,43 @@ export default function Settings() {
       // no-op
     } finally {
       setLoadingEnterprises(false);
+    }
+  };
+
+  const loadUnassignedOrganizations = async (q: string) => {
+    try {
+      setLoadingUnassignedOrgs(true);
+      // Get the platform root tenant ID
+      const { data: platformTenant } = await supabase
+        .from('enterprises')
+        .select('id')
+        .eq('slug', 'patroller-root')
+        .maybeSingle();
+      
+      if (!platformTenant) return;
+
+      const query = supabase
+        .from('organizations')
+        .select('id, name, organization_type, organization_subtype')
+        .eq('tenant_id', platformTenant.id)
+        .order('name', { ascending: true })
+        .limit(20);
+      
+      // @ts-ignore - supabase-js supports ilike
+      if (q) query.ilike('name', `%${q}%`);
+      
+      const { data } = await query;
+      setUnassignedOrgs(
+        (data || []).map((org: any) => ({
+          id: org.id,
+          name: org.name,
+          type: org.organization_subtype || mapOrgTypeToCategory(org.organization_type)
+        }))
+      );
+    } catch (e) {
+      console.error('Error loading unassigned organizations:', e);
+    } finally {
+      setLoadingUnassignedOrgs(false);
     }
   };
 
@@ -534,6 +578,51 @@ export default function Settings() {
     }
   };
 
+  const handleAssignOrganization = async (orgId: string) => {
+    if (!isPlatformAdmin || !currentAccount || currentAccount.type !== 'Enterprise') return;
+
+    try {
+      setAssigningOrgId(orgId);
+
+      // Assign the organization to this enterprise
+      const requestId = crypto.randomUUID();
+      const ok = await safeMutation(`assign-org:${orgId}:${requestId}`, {
+        op: () => supabase.rpc('update_or_delete_organization_tx', {
+          p_org_id: orgId,
+          p_mode: 'update',
+          p_payload: { tenant_id: currentAccount.id },
+          p_request_id: requestId,
+        }),
+        name: 'update_or_delete_organization_tx',
+        tags: { request_id: requestId },
+        refetch: () => refetchEnterpriseData(),
+      });
+      
+      if (!ok) throw new Error('Assignment failed');
+
+      toast({
+        title: "Organization Assigned",
+        description: "The organization has been assigned to this enterprise.",
+      });
+
+      // Refresh the enterprise organizations list
+      refetchEnterpriseData();
+      // Clear the search to force reload of unassigned orgs
+      setOrgQuery("");
+      setUnassignedOrgs([]);
+      setOrgSearchOpen(false);
+    } catch (error: any) {
+      console.error("Error assigning organization:", error);
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to assign organization. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAssigningOrgId(null);
+    }
+  };
+
   const handleUnassignOrganization = async (orgId: string) => {
     console.log('handleUnassignOrganization called with orgId:', orgId);
     console.log('isPlatformAdmin:', isPlatformAdmin);
@@ -552,14 +641,25 @@ export default function Settings() {
       console.log('Setting unassigningOrgId to:', orgId);
       setUnassigningOrgId(orgId);
 
+      // Get the platform root tenant ID
+      const { data: platformTenant } = await supabase
+        .from('enterprises')
+        .select('id')
+        .eq('slug', 'patroller-root')
+        .maybeSingle();
+      
+      if (!platformTenant) {
+        throw new Error('Platform tenant not found');
+      }
+
       console.log('Attempting to update organization in database...');
-      // Update the organization to set tenant_id to null
+      // Update the organization to set tenant_id to platform root (unassigned)
       const requestId = crypto.randomUUID();
       const ok = await safeMutation(`unassign-org:${orgId}:${requestId}`, {
         op: () => supabase.rpc('update_or_delete_organization_tx', {
           p_org_id: orgId,
           p_mode: 'update',
-          p_payload: { tenant_id: null },
+          p_payload: { tenant_id: platformTenant.id },
           p_request_id: requestId,
         }),
         name: 'update_or_delete_organization_tx',
@@ -571,7 +671,7 @@ export default function Settings() {
       console.log('Successfully unassigned organization');
       toast({
         title: "Organization Unassigned",
-        description: "The organization has been unassigned from this enterprise and is now standalone.",
+        description: "The organization has been unassigned from this enterprise.",
       });
 
       // Refresh the enterprise organizations list
@@ -786,7 +886,7 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Parent Enterprise - Only for Organizations */}
+      {/* Parent Enterprise - Only for Organizations (Read-only) */}
       {isOrganization && (
         <Card>
           <CardHeader>
@@ -796,73 +896,19 @@ export default function Settings() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isPlatformAdmin && isEditing ? (
-              <div className="space-y-2">
-                <Label>Assign to Enterprise (Optional)</Label>
-                <p className="text-sm text-muted-foreground mb-2">Organizations can exist independently or be assigned to an enterprise.</p>
-                <Popover open={enterpriseSearchOpen} onOpenChange={setEnterpriseSearchOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="w-full justify-between">
-                      {pendingEnterpriseId === 'CLEAR'
-                        ? 'No enterprise assigned (standalone)'
-                        : pendingEnterpriseId
-                        ? (enterprises.find(e => e.id === pendingEnterpriseId)?.name || 'Selected enterprise')
-                        : (currentEnterprise?.name || 'No enterprise assigned (standalone)')}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="p-0">
-                    <Command>
-                      <CommandInput placeholder="Search enterprises..." value={enterpriseQuery} onValueChange={(v) => {
-                        setEnterpriseQuery(v);
-                        loadEnterprises(v);
-                      }} />
-                      <CommandList>
-                        <CommandEmpty>{loadingEnterprises ? 'Loading...' : 'No results found.'}</CommandEmpty>
-                        <CommandGroup>
-                          {(currentEnterprise || pendingEnterpriseId) && (
-                            <CommandItem 
-                              value="clear-assignment" 
-                              onSelect={() => {
-                                setPendingEnterpriseId('CLEAR');
-                                setEnterpriseSearchOpen(false);
-                              }}
-                              className="text-muted-foreground border-b"
-                            >
-                              Clear assignment (standalone)
-                            </CommandItem>
-                          )}
-                          {enterprises.map((ent) => (
-                            <CommandItem key={ent.id} value={ent.name} onSelect={() => {
-                              setPendingEnterpriseId(ent.id);
-                              setEnterpriseSearchOpen(false);
-                            }}>
-                              {ent.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                {pendingEnterpriseId && (
-                  <p className="text-xs text-muted-foreground">
-                    {pendingEnterpriseId === 'CLEAR' 
-                      ? 'Pending: Will remove enterprise assignment. Click Save to apply.' 
-                      : 'Pending change. Click Save to apply.'}
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold">{currentEnterprise?.name || 'Unassigned'}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {currentEnterprise 
+                      ? 'This organization is assigned to an enterprise. To change, update from the enterprise settings page.' 
+                      : 'This organization is not assigned to any enterprise.'}
                   </p>
-                )}
-              </div>
-            ) : (
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">{currentEnterprise?.name || 'Unassigned'}</h3>
-                    <p className="text-sm text-muted-foreground">{isPlatformAdmin ? 'Click Edit Settings to change the parent enterprise.' : 'Only platform admins can change the parent enterprise.'}</p>
-                  </div>
-                  <Badge variant="secondary">Enterprise</Badge>
                 </div>
+                {currentEnterprise && <Badge variant="secondary">Enterprise</Badge>}
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -871,10 +917,57 @@ export default function Settings() {
       {isEnterprise && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Organizations
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Organizations
+              </CardTitle>
+              {isPlatformAdmin && (
+                <Popover open={orgSearchOpen} onOpenChange={setOrgSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Assign Organization
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-80">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Search unassigned organizations..." 
+                        value={orgQuery} 
+                        onValueChange={(v) => {
+                          setOrgQuery(v);
+                          loadUnassignedOrganizations(v);
+                        }} 
+                      />
+                      <CommandList>
+                        <CommandEmpty>
+                          {loadingUnassignedOrgs ? 'Loading...' : 'No unassigned organizations found.'}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {unassignedOrgs.map((org) => (
+                            <CommandItem 
+                              key={org.id} 
+                              value={org.name}
+                              onSelect={() => handleAssignOrganization(org.id)}
+                              disabled={assigningOrgId === org.id}
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium">{org.name}</span>
+                                <span className="text-xs text-muted-foreground">{org.type}</span>
+                              </div>
+                              {assigningOrgId === org.id && (
+                                <Loader2 className="ml-auto h-4 w-4 animate-spin" />
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -913,7 +1006,10 @@ export default function Settings() {
                 </div>
               ))}
               {(!enterpriseOrganizations || enterpriseOrganizations.length === 0) && (
-                <div className="text-sm text-muted-foreground">No organizations assigned to this enterprise.</div>
+                <div className="text-sm text-muted-foreground">
+                  No organizations assigned to this enterprise.
+                  {isPlatformAdmin && ' Click "Assign Organization" to add organizations.'}
+                </div>
               )}
             </div>
           </CardContent>
