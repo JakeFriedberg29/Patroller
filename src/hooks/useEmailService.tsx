@@ -18,17 +18,8 @@ export const useEmailService = () => {
   // Prefer env-based selection; default to 'resend' for best compatibility with custom activation flow
   const EMAIL_PROVIDER: EmailProvider = (import.meta as any)?.env?.VITE_EMAIL_PROVIDER as EmailProvider || 'resend';
 
-  const invokeSupabaseInvite = async (request: SendEmailRequest) => {
-    console.log('Sending email via Supabase Auth...');
-    const { data, error } = await supabase.functions.invoke('send-activation-email', {
-      body: request
-    });
-    return { data, error };
-  };
-
-  const invokeResendEmail = async (request: SendEmailRequest) => {
-    console.log('Sending email via Resend...');
-    const { data, error } = await supabase.functions.invoke('send-resend-email', {
+  const invokeCreateInvitation = async (request: SendEmailRequest) => {
+    const { data, error } = await supabase.functions.invoke('invitations', {
       body: request
     });
     return { data, error };
@@ -38,40 +29,7 @@ export const useEmailService = () => {
     setIsLoading(true);
     
     try {
-      let response;
-      let error;
-
-      if (EMAIL_PROVIDER === 'resend') {
-        // Use Resend service (requires domain verification)
-        console.log('Sending email via Resend...');
-        ({ data: response, error } = await supabase.functions.invoke('send-resend-email', {
-          body: request
-        }));
-      } else {
-        // Use Supabase Auth (default, works immediately)
-        console.log('Sending email via Supabase Auth...');
-        ({ data: response, error } = await supabase.functions.invoke('send-activation-email', {
-          body: request
-        }));
-
-        // If Supabase invite path fails for known reasons, fall back to Resend automatically
-        if ((error || !response?.success) && EMAIL_PROVIDER === 'supabase') {
-          const errMsg = error?.message || response?.error || '';
-          const shouldFallback =
-            errMsg.toLowerCase().includes('already registered') ||
-            errMsg.toLowerCase().includes('already signed up') ||
-            errMsg.toLowerCase().includes('failed to send invitation') ||
-            errMsg.toLowerCase().includes('rate limit') ||
-            errMsg.toLowerCase().includes('error generating activation token');
-
-          if (shouldFallback) {
-            console.log('Falling back to Resend for activation email...');
-            ({ data: response, error } = await supabase.functions.invoke('send-resend-email', {
-              body: request
-            }));
-          }
-        }
-      }
+      const { data: response, error } = await invokeCreateInvitation(request);
 
       if (error) {
         console.error(`Error sending email via ${EMAIL_PROVIDER}:`, error);

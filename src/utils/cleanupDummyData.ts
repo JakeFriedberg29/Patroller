@@ -2,9 +2,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function cleanupDummyData() {
   try {
-    console.log('Calling cleanup-dummy-data function...');
-    
-    const { data, error } = await supabase.functions.invoke('cleanup-dummy-data', {
+    console.log('Calling cleanups function...');
+    const { data, error } = await supabase.functions.invoke('cleanups', {
+      // Supabase invoke uses POST; function enforces DELETE semantics internally
       body: {}
     });
 

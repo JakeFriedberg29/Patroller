@@ -2,9 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function createSeedAuthUsers() {
   try {
-    console.log('Calling create-seed-auth-users function...');
-    
-    const { data, error } = await supabase.functions.invoke('create-seed-auth-users', {
+    console.log('Calling seed-users function...');
+    const { data, error } = await supabase.functions.invoke('seed-users', {
       body: {}
     });
 
