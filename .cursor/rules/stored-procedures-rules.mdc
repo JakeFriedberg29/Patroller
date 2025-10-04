@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+# Stored Procedures Design
+- lowercase, underscores 
+- begin with entity  
+- clear domain prefix (e.g. `user_`, `report_`, `organization_`)  
+- descriptive action verbs (`create`, `update`, `delete`, `set`, `add`, `activate`, etc.)  
+- append `_v2`, `_v3` for breaking changes  
+- no vague names like `do_stuff` or `process`
+
