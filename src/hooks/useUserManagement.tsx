@@ -94,7 +94,7 @@ export const useUserManagement = () => {
       const roleType = userData.isPatroller ? 'patroller' : 'observer';
       
       // Create user in the database first (without email confirmation)
-      const { data, error } = await supabase.rpc('create_user_with_activation', {
+      const { data, error } = await supabase.rpc('user_create_with_activation', {
         p_email: userData.email,
         p_full_name: userData.fullName,
         p_tenant_id: tenantId,
@@ -190,13 +190,13 @@ export const useUserManagement = () => {
       let error;
       if (newPassword && newPassword.length > 0) {
         ({ data, error } = await supabase
-          .rpc('activate_user_account_with_password', {
+          .rpc('user_activate_account_with_code', {
             p_activation_token: activationToken,
             p_password: newPassword
           }));
       } else {
         ({ data, error } = await supabase
-          .rpc('activate_user_account', {
+          .rpc('user_activate_account', {
             p_activation_token: activationToken
           }));
       }

@@ -1399,125 +1399,23 @@ export type Database = {
       }
     }
     Functions: {
-      activate_user_account: {
-        Args: { p_activation_token: string }
-        Returns: Json
+      _assert_current_user_platform_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
-      activate_user_account_with_password: {
-        Args: { p_activation_token: string; p_password: string }
-        Returns: Json
-      }
-      add_organization_subtype: {
-        Args: { p_name: string }
-        Returns: undefined
-      }
-      assert_record_matches_org_tenant: {
+      _assert_record_matches_org_tenant: {
         Args: { p_org_id: string; p_tenant_id: string }
         Returns: undefined
       }
-      assert_same_tenant_for_user_and_org: {
+      _assert_same_tenant_for_user: {
         Args: { p_org_id: string; p_user_id: string }
         Returns: undefined
       }
-      cleanup_dummy_data: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      create_audit_log_partition: {
+      audit_log_create_partition: {
         Args: { p_month: number; p_year: number }
         Returns: string
       }
-      create_incident: {
-        Args: {
-          p_description: string
-          p_incident_type: string
-          p_location_id?: string
-          p_occurred_at?: string
-          p_priority: Database["public"]["Enums"]["incident_priority"]
-          p_title: string
-        }
-        Returns: string
-      }
-      create_organization_tx: {
-        Args: { p_payload: Json; p_request_id?: string }
-        Returns: string
-      }
-      create_pending_user: {
-        Args:
-          | {
-              p_department?: string
-              p_email: string
-              p_full_name: string
-              p_location?: string
-              p_organization_id?: string
-              p_phone?: string
-              p_role_type?: Database["public"]["Enums"]["role_type"]
-              p_tenant_id: string
-            }
-          | {
-              p_email: string
-              p_full_name: string
-              p_location?: string
-              p_organization_id?: string
-              p_phone?: string
-              p_role_type?: Database["public"]["Enums"]["role_type"]
-              p_tenant_id: string
-            }
-        Returns: Json
-      }
-      create_report_tx: {
-        Args: { p_actor_id: string; p_payload: Json; p_request_id?: string }
-        Returns: string
-      }
-      create_tenant_with_organization: {
-        Args: {
-          p_admin_email: string
-          p_admin_name: string
-          p_org_name: string
-          p_org_slug: string
-          p_org_type: Database["public"]["Enums"]["organization_type"]
-          p_subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
-          p_tenant_name: string
-          p_tenant_slug: string
-        }
-        Returns: Json
-      }
-      create_user: {
-        Args: {
-          p_email: string
-          p_employee_id?: string
-          p_full_name: string
-          p_organization_id?: string
-          p_phone?: string
-          p_role_type?: Database["public"]["Enums"]["role_type"]
-          p_tenant_id: string
-        }
-        Returns: string
-      }
-      create_user_with_activation: {
-        Args:
-          | {
-              p_department?: string
-              p_email: string
-              p_full_name: string
-              p_location?: string
-              p_organization_id?: string
-              p_phone?: string
-              p_role_type?: Database["public"]["Enums"]["role_type"]
-              p_tenant_id: string
-            }
-          | {
-              p_email: string
-              p_full_name: string
-              p_location?: string
-              p_organization_id?: string
-              p_phone?: string
-              p_role_type?: Database["public"]["Enums"]["role_type"]
-              p_tenant_id: string
-            }
-        Returns: Json
-      }
-      delete_enterprise_tx: {
+      enterprise_delete_tx: {
         Args: {
           p_actor_id: string
           p_force?: boolean
@@ -1526,58 +1424,9 @@ export type Database = {
         }
         Returns: undefined
       }
-      delete_organization_subtype: {
-        Args: { p_name: string }
+      enterprise_update_settings_tx: {
+        Args: { p_payload: Json; p_request_id?: string; p_tenant_id: string }
         Returns: undefined
-      }
-      delete_report_template: {
-        Args: {
-          p_actor_id: string
-          p_request_id?: string
-          p_template_id: string
-          p_tenant_id: string
-        }
-        Returns: undefined
-      }
-      ensure_current_user_platform_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      generate_activation_token: {
-        Args: { p_user_id: string }
-        Returns: Json
-      }
-      get_current_user_organization_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_tenant_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      global_search: {
-        Args: { p_limit?: number; p_query: string }
-        Returns: Json
-      }
-      has_org_read: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      has_org_write: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      has_tenant_read: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      has_tenant_write: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_platform_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
       }
       log_user_action: {
         Args: {
@@ -1590,11 +1439,7 @@ export type Database = {
         }
         Returns: undefined
       }
-      rename_organization_subtype: {
-        Args: { p_new_name: string; p_old_name: string }
-        Returns: undefined
-      }
-      send_notification: {
+      notification_send: {
         Args: {
           p_expires_at?: string
           p_message: string
@@ -1604,7 +1449,36 @@ export type Database = {
         }
         Returns: number
       }
-      set_platform_admin_assignment: {
+      organization_add_subtype: {
+        Args: { p_name: string }
+        Returns: undefined
+      }
+      organization_create_tx: {
+        Args: { p_payload: Json; p_request_id?: string }
+        Returns: string
+      }
+      organization_delete_subtype: {
+        Args: { p_name: string }
+        Returns: undefined
+      }
+      organization_rename_subtype: {
+        Args: { p_new_name: string; p_old_name: string }
+        Returns: undefined
+      }
+      organization_update_or_delete: {
+        Args: {
+          p_mode: string
+          p_org_id: string
+          p_payload?: Json
+          p_request_id?: string
+        }
+        Returns: undefined
+      }
+      platform_is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      platform_set_admin_assignment: {
         Args: {
           p_account_id: string
           p_account_type: string
@@ -1614,41 +1488,167 @@ export type Database = {
         }
         Returns: undefined
       }
-      set_report_template_status: {
+      report_create_incident: {
+        Args: {
+          p_description: string
+          p_incident_type: string
+          p_location_id?: string
+          p_occurred_at?: string
+          p_priority: Database["public"]["Enums"]["incident_priority"]
+          p_title: string
+        }
+        Returns: string
+      }
+      report_create_tx: {
+        Args: { p_actor_id: string; p_payload: Json; p_request_id?: string }
+        Returns: string
+      }
+      report_template_delete: {
+        Args: {
+          p_actor_id: string
+          p_request_id?: string
+          p_template_id: string
+          p_tenant_id: string
+        }
+        Returns: undefined
+      }
+      report_template_set_status: {
         Args: {
           p_status: Database["public"]["Enums"]["report_template_status"]
           p_template_id: string
         }
         Returns: Json
       }
-      set_user_active_persona: {
-        Args: { p_persona: string }
-        Returns: undefined
+      system_cleanup_dummy_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
-      slugify: {
+      system_global_search: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: Json
+      }
+      system_slugify: {
         Args: { p_text: string }
         Returns: string
       }
-      update_enterprise_settings_tx: {
-        Args: { p_payload: Json; p_request_id?: string; p_tenant_id: string }
-        Returns: undefined
-      }
-      update_or_delete_organization_tx: {
+      tenant_create_with_org: {
         Args: {
-          p_mode: string
-          p_org_id: string
-          p_payload?: Json
-          p_request_id?: string
+          p_admin_email: string
+          p_admin_name: string
+          p_org_name: string
+          p_org_slug: string
+          p_org_type: Database["public"]["Enums"]["organization_type"]
+          p_subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
+          p_tenant_name: string
+          p_tenant_slug: string
         }
-        Returns: undefined
+        Returns: Json
+      }
+      user_activate_account: {
+        Args: { p_activation_token: string }
+        Returns: Json
+      }
+      user_activate_account_with_code: {
+        Args: { p_activation_token: string; p_password: string }
+        Returns: Json
+      }
+      user_create: {
+        Args: {
+          p_email: string
+          p_employee_id?: string
+          p_full_name: string
+          p_organization_id?: string
+          p_phone?: string
+          p_role_type?: Database["public"]["Enums"]["role_type"]
+          p_tenant_id: string
+        }
+        Returns: string
+      }
+      user_create_pending: {
+        Args:
+          | {
+              p_department?: string
+              p_email: string
+              p_full_name: string
+              p_location?: string
+              p_organization_id?: string
+              p_phone?: string
+              p_role_type?: Database["public"]["Enums"]["role_type"]
+              p_tenant_id: string
+            }
+          | {
+              p_email: string
+              p_full_name: string
+              p_location?: string
+              p_organization_id?: string
+              p_phone?: string
+              p_role_type?: Database["public"]["Enums"]["role_type"]
+              p_tenant_id: string
+            }
+        Returns: Json
+      }
+      user_create_with_activation: {
+        Args:
+          | {
+              p_department?: string
+              p_email: string
+              p_full_name: string
+              p_location?: string
+              p_organization_id?: string
+              p_phone?: string
+              p_role_type?: Database["public"]["Enums"]["role_type"]
+              p_tenant_id: string
+            }
+          | {
+              p_email: string
+              p_full_name: string
+              p_location?: string
+              p_organization_id?: string
+              p_phone?: string
+              p_role_type?: Database["public"]["Enums"]["role_type"]
+              p_tenant_id: string
+            }
+        Returns: Json
+      }
+      user_generate_activation_token: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      user_get_current_org: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      user_get_current_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       user_has_full_permission: {
         Args: { _role_type: Database["public"]["Enums"]["role_type"] }
         Returns: boolean
       }
+      user_has_org_read: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      user_has_org_write: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       user_has_role: {
         Args: { _role_type: Database["public"]["Enums"]["role_type"] }
         Returns: boolean
+      }
+      user_has_tenant_read: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      user_has_tenant_write: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      user_set_active_persona: {
+        Args: { p_persona: string }
+        Returns: undefined
       }
     }
     Enums: {

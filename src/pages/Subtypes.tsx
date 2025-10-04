@@ -93,7 +93,7 @@ export default function Subtypes() {
         setEnterpriseRows(prev => [...prev, { id: crypto.randomUUID(), name: editValue.trim(), is_active: true }].sort((a, b) => a.name.localeCompare(b.name)));
       } else {
         // Adds enum if needed and inserts subtype for this tenant
-        const { error } = await supabase.rpc("add_organization_subtype" as any, { p_name: editValue.trim() });
+        const { error } = await supabase.rpc("organization_add_subtype" as any, { p_name: editValue.trim() });
         if (error) throw error;
         setOrganizationRows(prev => [...prev, { id: crypto.randomUUID(), name: editValue.trim(), is_active: true }].sort((a, b) => a.name.localeCompare(b.name)));
       }
@@ -167,7 +167,7 @@ export default function Subtypes() {
         if (error) throw error;
         setEnterpriseRows(prev => prev.filter(r => r.name !== name));
       } else {
-        const { error } = await supabase.rpc("delete_organization_subtype" as any, { p_name: name });
+        const { error } = await supabase.rpc("organization_delete_subtype" as any, { p_name: name });
         if (error) throw error;
         setOrganizationRows(prev => prev.filter(r => r.name !== name));
       }

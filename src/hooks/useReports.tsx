@@ -135,7 +135,7 @@ export const useReports = () => {
 
       // Optional: ensure org belongs to same tenant (defense in depth)
       if (accountType === 'organization') {
-        await supabase.rpc('assert_record_matches_org_tenant', {
+        await supabase.rpc('_assert_record_matches_org_tenant', {
           p_org_id: accountId,
           p_tenant_id: currentUser.tenant_id,
         });
@@ -143,7 +143,7 @@ export const useReports = () => {
 
       const requestId = crypto.randomUUID();
       const ok = await safeMutation(`create-report:${requestId}`, {
-        op: () => supabase.rpc('create_report_tx', {
+        op: () => supabase.rpc('report_create_tx', {
           p_actor_id: currentUser.id,
           p_payload: {
             tenant_id: currentUser.tenant_id,

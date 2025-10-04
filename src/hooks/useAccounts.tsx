@@ -276,7 +276,7 @@ export const useAccounts = () => {
         const baseOrgSlug = slugify(`${accountData.name}-main`);
         // New tenant has no orgs yet; baseOrgSlug is fine
 
-        const { data, error } = await supabase.rpc('create_tenant_with_organization', {
+        const { data, error } = await supabase.rpc('tenant_create_with_org', {
           p_tenant_name: accountData.name,
           p_tenant_slug: uniqueTenantSlug,
           p_org_name: `${accountData.name} - Main Office`,
@@ -308,7 +308,7 @@ export const useAccounts = () => {
 
         const requestId = crypto.randomUUID();
         const ok = await safeMutation(`create-org:${uniqueOrgSlug}:${requestId}`, {
-          op: () => supabase.rpc('create_organization_tx', {
+          op: () => supabase.rpc('organization_create_tx', {
             p_payload: {
               tenant_id: tenantId,
               name: accountData.name,
@@ -392,7 +392,7 @@ export const useAccounts = () => {
         };
         const requestId = crypto.randomUUID();
         const ok = await safeMutation(`update-enterprise:${id}:${requestId}`, {
-          op: () => supabase.rpc('update_enterprise_settings_tx', {
+          op: () => supabase.rpc('enterprise_update_settings_tx', {
             p_tenant_id: id,
             p_payload: payload,
             p_request_id: requestId,
@@ -429,7 +429,7 @@ export const useAccounts = () => {
         };
         const requestId = crypto.randomUUID();
         const ok = await safeMutation(`update-org:${id}:${requestId}` ,{
-          op: () => supabase.rpc('update_or_delete_organization_tx', {
+          op: () => supabase.rpc('organization_update_or_delete', {
             p_org_id: id,
             p_mode: 'update',
             p_payload: payload,
@@ -483,7 +483,7 @@ export const useAccounts = () => {
       if (account.type === 'Enterprise') {
         const requestId = crypto.randomUUID();
         const ok = await safeMutation(`delete-tenant:${id}:${requestId}`, {
-          op: () => supabase.rpc('delete_enterprise_tx', {
+          op: () => supabase.rpc('enterprise_delete_tx', {
             p_tenant_id: id,
             p_actor_id: '',
             p_force: true,
@@ -497,7 +497,7 @@ export const useAccounts = () => {
       } else {
         const requestId = crypto.randomUUID();
         const ok = await safeMutation(`delete-org:${id}:${requestId}`, {
-          op: () => supabase.rpc('update_or_delete_organization_tx', {
+          op: () => supabase.rpc('organization_update_or_delete', {
             p_org_id: id,
             p_mode: 'delete',
             p_payload: {},

@@ -138,7 +138,7 @@ export default function Repository() {
   const handleInlineStatusChange = async (templateId: string, next: 'draft' | 'ready' | 'published' | 'unpublished' | 'archive') => {
     try {
       // Use RPC which enforces tenancy/role checks
-      const { data: rpc, error: rpcErr } = await supabase.rpc('set_report_template_status' as any, {
+      const { data: rpc, error: rpcErr } = await supabase.rpc('report_template_set_status' as any, {
         p_template_id: templateId,
         p_status: next,
       });
@@ -194,7 +194,7 @@ export default function Repository() {
       const requestId = crypto.randomUUID();
       await safeMutation(`del-template:${deleteTemplateId}`, {
         op: async () => {
-          const { data, error } = await supabase.rpc('delete_report_template', {
+          const { data, error } = await supabase.rpc('report_template_delete', {
             p_tenant_id: tenantId,
             p_template_id: deleteTemplateId,
             p_actor_id: userId,
@@ -258,7 +258,7 @@ export default function Repository() {
       const needsCatalogAdd = toAdd.filter(label => !allOrgTypes.includes(label));
       if (needsCatalogAdd.length > 0) {
         await Promise.all(needsCatalogAdd.map(async (label) => {
-          await supabase.rpc('add_organization_subtype' as any, { p_name: label });
+          await supabase.rpc('organization_add_subtype' as any, { p_name: label });
         }));
         // Reflect immediately in local options for this dialog session
         setAllOrgTypes(prev => Array.from(new Set([...prev, ...needsCatalogAdd])));

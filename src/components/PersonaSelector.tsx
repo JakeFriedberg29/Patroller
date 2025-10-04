@@ -18,7 +18,7 @@ export function PersonaSelector({ availablePersonas, onPersonaSelected }: Person
   const handleSelectPersona = async (persona: 'admin' | 'patroller') => {
     setSelecting(true);
     try {
-      const { error } = await supabase.rpc('set_user_active_persona', {
+      const { error } = await supabase.rpc('user_set_active_persona', {
         p_persona: persona
       });
 

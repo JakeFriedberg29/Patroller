@@ -187,7 +187,7 @@ export const usePlatformAdminAssignmentManager = (platformAdminId?: string) => {
     try {
       const requestId = crypto.randomUUID();
       const ok = await safeMutation(`add-assignment:${adminId}:${accountId}:${accountType}`, {
-        op: () => supabase.rpc('set_platform_admin_assignment', {
+        op: () => supabase.rpc('platform_set_admin_assignment', {
           p_admin_id: adminId,
           p_account_id: accountId,
           p_account_type: accountType,
@@ -221,7 +221,7 @@ export const usePlatformAdminAssignmentManager = (platformAdminId?: string) => {
       }
       const requestId = crypto.randomUUID();
       const ok = await safeMutation(`rm-assignment:${assignmentId}`, {
-        op: () => supabase.rpc('set_platform_admin_assignment', {
+        op: () => supabase.rpc('platform_set_admin_assignment', {
           p_admin_id: adminId,
           p_account_id: row.account_id,
           p_account_type: row.account_type,
