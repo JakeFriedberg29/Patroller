@@ -49,7 +49,6 @@ const adminItems = [
   { title: "Platform Admins", url: "/admins", icon: Shield },
   { title: "Subtypes", url: "/subtypes", icon: Tag },
   { title: "Repository", url: "/repository", icon: Layers },
-  { title: "Notification Center", url: "/notifications", icon: Bell },
   { title: "Logs", url: "/logs", icon: BarChart3 },
 ];
 
@@ -57,7 +56,6 @@ const enterpriseItems = [
   { title: "Analytics", url: "/analytics", icon: Monitor },
   { title: "Organizations", url: "/organizations", icon: Building2 },
   { title: "Users", url: "/users", icon: Users },
-  { title: "Notification Center", url: "/notifications", icon: Bell },
   { title: "Logs", url: "/logs", icon: BarChart3 },
   { title: "Account Details", url: "/settings", icon: Settings },
 ];

@@ -31,9 +31,7 @@ const UserSettings = lazy(() => import("./pages/UserSettings"));
 const EnterpriseView = lazy(() => import("./pages/EnterpriseView"));
 const EnterpriseOrganizations = lazy(() => import("./pages/EnterpriseOrganizations"));
 const EnterpriseUsers = lazy(() => import("./pages/EnterpriseUsers"));
-const EnterpriseNotificationCenter = lazy(() => import("./pages/EnterpriseNotificationCenter"));
 const EnterpriseLogs = lazy(() => import("./pages/EnterpriseLogs"));
-const PlatformNotificationCenter = lazy(() => import("./pages/PlatformNotificationCenter"));
 const Repository = lazy(() => import("./pages/Repository"));
 const ReportBuilder = lazy(() => import("./pages/ReportBuilder"));
 const PatrollerDashboard = lazy(() => import("./pages/PatrollerDashboard"));
@@ -105,7 +103,7 @@ const App = () => (
                           <Route path="enterprises/:id/users" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseUsers /></ProtectedRoute>} />
                           {/* Backward-compat: old Enterprise Admins path */}
                           <Route path="enterprises/:id/enterprise-admins" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseUsers /></ProtectedRoute>} />
-                          <Route path="enterprises/:id/notifications" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseNotificationCenter /></ProtectedRoute>} />
+                          
                           <Route path="enterprises/:id/logs" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseLogs /></ProtectedRoute>} />
                           <Route path="enterprises/:id/licenses" element={<ProtectedRoute requireAssignment accountType="Enterprise"><LicensesCatalog /></ProtectedRoute>} />
                           <Route path="enterprises/:id/billing" element={<ProtectedRoute requireAssignment accountType="Enterprise"><Billing /></ProtectedRoute>} />
@@ -117,7 +115,7 @@ const App = () => (
                           <Route path="admins" element={<PlatformAdmins />} />
                           <Route path="subtypes" element={<Subtypes />} />
                           <Route path="repository" element={<Repository />} />
-                          <Route path="notifications" element={<PlatformNotificationCenter />} />
+                          
                           <Route path="logs" element={<Logs />} />
                           <Route path="settings" element={<UserSettings />} />
                           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
