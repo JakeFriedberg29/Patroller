@@ -4,21 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mic, FileText, Clock, AlertTriangle } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { IncidentForm } from "@/components/IncidentForm";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
-import { useIncidents } from "@/hooks/useIncidents";
+import { useReports } from "@/hooks/useReports";
 import { useToast } from "@/components/ui/use-toast";
-
+import { DynamicReportForm } from "@/components/DynamicReportForm";
 import { useOrganizationReportTemplates } from "@/hooks/useReportTemplates";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function PatrollerDashboard() {
   const { profile } = useUserProfile();
-  const { createIncident } = useIncidents();
+  const { createReport } = useReports();
   const { toast } = useToast();
   const { templates, loading: loadingTemplates } = useOrganizationReportTemplates();
   const [visibilityByTemplate, setVisibilityByTemplate] = useState<Record<string, boolean>>({});
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState("");
   const [organizationName, setOrganizationName] = useState<string | null>(null);
@@ -80,25 +80,65 @@ export default function PatrollerDashboard() {
     return "Good evening";
   };
 
-  const handleReportSubmit = async (reportData: any) => {
+  // Fetch full template when report is selected
+  useEffect(() => {
+    const fetchTemplate = async () => {
+      if (!selectedReport) {
+        setSelectedTemplate(null);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('report_templates')
+        .select('id, name, description, template_schema')
+        .eq('id', selectedReport)
+        .single();
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load report template",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setSelectedTemplate(data);
+    };
+    
+    fetchTemplate();
+  }, [selectedReport, toast]);
+
+  const handleReportSubmit = async (formData: Record<string, any>) => {
+    if (!selectedTemplate) return;
+    
     try {
-      const incidentData = {
-        ...reportData,
-        description: voiceTranscript ? 
-          `${reportData.description}\n\nVoice Recording Notes: ${voiceTranscript}` : 
-          reportData.description
+      // Include voice transcript in metadata if present
+      const metadata = {
+        ...formData,
+        ...(voiceTranscript && { voiceTranscript })
       };
       
-      await createIncident(incidentData);
-      
-      toast({
-        title: "Report Submitted",
-        description: "Your report has been submitted successfully.",
+      const success = await createReport({
+        title: selectedTemplate.name,
+        description: selectedTemplate.description,
+        report_type: selectedTemplate.name,
+        template_id: selectedTemplate.id,
+        template_version: 1,
+        metadata,
       });
       
-      // Reset form
-      setSelectedReport(null);
-      setVoiceTranscript("");
+      if (success) {
+        toast({
+          title: "Report Submitted",
+          description: "Your report has been submitted successfully.",
+        });
+        
+        // Reset form
+        setSelectedReport(null);
+        setSelectedTemplate(null);
+        setVoiceTranscript("");
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -263,7 +303,23 @@ export default function PatrollerDashboard() {
           </Card>
 
           {/* Report Form */}
-          <IncidentForm onSubmit={handleReportSubmit} />
+          {selectedTemplate && selectedTemplate.template_schema ? (
+            <DynamicReportForm
+              templateSchema={selectedTemplate.template_schema}
+              templateId={selectedTemplate.id}
+              templateName={selectedTemplate.name}
+              onSubmit={handleReportSubmit}
+              onCancel={() => {
+                setSelectedReport(null);
+                setSelectedTemplate(null);
+                setVoiceTranscript("");
+              }}
+            />
+          ) : (
+            <div className="text-center p-8 text-muted-foreground">
+              Loading report form...
+            </div>
+          )}
         </div>
       )}
     </div>

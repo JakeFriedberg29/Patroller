@@ -290,29 +290,36 @@ export default function OrganizationReports() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="font-semibold">Title</TableHead>
+                    <TableHead className="font-semibold">Template</TableHead>
                     <TableHead className="font-semibold">Type</TableHead>
                     <TableHead className="font-semibold">Submitted</TableHead>
-                    <TableHead className="font-semibold">Account</TableHead>
+                    <TableHead className="font-semibold">Submitted By</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loadingReports ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-sm text-muted-foreground">Loading submissions…</TableCell>
+                      <TableCell colSpan={5} className="text-sm text-muted-foreground">Loading submissions…</TableCell>
                     </TableRow>
                   ) : reports.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-sm text-muted-foreground">No submissions yet.</TableCell>
+                      <TableCell colSpan={5} className="text-sm text-muted-foreground">No submissions yet.</TableCell>
                     </TableRow>
                   ) : (
-                    reports.map(r => (
-                      <TableRow key={r.id}>
-                        <TableCell className="font-medium">{r.title || r.report_type}</TableCell>
-                        <TableCell className="text-muted-foreground">{r.report_type}</TableCell>
-                        <TableCell className="text-muted-foreground">{new Date(r.submitted_at).toLocaleString()}</TableCell>
-                        <TableCell className="text-muted-foreground">{r.account_type}</TableCell>
-                      </TableRow>
-                    ))
+                    reports.map(r => {
+                      const templateInfo = templates.find(t => t.id === r.template_id);
+                      return (
+                        <TableRow key={r.id} className="hover:bg-muted/50 cursor-pointer">
+                          <TableCell className="font-medium">{r.title || r.report_type}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {templateInfo ? templateInfo.name : r.template_id ? 'Template' : 'N/A'}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{r.report_type}</TableCell>
+                          <TableCell className="text-muted-foreground">{new Date(r.submitted_at).toLocaleString()}</TableCell>
+                          <TableCell className="text-muted-foreground">{r.created_by || 'Unknown'}</TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>

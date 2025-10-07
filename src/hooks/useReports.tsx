@@ -47,7 +47,7 @@ export const useReports = () => {
         .eq('auth_user_id', authUserId)
         .single();
 
-      let query = supabase.from('reports').select('*');
+      let query = supabase.from('reports_submissions').select('*');
 
       if (isPlatformAdmin) {
         // Platform admins: optionally scope to URL org if provided
