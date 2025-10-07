@@ -93,20 +93,36 @@ export function AppSidebar() {
   };
   const routeId = id ?? deriveRouteIdFromPath();
 
-  // Fetch organization data to check if it's standalone
+  // Fetch organization data
   const { data: organizationData } = useQuery({
     queryKey: ['organization', routeId],
     queryFn: async () => {
       if (!routeId || !isInOrganization) return null;
       const { data, error } = await supabase
         .from('organizations')
-        .select('tenant_id')
+        .select('tenant_id, name')
         .eq('id', routeId)
         .single();
       if (error) throw error;
       return data;
     },
     enabled: isInOrganization && !!routeId
+  });
+
+  // Fetch enterprise data
+  const { data: enterpriseData } = useQuery({
+    queryKey: ['enterprise', routeId],
+    queryFn: async () => {
+      if (!routeId || !isInEnterprise) return null;
+      const { data, error } = await supabase
+        .from('enterprises')
+        .select('name')
+        .eq('id', routeId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: isInEnterprise && !!routeId
   });
 
   // Determine if licenses/billing should be shown
@@ -180,7 +196,11 @@ export function AppSidebar() {
             <div>
               <h2 className="text-lg font-bold text-sidebar-foreground">Patroller Console</h2>
               <p className="text-xs text-sidebar-foreground/70">
-                {(isInEnterprise || isInOrganization) ? 'Analytics' : 'Platform View'}
+                {isInEnterprise 
+                  ? enterpriseData?.name || 'Enterprise' 
+                  : isInOrganization 
+                  ? organizationData?.name || 'Organization'
+                  : 'Platform View'}
               </p>
             </div>
           )}
