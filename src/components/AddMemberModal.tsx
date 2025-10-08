@@ -69,7 +69,7 @@ export function AddMemberModal({
       if (!user) throw new Error('Not authenticated');
       const {
         data: currentUser
-      } = await supabase.from('users').select('organization_id, tenant_id').eq('auth_user_id', user.id).single();
+      } = await supabase.from('users').select('organization_id, enterprise_id').eq('auth_user_id', user.id).single();
       
       // Use provided organizationId (from URL) or fall back to current user's organization
       const targetOrgId = organizationId || currentUser?.organization_id;
@@ -79,7 +79,7 @@ export function AddMemberModal({
       }
       
       // If using provided organizationId, get the tenant_id from that organization
-      let tenantId = currentUser?.tenant_id;
+      let tenantId = currentUser?.enterprise_id;
       if (organizationId && organizationId !== currentUser?.organization_id) {
         const { data: org } = await supabase
           .from('organizations')
