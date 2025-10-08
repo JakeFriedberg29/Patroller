@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Mail, Loader2 } from "lucide-react";
 import { useEmailService } from "@/hooks/useEmailService";
-
 interface ResendActivationButtonProps {
   userId: string;
   email: string;
@@ -12,7 +11,6 @@ interface ResendActivationButtonProps {
   size?: "default" | "sm" | "lg";
   className?: string;
 }
-
 export const ResendActivationButton = ({
   userId,
   email,
@@ -22,11 +20,11 @@ export const ResendActivationButton = ({
   className
 }: ResendActivationButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const { sendActivationEmail } = useEmailService();
-
+  const {
+    sendActivationEmail
+  } = useEmailService();
   const handleResendActivation = async () => {
     setIsLoading(true);
-    
     try {
       const result = await sendActivationEmail({
         userId,
@@ -35,12 +33,10 @@ export const ResendActivationButton = ({
         isResend: true,
         organizationName: 'Emergency Management Platform'
       });
-
       if (!result.success) {
         toast.error(result.error || 'Failed to resend activation email');
         return;
       }
-
       toast.success(`Activation email resent successfully via ${result.provider}!`);
     } catch (error) {
       console.error('Error resending activation email:', error);
@@ -49,21 +45,5 @@ export const ResendActivationButton = ({
       setIsLoading(false);
     }
   };
-
-  return (
-    <Button
-      variant={variant}
-      size={size}
-      onClick={handleResendActivation}
-      disabled={isLoading}
-      className={className}
-    >
-      {isLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Mail className="h-4 w-4" />
-      )}
-      {isLoading ? 'Resending...' : 'Resend Activation'}
-    </Button>
-  );
+  return;
 };
