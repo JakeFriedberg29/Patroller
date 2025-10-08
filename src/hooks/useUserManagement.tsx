@@ -11,8 +11,6 @@ export interface CreateUserRequest {
   isPatroller?: boolean;
   tenantId?: string;
   organizationId?: string;
-  
-  location?: string;
   phone?: string;
 }
 
@@ -102,8 +100,6 @@ export const useUserManagement = () => {
         p_tenant_id: tenantId,
         p_organization_id: userData.organizationId || null,
         p_phone: userData.phone || null,
-        
-        p_location: userData.location || null,
         p_role_type: roleType
       });
 
