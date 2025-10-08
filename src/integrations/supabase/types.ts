@@ -1062,7 +1062,6 @@ export type Database = {
           email: string
           email_verified: boolean
           employee_id: string | null
-          enterprise_id: string | null
           first_name: string | null
           full_name: string
           id: string
@@ -1073,6 +1072,7 @@ export type Database = {
           preferences: Json | null
           profile_data: Json | null
           status: Database["public"]["Enums"]["user_status"]
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -1081,7 +1081,6 @@ export type Database = {
           email: string
           email_verified?: boolean
           employee_id?: string | null
-          enterprise_id?: string | null
           first_name?: string | null
           full_name: string
           id?: string
@@ -1092,6 +1091,7 @@ export type Database = {
           preferences?: Json | null
           profile_data?: Json | null
           status?: Database["public"]["Enums"]["user_status"]
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -1100,7 +1100,6 @@ export type Database = {
           email?: string
           email_verified?: boolean
           employee_id?: string | null
-          enterprise_id?: string | null
           first_name?: string | null
           full_name?: string
           id?: string
@@ -1111,21 +1110,22 @@ export type Database = {
           preferences?: Json | null
           profile_data?: Json | null
           status?: Database["public"]["Enums"]["user_status"]
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "users_enterprise_id_fkey"
-            columns: ["enterprise_id"]
-            isOneToOne: false
-            referencedRelation: "enterprises"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "users_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprises"
             referencedColumns: ["id"]
           },
         ]
