@@ -594,7 +594,7 @@ export default function Settings() {
           } as any;
           const requestId = crypto.randomUUID();
           const ok = await safeMutation(`update-enterprise:${currentAccount.id}:${requestId}`, {
-            op: () => supabase.rpc('enterprise_update_settings_tx', {
+            op: async () => await supabase.rpc('enterprise_update_settings_tx', {
               p_tenant_id: currentAccount.id,
               p_payload: payload,
               p_request_id: requestId,
@@ -687,7 +687,7 @@ export default function Settings() {
       // Update the organization to set tenant_id to platform root (unassigned)
       const requestId = crypto.randomUUID();
       const ok = await safeMutation(`unassign-org:${orgId}:${requestId}`, {
-        op: () => supabase.rpc('organization_update_or_delete', {
+        op: async () => await supabase.rpc('organization_update_or_delete', {
           p_org_id: orgId,
           p_mode: 'update',
           p_payload: { tenant_id: platformTenant.id },

@@ -105,30 +105,21 @@ export default function EnterpriseUsers() {
       }
 
       const transformedAdmins: EnterpriseAdmin[] = data.map(user => {
-        const profileData = user.profile_data as { 
-           
-          location?: string; 
-          permissions?: string[];
-          avatar?: string;
-          activation_sent_at?: string;
-        } || {};
-        
         return {
           id: user.id,
-          user_id: user.id,
-          firstName: user.first_name || user.full_name?.split(' ')[0] || '',
-          lastName: user.last_name || user.full_name?.split(' ').slice(1).join(' ') || '',
+          user_id: user.user_id,
+          firstName: user.full_name?.split(' ')[0] || '',
+          lastName: user.full_name?.split(' ').slice(1).join(' ') || '',
           email: user.email,
-          phone: user.phone || '',
+          phone: '',
           role: 'User',
           activation_status: user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended',
-          
-          location: profileData.location || '',
-          lastLogin: user.last_login_at || user.updated_at || '',
-          createdDate: user.created_at || '',
-          permissions: profileData.permissions || ['User Management', 'Organization Management'],
-          avatar: profileData.avatar || '',
-          activation_sent_at: profileData.activation_sent_at
+          location: '',
+          lastLogin: '',
+          createdDate: '',
+          permissions: ['User Management', 'Organization Management'],
+          avatar: '',
+          activation_sent_at: undefined
         };
       });
 

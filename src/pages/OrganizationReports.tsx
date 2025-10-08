@@ -164,7 +164,7 @@ export default function OrganizationReports() {
       const tenantId = orgRow?.tenant_id as string;
       setVisibilityByTemplate(prev => ({ ...prev, [templateId]: next }));
       const { data: existing } = await supabase
-        .from('organization_report_settings')
+        .from('patroller_report_visibility')
         .select('id')
         .eq('tenant_id', tenantId)
         .eq('organization_id', id)
@@ -172,13 +172,13 @@ export default function OrganizationReports() {
         .maybeSingle();
       if (existing?.id) {
         const { error } = await supabase
-          .from('organization_report_settings')
+          .from('patroller_report_visibility')
           .update({ visible_to_patrollers: next })
           .eq('id', existing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('organization_report_settings')
+          .from('patroller_report_visibility')
           .insert({ tenant_id: tenantId, organization_id: id, template_id: templateId, visible_to_patrollers: next });
         if (error) throw error;
       }

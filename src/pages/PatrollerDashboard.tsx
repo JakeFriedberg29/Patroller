@@ -53,7 +53,7 @@ export default function PatrollerDashboard() {
       const tenantId = profile?.profileData?.tenant_id;
       if (!orgId || !tenantId) return;
       const { data } = await supabase
-        .from('organization_report_settings')
+        .from('patroller_report_visibility')
         .select('template_id, visible_to_patrollers')
         .eq('organization_id', orgId)
         .eq('tenant_id', tenantId);

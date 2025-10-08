@@ -245,7 +245,7 @@ export default function ReportBuilder() {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
-  const [status, setStatus] = useState<'draft' | 'ready' | 'published' | 'unpublished'>("draft");
+  const [status, setStatus] = useState<'draft' | 'ready' | 'published' | 'unpublished' | 'archive'>("draft");
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(0);
 
