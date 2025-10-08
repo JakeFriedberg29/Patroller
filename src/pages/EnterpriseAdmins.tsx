@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,7 +61,6 @@ interface EnterpriseAdmin {
 }
 
 export default function EnterpriseUsers() {
-  const { id: tenantId } = useParams();
   const { toast } = useToast();
   // Force rebuild to clear cache
   const { createUser, isLoading: isCreatingUser } = useUserManagement();
@@ -84,41 +82,17 @@ export default function EnterpriseUsers() {
   // Load enterprise users from database
   useEffect(() => {
     loadEnterpriseAdmins();
-  }, [tenantId]);
+  }, []);
 
   const loadEnterpriseAdmins = async () => {
     setIsLoading(true);
     try {
-      if (!tenantId) {
-        toast({
-          title: "Error",
-          description: "Enterprise ID not found",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Query users directly and filter out platform admins
-      const { data: accountUsersData, error } = await supabase
-        .from('account_users')
-        .select(`
-          *,
-          users!inner (
-            id,
-            email,
-            full_name,
-            status,
-            profile_data,
-            user_roles!user_roles_user_id_fkey (
-              role_type,
-              is_active
-            )
-          )
-        `)
-        .eq('tenant_id', tenantId)
+      const { data, error } = await supabase
+        .from('v_account_users')
+        .select('*')
         .is('organization_id', null)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .order('full_name', { ascending: true });
 
       if (error) {
         console.error('Error loading enterprise admins:', error);
@@ -127,38 +101,27 @@ export default function EnterpriseUsers() {
           description: "Failed to load enterprise administrators.",
           variant: "destructive",
         });
-        setIsLoading(false);
         return;
       }
 
-      // Filter out platform admins and transform the data
-      const filteredUsers = (accountUsersData || []).filter(accountUser => {
-        const user = accountUser.users as any;
-        const roles = user?.user_roles || [];
-        // Exclude users who have platform_admin role
-        return !roles.some((role: any) => role.role_type === 'platform_admin' && role.is_active);
-      });
-
-      const transformedAdmins: EnterpriseAdmin[] = filteredUsers.map(accountUser => {
-        const user = accountUser.users as any;
-        const status = user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended';
+      const transformedAdmins: EnterpriseAdmin[] = data.map(user => {
         return {
-          id: accountUser.id,
-          user_id: user.id,
+          id: user.id,
+          user_id: user.user_id,
           firstName: user.full_name?.split(' ')[0] || '',
           lastName: user.full_name?.split(' ').slice(1).join(' ') || '',
           email: user.email,
           phone: '',
-          role: accountUser.access_role === 'write' ? 'Admin' : 'User',
-          activation_status: status as "pending" | "active" | "suspended",
+          role: 'User',
+          activation_status: user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended',
           location: '',
           lastLogin: '',
           createdDate: '',
-          permissions: accountUser.access_role === 'write' ? ['User Management', 'Organization Management'] : ['Read Only'],
+          permissions: ['User Management', 'Organization Management'],
           avatar: '',
-          activation_sent_at: user.profile_data?.activation_sent_at
+          activation_sent_at: undefined
         };
-      }).sort((a, b) => a.firstName.localeCompare(b.firstName));
+      });
 
       setAdmins(transformedAdmins);
     } catch (error) {
