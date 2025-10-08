@@ -136,7 +136,8 @@ export const useTeamMembers = () => {
             .select('tenant_id')
             .eq('id', organizationId)
             .single();
-          tenantId = orgData?.tenant_id;
+          // For standalone organizations (tenant_id is null), use the organization ID as tenant
+          tenantId = orgData?.tenant_id || organizationId;
         } else {
           console.error("Platform admin: Invalid organization ID in URL:", urlOrgId);
           throw new Error("Invalid organization ID in URL");

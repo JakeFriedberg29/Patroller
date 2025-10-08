@@ -45,16 +45,23 @@ export function AddAdminModal({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     // Resolve tenant id correctly when creating users for an organization
     let tenantIdToUse: string | undefined = accountId;
+    
     if (accountType === "organization" && accountId) {
       const {
         data: org,
         error: orgErr
       } = await supabase.from('organizations').select('tenant_id').eq('id', accountId).single();
+      
       if (orgErr) {
         console.error('Failed to load organization tenant_id:', orgErr);
+        return;
       }
-      tenantIdToUse = org?.tenant_id || undefined;
+      
+      // For standalone organizations (tenant_id is null), use the organization ID as tenant
+      // For organizations under an enterprise, use the enterprise's tenant_id
+      tenantIdToUse = org?.tenant_id || accountId;
     }
+    
     const result = await createUser({
       email: values.email,
       fullName: values.fullName,
@@ -63,6 +70,7 @@ export function AddAdminModal({
       tenantId: tenantIdToUse,
       organizationId: accountType === "organization" ? accountId : undefined
     });
+    
     if (result.success) {
       form.reset();
       onOpenChange(false);
