@@ -109,14 +109,14 @@ export const useAccounts = () => {
       // Get user counts for each tenant/organization
       const { data: userCounts, error: userCountsError } = await supabase
         .from('users')
-        .select('enterprise_id, organization_id')
+        .select('tenant_id, organization_id')
         .eq('status', 'active');
 
       if (userCountsError) throw userCountsError;
 
       // Process enterprises as Enterprise accounts
       const enterpriseAccounts: Account[] = (tenants || []).map(tenant => {
-        const memberCount = userCounts?.filter(u => u.enterprise_id === tenant.id).length || 0;
+        const memberCount = userCounts?.filter(u => u.tenant_id === tenant.id).length || 0;
         
         // Validate tenant ID
         if (!tenant.id || tenant.id === 'undefined') {

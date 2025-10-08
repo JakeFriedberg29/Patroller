@@ -43,7 +43,7 @@ export const useReports = () => {
       const authUserId = authUser.user?.id;
       const { data: currentUser } = await supabase
         .from('users')
-        .select('id, enterprise_id, organization_id')
+        .select('id, tenant_id, organization_id')
         .eq('auth_user_id', authUserId)
         .single();
 
@@ -59,7 +59,7 @@ export const useReports = () => {
         if (isValidUuid(urlOrganizationId)) {
           query = query.eq('account_type', 'organization').eq('account_id', urlOrganizationId as string);
         } else {
-          query = query.eq('tenant_id', currentUser?.enterprise_id || '');
+          query = query.eq('tenant_id', currentUser?.tenant_id || '');
         }
       } else if (hasOrgRead || isPatroller) {
         // Org users/patrollers: only their organization's reports
@@ -106,7 +106,7 @@ export const useReports = () => {
       const authUserId = authUser.user?.id;
       const { data: currentUser, error: userErr } = await supabase
         .from('users')
-        .select('id, enterprise_id, organization_id')
+        .select('id, tenant_id, organization_id')
         .eq('auth_user_id', authUserId)
         .single();
       if (userErr || !currentUser) throw userErr || new Error('Current user not found');
@@ -137,7 +137,7 @@ export const useReports = () => {
       if (accountType === 'organization') {
         await supabase.rpc('_assert_record_matches_org_tenant', {
           p_org_id: accountId,
-          p_tenant_id: currentUser.enterprise_id,
+          p_tenant_id: currentUser.tenant_id,
         });
       }
 
@@ -147,7 +147,7 @@ export const useReports = () => {
           const { error } = await supabase.rpc('report_create_tx', {
             p_actor_id: currentUser.id,
             p_payload: {
-              tenant_id: currentUser.enterprise_id,
+              tenant_id: currentUser.tenant_id,
               account_id: accountId!,
               account_type: accountType,
               template_id: payload.template_id ?? null,
