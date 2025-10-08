@@ -88,14 +88,14 @@ export const useAccounts = () => {
         return;
       }
 
-      // Fetch tenants (Enterprises)
+      // Fetch enterprises
       const { data: tenants, error: tenantsError } = await supabase
         .from('enterprises')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (tenantsError) throw tenantsError;
-      console.log("Fetched tenants:", tenants);
+      console.log("Fetched enterprises:", tenants);
 
       // Fetch organizations
       const { data: organizations, error: orgsError } = await supabase
@@ -114,7 +114,7 @@ export const useAccounts = () => {
 
       if (userCountsError) throw userCountsError;
 
-      // Process tenants as Enterprise accounts
+      // Process enterprises as Enterprise accounts
       const enterpriseAccounts: Account[] = (tenants || []).map(tenant => {
         const memberCount = userCounts?.filter(u => u.tenant_id === tenant.id).length || 0;
         
@@ -214,10 +214,10 @@ export const useAccounts = () => {
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '');
 
-      const getUniqueTenantSlug = async (base: string): Promise<string> => {
+      const getUniqueEnterpriseSlug = async (base: string): Promise<string> => {
         let attempt = base;
         let counter = 2;
-        // Ensure uniqueness across tenants.slug
+        // Ensure uniqueness across enterprises.slug
         // RLS: platform admins have SELECT via policy
         // Loop will usually exit immediately
         // Guard against excessive loops
@@ -271,14 +271,14 @@ export const useAccounts = () => {
 
       if (accountData.type === 'Enterprise') {
         // Create Enterprise (Tenant with default organization)
-        const baseTenantSlug = slugify(accountData.name);
-        const uniqueTenantSlug = await getUniqueTenantSlug(baseTenantSlug);
+        const baseEnterpriseSlug = slugify(accountData.name);
+        const uniqueEnterpriseSlug = await getUniqueEnterpriseSlug(baseEnterpriseSlug);
         const baseOrgSlug = slugify(`${accountData.name}-main`);
         // New tenant has no orgs yet; baseOrgSlug is fine
 
         const { data, error } = await supabase.rpc('tenant_create_with_org', {
           p_tenant_name: accountData.name,
-          p_tenant_slug: uniqueTenantSlug,
+          p_tenant_slug: uniqueEnterpriseSlug,
           p_org_name: `${accountData.name} - Main Office`,
           p_org_slug: baseOrgSlug,
           p_org_type: mapCategoryToOrgType(accountData.category) as any,

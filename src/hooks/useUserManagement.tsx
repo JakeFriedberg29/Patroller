@@ -75,7 +75,7 @@ export const useUserManagement = () => {
 
       console.log('Creating user with tenant ID:', tenantId);
       
-      // Pre-check: email must not exist anywhere (global uniqueness across tenants/orgs)
+      // Pre-check: email must not exist anywhere (global uniqueness across enterprises/orgs)
       const { data: existingUsers, error: existingErr } = await supabase
         .from('users')
         .select('id, tenant_id')

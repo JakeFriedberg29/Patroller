@@ -151,7 +151,7 @@ export default function PlatformAdmins() {
           if (anyTenant && anyTenant.length > 0) {
             tenantIdToUse = anyTenant[0].id;
           } else {
-            // If no tenants exist, create a platform tenant
+            // If no enterprises exist, create a platform enterprise
             const {
               data: createdTenant,
               error: createTenantErr
