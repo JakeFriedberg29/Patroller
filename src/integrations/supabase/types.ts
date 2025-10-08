@@ -1450,9 +1450,10 @@ export type Database = {
         Args: {
           p_email: string
           p_full_name: string
-          p_location?: string
           p_organization_id?: string
+          p_permission?: string
           p_phone?: string
+          p_request_id?: string
           p_role_type?: Database["public"]["Enums"]["role_type"]
           p_tenant_id: string
         }
