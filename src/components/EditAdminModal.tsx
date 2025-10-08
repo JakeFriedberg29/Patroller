@@ -147,19 +147,19 @@ export const EditAdminModal = ({
 
       // Update access role for platform admins
       if (accountType === "platform" && values.accessRole) {
-        // Get tenant_id for the platform admin
+        // Get enterprise_id for the platform admin
         const { data: userData } = await supabase
           .from('users')
-          .select('tenant_id')
+          .select('enterprise_id')
           .eq('id', admin.id)
           .single();
 
-        if (userData?.tenant_id) {
+        if (userData?.enterprise_id) {
           await supabase
             .from('account_users')
             .upsert({
               user_id: admin.id,
-              tenant_id: userData.tenant_id,
+              tenant_id: userData.enterprise_id,
               organization_id: null,
               access_role: values.accessRole,
               is_active: true

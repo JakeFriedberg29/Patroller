@@ -34,7 +34,7 @@ export const useTeamMembers = () => {
       // Get current user info first
       const { data: currentUser } = await supabase
         .from('users')
-        .select('organization_id, tenant_id')
+        .select('organization_id, enterprise_id')
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
@@ -110,7 +110,7 @@ export const useTeamMembers = () => {
       // Get current user's info
       const { data: currentUser } = await supabase
         .from('users')
-        .select('organization_id, tenant_id')
+        .select('organization_id, enterprise_id')
         .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
@@ -121,7 +121,7 @@ export const useTeamMembers = () => {
       };
 
       let organizationId = currentUser?.organization_id;
-      let tenantId = currentUser?.tenant_id;
+      let tenantId = currentUser?.enterprise_id;
 
       // For platform admins, ALWAYS use URL organization ID if available and valid
       if (isPlatformAdmin) {
