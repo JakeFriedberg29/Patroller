@@ -251,7 +251,8 @@ export default function OrganizationUsers() {
 
       <AddMemberModal 
         open={isAddModalOpen} 
-        onOpenChange={setIsAddModalOpen} 
+        onOpenChange={setIsAddModalOpen}
+        organizationId={id}
       />
 
       {/* Edit Member Modal */}

@@ -29,10 +29,12 @@ const formSchema = z.object({
 interface AddMemberModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  organizationId?: string;
 }
 export function AddMemberModal({
   open,
-  onOpenChange
+  onOpenChange,
+  organizationId
 }: AddMemberModalProps) {
   const {
     toast
@@ -68,8 +70,23 @@ export function AddMemberModal({
       const {
         data: currentUser
       } = await supabase.from('users').select('organization_id, tenant_id').eq('auth_user_id', user.id).single();
-      if (!currentUser?.organization_id) {
+      
+      // Use provided organizationId (from URL) or fall back to current user's organization
+      const targetOrgId = organizationId || currentUser?.organization_id;
+      
+      if (!targetOrgId) {
         throw new Error('No organization found');
+      }
+      
+      // If using provided organizationId, get the tenant_id from that organization
+      let tenantId = currentUser?.tenant_id;
+      if (organizationId && organizationId !== currentUser?.organization_id) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('tenant_id')
+          .eq('id', organizationId)
+          .single();
+        tenantId = org?.tenant_id;
       }
       const result = await createUser({
         email: values.email,
@@ -77,8 +94,8 @@ export function AddMemberModal({
         role: values.isPatroller ? 'Patroller' : 'User',
         accessRole: values.accessLevel,
         isPatroller: values.isPatroller,
-        tenantId: currentUser.tenant_id,
-        organizationId: currentUser.organization_id,
+        tenantId: tenantId!,
+        organizationId: targetOrgId,
         phone: values.phone
       });
       if (!result.success) {
