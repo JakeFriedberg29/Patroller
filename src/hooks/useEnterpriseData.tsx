@@ -68,7 +68,7 @@ export const useEnterpriseData = (tenantId?: string) => {
       const { data: tenantUsers } = await supabase
         .from('users')
         .select('id')
-        .eq('enterprise_id', tenantId)
+        .eq('tenant_id', tenantId)
         .eq('status', 'active');
 
       const userIds = (tenantUsers || []).map(u => u.id);
