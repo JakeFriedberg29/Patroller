@@ -1411,6 +1411,14 @@ export type Database = {
         Args: { p_org_id: string; p_user_id: string }
         Returns: undefined
       }
+      assert_record_matches_org_tenant: {
+        Args: { p_org_id: string; p_tenant_id: string }
+        Returns: undefined
+      }
+      assert_same_tenant_for_user_and_org: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: undefined
+      }
       audit_log_create_partition: {
         Args: { p_month: number; p_year: number }
         Returns: string
