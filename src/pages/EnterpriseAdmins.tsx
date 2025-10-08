@@ -92,7 +92,7 @@ export default function EnterpriseUsers() {
         .select('*')
         .is('organization_id', null)
         .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .order('full_name', { ascending: true });
 
       if (error) {
         console.error('Error loading enterprise admins:', error);
