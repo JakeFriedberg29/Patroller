@@ -71,7 +71,7 @@ export const useAuthRedirect = () => {
         break;
       case 'patroller':
       case 'member':
-      case 'observer':
+      case 'responder':
         if (organizationId) {
           navigate(`/organization/${organizationId}/patroller-dashboard`, { replace: true });
         } else {

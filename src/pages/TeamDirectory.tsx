@@ -294,7 +294,7 @@ export default function OrganizationUsers() {
                   <SelectContent>
                     <SelectItem value="Team Lead">Team Lead</SelectItem>
                     <SelectItem value="Patroller">Patroller</SelectItem>
-                    <SelectItem value="Observer">Observer</SelectItem>
+                    <SelectItem value="Responder">Responder</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

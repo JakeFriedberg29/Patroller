@@ -79,6 +79,7 @@ export default function PlatformAdmins() {
   const loadPlatformAdmins = async () => {
     setIsLoading(true);
     try {
+      console.log('Loading platform admins...');
       // Load platform admins from users table with role information
       const {
         data,
@@ -93,10 +94,12 @@ export default function PlatformAdmins() {
           status,
           created_at,
           profile_data,
-          user_roles!user_roles_user_id_fkey!inner(role_type)
-        `).eq('user_roles.role_type', 'platform_admin').eq('user_roles.is_active', true).neq('status', 'inactive').order('created_at', {
+          user_roles!user_roles_user_id_fkey!inner(role_type, is_active)
+        `).eq('user_roles.role_type', 'platform_admin').eq('user_roles.is_active', true).order('created_at', {
         ascending: false
       });
+      
+      console.log('Platform admins query result:', { data, error });
       if (error) {
         console.error('Error loading platform admins:', error);
         toast({

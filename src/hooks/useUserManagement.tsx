@@ -17,19 +17,19 @@ export interface CreateUserRequest {
 }
 
 // Map UI roles to database role types
-const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'patroller' | 'team_leader' => {
-  const roleMap: { [key: string]: 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'observer' | 'patroller' | 'team_leader' } = {
+const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'patroller' | 'team_leader' | 'responder' => {
+  const roleMap: { [key: string]: 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'patroller' | 'team_leader' | 'responder' } = {
     'Platform Admin': 'platform_admin',
     'Enterprise Admin': 'enterprise_admin', 
     'Organization Admin': 'organization_admin',
     'Admin': 'organization_admin',
-    'User': 'observer',
+    'User': 'responder',
     'Team Leader': 'team_leader',
     'Supervisor': 'supervisor',
     'Patroller': 'patroller',
-    'Observer': 'observer'
+    'Responder': 'responder'
   };
-  return roleMap[uiRole] || 'patroller';
+  return roleMap[uiRole] || 'responder';
 };
 
 export const useUserManagement = () => {
@@ -93,7 +93,7 @@ export const useUserManagement = () => {
       // Determine the role type - prioritize userData.role if provided, otherwise use isPatroller flag
       const roleType = userData.role 
         ? mapRoleToDbRole(userData.role)
-        : (userData.isPatroller ? 'patroller' : 'observer');
+        : (userData.isPatroller ? 'patroller' : 'responder');
       
       // Create user in the database first (without email confirmation)
       const { data, error } = await supabase.rpc('user_create_with_activation', {
