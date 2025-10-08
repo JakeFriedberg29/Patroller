@@ -81,12 +81,25 @@ export default function OrganizationUsers() {
   const loadOrganizationAdmins = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('v_account_users')
-        .select('*')
+      // Query users directly through account_users to get access_role and filter out platform admins
+      const { data: accountUsersData, error } = await supabase
+        .from('account_users')
+        .select(`
+          *,
+          users!inner (
+            id,
+            email,
+            full_name,
+            status,
+            profile_data,
+            user_roles!user_roles_user_id_fkey (
+              role_type,
+              is_active
+            )
+          )
+        `)
         .eq('organization_id', organizationId)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .eq('is_active', true);
 
       if (error) {
         console.error('Error loading organization admins:', error);
@@ -95,27 +108,38 @@ export default function OrganizationUsers() {
           description: "Failed to load organization administrators.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
-      const transformedAdmins: OrganizationAdmin[] = data.map(user => {
+      // Filter out platform admins and transform the data
+      const filteredUsers = (accountUsersData || []).filter(accountUser => {
+        const user = accountUser.users as any;
+        const roles = user?.user_roles || [];
+        // Exclude users who have platform_admin role
+        return !roles.some((role: any) => role.role_type === 'platform_admin' && role.is_active);
+      });
+
+      const transformedAdmins: OrganizationAdmin[] = filteredUsers.map(accountUser => {
+        const user = accountUser.users as any;
+        const status = user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended';
         return {
-          id: user.id,
-          user_id: user.user_id,
+          id: accountUser.id,
+          user_id: user.id,
           firstName: user.full_name?.split(' ')[0] || '',
           lastName: user.full_name?.split(' ').slice(1).join(' ') || '',
           email: user.email,
           phone: '',
-          role: 'User',
-          activation_status: user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended',
+          role: accountUser.access_role === 'write' ? 'Admin' : 'User',
+          activation_status: status as "pending" | "active" | "suspended",
           location: '',
           lastLogin: '',
           createdDate: '',
-          permissions: ['Team Management', 'Report Management'],
+          permissions: accountUser.access_role === 'write' ? ['Team Management', 'Report Management'] : ['Read Only'],
           avatar: '',
-          activation_sent_at: undefined
+          activation_sent_at: user.profile_data?.activation_sent_at
         };
-      });
+      }).sort((a, b) => a.firstName.localeCompare(b.firstName));
 
       setAdmins(transformedAdmins);
     } catch (error) {

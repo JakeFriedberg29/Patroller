@@ -35,7 +35,7 @@ export const useUserManagement = () => {
   const [currentUserTenantId, setCurrentUserTenantId] = useState<string | null>(null);
   const { sendActivationEmail } = useEmailService();
 
-  // Get current user's tenant ID
+  // Get current user's enterprise ID (tenant)
   useEffect(() => {
     const getCurrentUserTenant = async () => {
       try {
@@ -43,16 +43,16 @@ export const useUserManagement = () => {
         if (user) {
           const { data: userData } = await supabase
             .from('users')
-            .select('tenant_id')
+            .select('enterprise_id')
             .eq('auth_user_id', user.id)
             .single();
           
-          if (userData?.tenant_id) {
-            setCurrentUserTenantId(userData.tenant_id);
+          if (userData?.enterprise_id) {
+            setCurrentUserTenantId(userData.enterprise_id);
           }
         }
       } catch (error) {
-        console.error('Error getting current user tenant:', error);
+        console.error('Error getting current user enterprise:', error);
       }
     };
 
@@ -76,7 +76,7 @@ export const useUserManagement = () => {
       // Pre-check: email must not exist anywhere (global uniqueness across enterprises/orgs)
       const { data: existingUsers, error: existingErr } = await supabase
         .from('users')
-        .select('id, tenant_id')
+        .select('id, enterprise_id')
         .ilike('email', userData.email.trim());
 
       if (existingErr) {
