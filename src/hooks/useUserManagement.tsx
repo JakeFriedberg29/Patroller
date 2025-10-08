@@ -90,8 +90,10 @@ export const useUserManagement = () => {
         return { success: false, error: 'Email already exists in another account' };
       }
       
-      // Determine the role type based on whether user is patroller or admin
-      const roleType = userData.isPatroller ? 'patroller' : 'observer';
+      // Determine the role type - prioritize userData.role if provided, otherwise use isPatroller flag
+      const roleType = userData.role 
+        ? mapRoleToDbRole(userData.role)
+        : (userData.isPatroller ? 'patroller' : 'observer');
       
       // Create user in the database first (without email confirmation)
       const { data, error } = await supabase.rpc('user_create_with_activation', {
