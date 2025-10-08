@@ -1423,6 +1423,10 @@ export type Database = {
         Args: { p_month: number; p_year: number }
         Returns: string
       }
+      create_audit_log_partition: {
+        Args: { p_month: number; p_year: number }
+        Returns: string
+      }
       enterprise_delete_tx: {
         Args: {
           p_actor_id: string
