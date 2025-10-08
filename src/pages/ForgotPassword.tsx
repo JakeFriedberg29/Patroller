@@ -27,12 +27,15 @@ const ForgotPassword = () => {
     }
 
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { data, error: resetError } = await supabase.functions.invoke('send-password-reset', {
+        body: { email }
       });
 
       if (resetError) {
         setError(resetError.message);
+        toast.error("Failed to send reset link");
+      } else if (!data?.success) {
+        setError(data?.error || "Failed to send reset link");
         toast.error("Failed to send reset link");
       } else {
         setSuccess(true);
