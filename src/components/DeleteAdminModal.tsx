@@ -1,18 +1,8 @@
 import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
 interface Admin {
   id: string;
   user_id: string;
@@ -21,7 +11,6 @@ interface Admin {
   email: string;
   role: string;
 }
-
 interface DeleteAdminModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,7 +18,6 @@ interface DeleteAdminModalProps {
   accountType: "platform" | "enterprise" | "organization";
   onSuccess?: () => void;
 }
-
 export const DeleteAdminModal = ({
   open,
   onOpenChange,
@@ -38,21 +26,17 @@ export const DeleteAdminModal = ({
   onSuccess
 }: DeleteAdminModalProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
-
   const handleDelete = async () => {
     if (!admin) return;
-
     setIsDeleting(true);
     try {
       // Soft delete by updating status to inactive
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ 
-          status: 'inactive',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', admin.id);
-
+      const {
+        error: updateError
+      } = await supabase.from('users').update({
+        status: 'inactive',
+        updated_at: new Date().toISOString()
+      }).eq('id', admin.id);
       if (updateError) {
         console.error('Error deleting admin:', updateError);
         toast.error('Failed to delete admin');
@@ -60,15 +44,14 @@ export const DeleteAdminModal = ({
       }
 
       // Deactivate user roles
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .update({ is_active: false })
-        .eq('user_id', admin.id);
-
+      const {
+        error: roleError
+      } = await supabase.from('user_roles').update({
+        is_active: false
+      }).eq('user_id', admin.id);
       if (roleError) {
         console.error('Error deactivating roles:', roleError);
       }
-
       toast.success(`${admin.firstName} ${admin.lastName} has been deleted successfully`);
       onSuccess?.();
       onOpenChange(false);
@@ -79,11 +62,8 @@ export const DeleteAdminModal = ({
       setIsDeleting(false);
     }
   };
-
   if (!admin) return null;
-
-  return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+  return <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
@@ -102,12 +82,7 @@ export const DeleteAdminModal = ({
           Are you sure you want to delete <strong>{admin.firstName} {admin.lastName}</strong>? 
           This action will deactivate their account and revoke all administrative privileges.
           
-          <div className="mt-4 p-3 bg-muted rounded-md">
-            <p className="text-sm font-medium">Admin Details:</p>
-            <p className="text-sm">Name: {admin.firstName} {admin.lastName}</p>
-            <p className="text-sm">Email: {admin.email}</p>
-            <p className="text-sm">Role: {admin.role}</p>
-          </div>
+          
           
           <p className="text-destructive font-medium mt-4">
             This action cannot be easily undone.
@@ -118,25 +93,16 @@ export const DeleteAdminModal = ({
           <AlertDialogCancel disabled={isDeleting}>
             Cancel
           </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {isDeleting ? (
-              <>
+          <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {isDeleting ? <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Deleting...
-              </>
-            ) : (
-              <>
+              </> : <>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Admin
-              </>
-            )}
+              </>}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
-    </AlertDialog>
-  );
+    </AlertDialog>;
 };
