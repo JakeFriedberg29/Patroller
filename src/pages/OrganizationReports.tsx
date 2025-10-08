@@ -140,7 +140,7 @@ export default function OrganizationReports() {
       if (orgErr) return;
       const tenantId = orgRow?.tenant_id as string | undefined;
       const { data } = await supabase
-        .from('organization_report_settings')
+        .from('patroller_report_visibility')
         .select('template_id, visible_to_patrollers')
         .eq('organization_id', id)
         .eq('tenant_id', tenantId || '');

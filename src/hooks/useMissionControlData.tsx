@@ -53,8 +53,8 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
 
       // Reports submitted in date range
       const { data: reportRows, count: reportsCount } = await supabase
-        .from('reports')
-        .select('id, report_type, submitted_at, incident_id, account_id, account_type', { count: 'exact' })
+        .from('reports_submissions')
+        .select('id, report_type, submitted_at, account_id, account_type', { count: 'exact' })
         .eq('account_type', 'organization')
         .eq('account_id', organizationId)
         .gte('submitted_at', fromIso)

@@ -489,12 +489,15 @@ export default function Settings() {
           for (const org of pendingOrgs) {
             const requestId = crypto.randomUUID();
             await safeMutation(`assign-org:${org.id}:${requestId}`, {
-              op: () => supabase.rpc('organization_update_or_delete', {
-                p_org_id: org.id,
-                p_mode: 'update',
-                p_payload: { tenant_id: currentAccount.id },
-                p_request_id: requestId,
-              }),
+              op: async () => {
+                const { error } = await supabase.rpc('organization_update_or_delete', {
+                  p_org_id: org.id,
+                  p_mode: 'update',
+                  p_payload: { tenant_id: currentAccount.id },
+                  p_request_id: requestId,
+                });
+                if (error) throw error;
+              },
               name: 'update_or_delete_organization_tx',
               tags: { request_id: requestId },
             });

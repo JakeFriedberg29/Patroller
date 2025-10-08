@@ -143,23 +143,26 @@ export const useReports = () => {
 
       const requestId = crypto.randomUUID();
       const ok = await safeMutation(`create-report:${requestId}`, {
-        op: () => supabase.rpc('report_create_tx', {
-          p_actor_id: currentUser.id,
-          p_payload: {
-            tenant_id: currentUser.tenant_id,
-            account_id: accountId!,
-            account_type: accountType,
-            template_id: payload.template_id ?? null,
-            template_version: payload.template_version ?? null,
-            title: payload.title ?? null,
-            description: payload.description ?? null,
-            report_type: payload.report_type,
-            incident_id: payload.incident_id ?? null,
-            metadata: payload.metadata ?? null,
-            submitted_at: new Date().toISOString(),
-          },
-          p_request_id: requestId,
-        }),
+        op: async () => {
+          const { error } = await supabase.rpc('report_create_tx', {
+            p_actor_id: currentUser.id,
+            p_payload: {
+              tenant_id: currentUser.tenant_id,
+              account_id: accountId!,
+              account_type: accountType,
+              template_id: payload.template_id ?? null,
+              template_version: payload.template_version ?? null,
+              title: payload.title ?? null,
+              description: payload.description ?? null,
+              report_type: payload.report_type,
+              incident_id: payload.incident_id ?? null,
+              metadata: payload.metadata ?? null,
+              submitted_at: new Date().toISOString(),
+            },
+            p_request_id: requestId,
+          });
+          if (error) throw error;
+        },
         refetch: () => fetchReports(),
       });
       if (!ok) throw new Error('RPC failed');

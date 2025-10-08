@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
 import { Resend } from "npm:resend@2.0.0";
+import { renderAsync } from 'npm:@react-email/components@0.0.22';
+import React from 'npm:react@18.3.1';
+import { ActivationEmail } from './_templates/activation-email.tsx';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,58 +91,15 @@ serve(async (req: Request): Promise<Response> => {
     const firstName = fullName.split(' ')[0];
     const orgName = organizationName || 'the organization';
 
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Welcome to ${orgName}</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f4f4f4;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #333333; margin-bottom: 10px;">Welcome to ${orgName}!</h1>
-              <p style="color: #666666; font-size: 16px;">You've been invited to join our platform</p>
-            </div>
-            <div style="background-color: #f8f9fa; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
-              <p style="color: #333333; font-size: 16px; margin-bottom: 20px;">Hello ${firstName},</p>
-              <p style="color: #333333; font-size: 16px; margin-bottom: 20px;">
-                You've been invited to join <strong>${orgName}</strong> on our emergency management platform. 
-                To get started, please activate your account by clicking the button below.
-              </p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${activationUrl}" 
-                   style="background-color: #007bff; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-                  Activate Account
-                </a>
-              </div>
-              <p style="color: #666666; font-size: 14px; margin-top: 20px;">
-                If the button doesn't work, you can copy and paste this link into your browser:
-                <br>
-                <a href="${activationUrl}" style="color: #007bff; word-break: break-all;">${activationUrl}</a>
-              </p>
-            </div>
-            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 5px; margin-bottom: 30px;">
-              <h3 style="color: #856404; margin-top: 0;">Important Security Information</h3>
-              <ul style="color: #856404; font-size: 14px; margin: 0; padding-left: 20px;">
-                <li>This invitation link will expire in 24 hours</li>
-                <li>If you didn't expect this invitation, please contact your administrator</li>
-                <li>Never share your login credentials with anyone</li>
-              </ul>
-            </div>
-            <div style="border-top: 1px solid #e9ecef; padding-top: 20px; text-align: center;">
-              <p style="color: #666666; font-size: 14px; margin: 0;">
-                Need help? Contact your system administrator or reply to this email.
-              </p>
-              <p style="color: #999999; font-size: 12px; margin-top: 20px;">
-                © ${new Date().getFullYear()} ${orgName}. All rights reserved.
-              </p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+    // Render React Email template
+    const emailHtml = await renderAsync(
+      React.createElement(ActivationEmail, {
+        firstName,
+        organizationName: orgName,
+        activationUrl,
+        isResend,
+      })
+    );
 
     const emailText = `
 Welcome to ${orgName}!
@@ -153,6 +113,7 @@ ${activationUrl}
 
 Important Security Information:
 - This invitation link will expire in 24 hours
+- The link can only be used once
 - If you didn't expect this invitation, please contact your administrator
 - Never share your login credentials with anyone
 

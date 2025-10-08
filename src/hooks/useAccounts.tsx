@@ -308,25 +308,28 @@ export const useAccounts = () => {
 
         const requestId = crypto.randomUUID();
         const ok = await safeMutation(`create-org:${uniqueOrgSlug}:${requestId}`, {
-          op: () => supabase.rpc('organization_create_tx', {
-            p_payload: {
-              tenant_id: tenantId,
-              name: accountData.name,
-              slug: uniqueOrgSlug,
-              organization_type: orgType as any,
-              organization_subtype: orgSubtype,
-              contact_email: accountData.primaryEmail,
-              contact_phone: accountData.primaryPhone,
-              address: address as any,
-              description: `${accountData.category} organization`,
-              settings: {
-                secondary_email: accountData.secondaryEmail,
-                secondary_phone: accountData.secondaryPhone
+          op: async () => {
+            const { error } = await supabase.rpc('organization_create_tx', {
+              p_payload: {
+                tenant_id: tenantId,
+                name: accountData.name,
+                slug: uniqueOrgSlug,
+                organization_type: orgType as any,
+                organization_subtype: orgSubtype,
+                contact_email: accountData.primaryEmail,
+                contact_phone: accountData.primaryPhone,
+                address: address as any,
+                description: `${accountData.category} organization`,
+                settings: {
+                  secondary_email: accountData.secondaryEmail,
+                  secondary_phone: accountData.secondaryPhone
+                },
+                is_active: true,
               },
-              is_active: true,
-            },
-            p_request_id: requestId,
-          }),
+              p_request_id: requestId,
+            });
+            if (error) throw error;
+          },
           refetch: () => fetchAccounts(),
           name: 'create_organization_tx',
           tags: { request_id: requestId },
@@ -392,11 +395,14 @@ export const useAccounts = () => {
         };
         const requestId = crypto.randomUUID();
         const ok = await safeMutation(`update-enterprise:${id}:${requestId}`, {
-          op: () => supabase.rpc('enterprise_update_settings_tx', {
-            p_tenant_id: id,
-            p_payload: payload,
-            p_request_id: requestId,
-          }),
+          op: async () => {
+            const { error } = await supabase.rpc('enterprise_update_settings_tx', {
+              p_tenant_id: id,
+              p_payload: payload,
+              p_request_id: requestId,
+            });
+            if (error) throw error;
+          },
           refetch: () => fetchAccounts(),
           name: 'update_enterprise_settings_tx',
           tags: { request_id: requestId },
@@ -429,12 +435,15 @@ export const useAccounts = () => {
         };
         const requestId = crypto.randomUUID();
         const ok = await safeMutation(`update-org:${id}:${requestId}` ,{
-          op: () => supabase.rpc('organization_update_or_delete', {
-            p_org_id: id,
-            p_mode: 'update',
-            p_payload: payload,
-            p_request_id: requestId,
-          }),
+          op: async () => {
+            const { error } = await supabase.rpc('organization_update_or_delete', {
+              p_org_id: id,
+              p_mode: 'update',
+              p_payload: payload,
+              p_request_id: requestId,
+            });
+            if (error) throw error;
+          },
           refetch: () => fetchAccounts(),
         });
         if (!ok) throw new Error('Update failed');
@@ -483,12 +492,15 @@ export const useAccounts = () => {
       if (account.type === 'Enterprise') {
         const requestId = crypto.randomUUID();
         const ok = await safeMutation(`delete-tenant:${id}:${requestId}`, {
-          op: () => supabase.rpc('enterprise_delete_tx', {
-            p_tenant_id: id,
-            p_actor_id: '',
-            p_force: true,
-            p_request_id: requestId,
-          }),
+          op: async () => {
+            const { error } = await supabase.rpc('enterprise_delete_tx', {
+              p_tenant_id: id,
+              p_actor_id: '',
+              p_force: true,
+              p_request_id: requestId,
+            });
+            if (error) throw error;
+          },
           refetch: () => fetchAccounts(),
           name: 'delete_enterprise_tx',
           tags: { request_id: requestId },
@@ -497,12 +509,15 @@ export const useAccounts = () => {
       } else {
         const requestId = crypto.randomUUID();
         const ok = await safeMutation(`delete-org:${id}:${requestId}`, {
-          op: () => supabase.rpc('organization_update_or_delete', {
-            p_org_id: id,
-            p_mode: 'delete',
-            p_payload: {},
-            p_request_id: requestId,
-          }),
+          op: async () => {
+            const { error } = await supabase.rpc('organization_update_or_delete', {
+              p_org_id: id,
+              p_mode: 'delete',
+              p_payload: {},
+              p_request_id: requestId,
+            });
+            if (error) throw error;
+          },
           refetch: () => fetchAccounts(),
         });
         if (!ok) throw new Error('Delete failed');

@@ -121,7 +121,7 @@ export const useEnterpriseData = (tenantId?: string) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const { count: reportsToday } = await supabase
-        .from('reports')
+        .from('reports_submissions')
         .select('id', { count: 'exact' })
         .in('account_id', orgIds.length ? orgIds : ['00000000-0000-0000-0000-000000000000'])
         .eq('account_type', 'organization')
@@ -131,7 +131,7 @@ export const useEnterpriseData = (tenantId?: string) => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const { data: reportRows } = await supabase
-        .from('reports')
+        .from('reports_submissions')
         .select('account_id, account_type')
         .in('account_id', orgIds.length ? orgIds : ['00000000-0000-0000-0000-000000000000'])
         .eq('account_type', 'organization')
