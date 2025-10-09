@@ -86,7 +86,9 @@ export function AddMemberModal({
           .select('tenant_id')
           .eq('id', organizationId)
           .single();
-        tenantId = org?.tenant_id;
+        
+        // For standalone organizations (tenant_id is null), use organization_id as tenant_id
+        tenantId = org?.tenant_id || organizationId;
       }
       const result = await createUser({
         email: values.email,
