@@ -114,7 +114,7 @@ export const EditAdminModal = ({
           phone: values.phone || null,
           updated_at: new Date().toISOString()
         })
-        .eq('id', admin.id);
+        .eq('id', admin.user_id);
 
       if (error) {
         console.error('Error updating admin:', error);
@@ -127,7 +127,7 @@ export const EditAdminModal = ({
         const { data: currentData } = await supabase
           .from('users')
           .select('profile_data')
-          .eq('id', admin.id)
+          .eq('id', admin.user_id)
           .single();
 
         const updatedProfileData = {
@@ -138,7 +138,7 @@ export const EditAdminModal = ({
         await supabase
           .from('users')
           .update({ profile_data: updatedProfileData })
-          .eq('id', admin.id);
+          .eq('id', admin.user_id);
       }
 
       // Update access role for platform admins
@@ -147,14 +147,14 @@ export const EditAdminModal = ({
         const { data: userData } = await supabase
           .from('users')
           .select('tenant_id')
-          .eq('id', admin.id)
+          .eq('id', admin.user_id)
           .single();
 
         if (userData?.tenant_id) {
           await supabase
             .from('account_users')
             .upsert({
-              user_id: admin.id,
+              user_id: admin.user_id,
               tenant_id: userData.tenant_id,
               organization_id: null,
               access_role: values.accessRole,
@@ -189,7 +189,7 @@ export const EditAdminModal = ({
           status: newStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', admin.id);
+        .eq('id', admin.user_id);
 
       if (error) {
         console.error('Error updating admin status:', error);
@@ -220,7 +220,7 @@ export const EditAdminModal = ({
           status: 'inactive',
           updated_at: new Date().toISOString()
         })
-        .eq('id', admin.id);
+        .eq('id', admin.user_id);
 
       if (userError) {
         console.error('Error deleting admin:', userError);
@@ -235,7 +235,7 @@ export const EditAdminModal = ({
           is_active: false,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', admin.id);
+        .eq('user_id', admin.user_id);
 
       if (roleError) {
         console.error('Error deactivating admin roles:', roleError);
@@ -427,7 +427,7 @@ export const EditAdminModal = ({
             {accountType === "platform" && admin && (
               <div className="space-y-4">
                 <AccountAssignmentManager
-                  platformAdminId={admin.id}
+                  platformAdminId={admin.user_id}
                   platformAdminName={`${admin.firstName} ${admin.lastName}`}
                   onAutoAssignChange={setAutoAssignAll}
                 />
