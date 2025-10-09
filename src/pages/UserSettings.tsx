@@ -12,19 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Bell, 
-  Shield, 
-  Key, 
-  Save,
-  Camera
-} from "lucide-react";
+import { User, Mail, Phone, MapPin, Bell, Shield, Key, Save, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
 interface FormProfile {
   id: string;
   firstName: string;
@@ -32,7 +21,6 @@ interface FormProfile {
   email: string;
   phone: string;
   title: string;
-  
   location: string;
   bio: string;
   avatar: string;
@@ -41,7 +29,6 @@ interface FormProfile {
   role: string;
   status: 'active' | 'inactive' | 'pending' | 'suspended';
 }
-
 interface NotificationSettings {
   emailNotifications: boolean;
   pushNotifications: boolean;
@@ -51,19 +38,24 @@ interface NotificationSettings {
   teamMessages: boolean;
   systemUpdates: boolean;
 }
-
 interface SecuritySettings {
   twoFactorEnabled: boolean;
   sessionTimeout: number;
   passwordLastChanged: string;
   trustedDevices: number;
 }
-
 export default function UserSettings() {
-  const { toast } = useToast();
-  const { profile, loading, error, refetch } = useUserProfile();
+  const {
+    toast
+  } = useToast();
+  const {
+    profile,
+    loading,
+    error,
+    refetch
+  } = useUserProfile();
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // Initialize form state with profile data
   const [formProfile, setFormProfile] = useState<FormProfile>({
     id: "",
@@ -80,7 +72,6 @@ export default function UserSettings() {
     role: "",
     status: "active"
   });
-
   const [notifications, setNotifications] = useState<NotificationSettings>({
     emailNotifications: true,
     pushNotifications: true,
@@ -90,10 +81,10 @@ export default function UserSettings() {
     teamMessages: true,
     systemUpdates: false
   });
-
   const [security, setSecurity] = useState<SecuritySettings>({
     twoFactorEnabled: true,
-    sessionTimeout: 480, // 8 hours in minutes
+    sessionTimeout: 480,
+    // 8 hours in minutes
     passwordLastChanged: "2024-01-01T00:00:00Z",
     trustedDevices: 3
   });
@@ -118,53 +109,42 @@ export default function UserSettings() {
       });
     }
   }, [profile]);
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
+    return <div className="flex items-center justify-center min-h-[200px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+      </div>;
   }
-
   if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
+    return <div className="flex items-center justify-center min-h-[200px]">
         <div className="text-center">
           <p className="text-destructive mb-4">Error loading profile: {error}</p>
           <Button onClick={refetch}>Try Again</Button>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   const handleProfileUpdate = async () => {
     if (!profile?.id) return;
-    
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({
-          first_name: formProfile.firstName,
-          last_name: formProfile.lastName,
-          phone: formProfile.phone,
-          profile_data: {
-            ...profile.profileData,
-            location: formProfile.location,
-            bio: formProfile.bio,
-            timezone: formProfile.timezone,
-            language: formProfile.language
-          }
-        })
-        .eq('id', profile.id);
-
+      const {
+        error
+      } = await supabase.from('users').update({
+        first_name: formProfile.firstName,
+        last_name: formProfile.lastName,
+        phone: formProfile.phone,
+        profile_data: {
+          ...profile.profileData,
+          location: formProfile.location,
+          bio: formProfile.bio,
+          timezone: formProfile.timezone,
+          language: formProfile.language
+        }
+      }).eq('id', profile.id);
       if (error) {
         throw error;
       }
-
       toast({
         title: "Profile Updated",
-        description: "Your profile information has been successfully updated.",
+        description: "Your profile information has been successfully updated."
       });
       setIsEditing(false);
       refetch(); // Reload the profile data
@@ -173,11 +153,10 @@ export default function UserSettings() {
       toast({
         title: "Update Failed",
         description: "Failed to update your profile. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleNotificationUpdate = (key: keyof NotificationSettings) => {
     setNotifications(prev => ({
       ...prev,
@@ -185,17 +164,15 @@ export default function UserSettings() {
     }));
     toast({
       title: "Notification Settings Updated",
-      description: "Your notification preferences have been saved.",
+      description: "Your notification preferences have been saved."
     });
   };
-
   const handlePasswordReset = () => {
     toast({
       title: "Password Reset Email Sent",
-      description: "Check your email for instructions to reset your password.",
+      description: "Check your email for instructions to reset your password."
     });
   };
-
   const handleEnable2FA = () => {
     setSecurity(prev => ({
       ...prev,
@@ -203,14 +180,10 @@ export default function UserSettings() {
     }));
     toast({
       title: security.twoFactorEnabled ? "2FA Disabled" : "2FA Enabled",
-      description: security.twoFactorEnabled 
-        ? "Two-factor authentication has been disabled." 
-        : "Two-factor authentication has been enabled for enhanced security.",
+      description: security.twoFactorEnabled ? "Two-factor authentication has been disabled." : "Two-factor authentication has been enabled for enhanced security."
     });
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">User Settings</h1>
@@ -243,14 +216,10 @@ export default function UserSettings() {
                   <Avatar className="h-20 w-20">
                     <AvatarImage src={formProfile.avatar} alt={`${formProfile.firstName} ${formProfile.lastName}`} />
                     <AvatarFallback className="text-lg">
-                      {(formProfile.firstName?.[0] || '')}{ (formProfile.lastName?.[0] || '')}
+                      {formProfile.firstName?.[0] || ''}{formProfile.lastName?.[0] || ''}
                     </AvatarFallback>
                   </Avatar>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-                  >
+                  <Button size="sm" variant="outline" className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0">
                     <Camera className="h-4 w-4" />
                   </Button>
                 </div>
@@ -265,84 +234,43 @@ export default function UserSettings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    value={formProfile.firstName}
-                    disabled={!isEditing}
-                    onChange={(e) => setFormProfile(prev => ({ ...prev, firstName: e.target.value }))}
-                  />
+                  <Input id="firstName" value={formProfile.firstName} disabled={!isEditing} onChange={e => setFormProfile(prev => ({
+                  ...prev,
+                  firstName: e.target.value
+                }))} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={formProfile.lastName}
-                    disabled={!isEditing}
-                    onChange={(e) => setFormProfile(prev => ({ ...prev, lastName: e.target.value }))}
-                  />
+                  <Input id="lastName" value={formProfile.lastName} disabled={!isEditing} onChange={e => setFormProfile(prev => ({
+                  ...prev,
+                  lastName: e.target.value
+                }))} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formProfile.email}
-                      disabled={true} // Email should not be editable
-                      className="pl-10"
-                    />
+                    <Input id="email" type="email" value={formProfile.email} disabled={true} // Email should not be editable
+                  className="pl-10" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      value={formProfile.phone}
-                      disabled={!isEditing}
-                      className="pl-10"
-                      onChange={(e) => setFormProfile(prev => ({ ...prev, phone: e.target.value }))}
-                    />
+                    <Input id="phone" value={formProfile.phone} disabled={!isEditing} className="pl-10" onChange={e => setFormProfile(prev => ({
+                    ...prev,
+                    phone: e.target.value
+                  }))} />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="title">Job Title</Label>
-                  <Input
-                    id="title"
-                    value={formProfile.title}
-                    disabled={true} // Job title should be based on role
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="location">Location</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="location"
-                      value={formProfile.location}
-                      disabled={!isEditing}
-                      className="pl-10"
-                      onChange={(e) => setFormProfile(prev => ({ ...prev, location: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={formProfile.bio}
-                    disabled={!isEditing}
-                    rows={3}
-                    onChange={(e) => setFormProfile(prev => ({ ...prev, bio: e.target.value }))}
-                  />
-                </div>
+                
+                
+                
               </div>
 
               <div className="flex justify-end gap-3">
-                {isEditing ? (
-                  <>
+                {isEditing ? <>
                     <Button variant="outline" onClick={() => setIsEditing(false)}>
                       Cancel
                     </Button>
@@ -350,12 +278,9 @@ export default function UserSettings() {
                       <Save className="mr-2 h-4 w-4" />
                       Save Changes
                     </Button>
-                  </>
-                ) : (
-                  <Button onClick={() => setIsEditing(true)}>
+                  </> : <Button onClick={() => setIsEditing(true)}>
                     Edit Profile
-                  </Button>
-                )}
+                  </Button>}
               </div>
             </CardContent>
           </Card>
@@ -376,30 +301,21 @@ export default function UserSettings() {
                     <Label>Email Notifications</Label>
                     <p className="text-sm text-muted-foreground">Receive notifications via email</p>
                   </div>
-                  <Switch
-                    checked={notifications.emailNotifications}
-                    onCheckedChange={() => handleNotificationUpdate('emailNotifications')}
-                  />
+                  <Switch checked={notifications.emailNotifications} onCheckedChange={() => handleNotificationUpdate('emailNotifications')} />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Push Notifications</Label>
                     <p className="text-sm text-muted-foreground">Receive browser push notifications</p>
                   </div>
-                  <Switch
-                    checked={notifications.pushNotifications}
-                    onCheckedChange={() => handleNotificationUpdate('pushNotifications')}
-                  />
+                  <Switch checked={notifications.pushNotifications} onCheckedChange={() => handleNotificationUpdate('pushNotifications')} />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>SMS Notifications</Label>
                     <p className="text-sm text-muted-foreground">Receive notifications via text message</p>
                   </div>
-                  <Switch
-                    checked={notifications.smsNotifications}
-                    onCheckedChange={() => handleNotificationUpdate('smsNotifications')}
-                  />
+                  <Switch checked={notifications.smsNotifications} onCheckedChange={() => handleNotificationUpdate('smsNotifications')} />
                 </div>
               </div>
 
@@ -413,40 +329,28 @@ export default function UserSettings() {
                       <Label>Incident Alerts</Label>
                       <p className="text-sm text-muted-foreground">Critical incident notifications</p>
                     </div>
-                    <Switch
-                      checked={notifications.incidentAlerts}
-                      onCheckedChange={() => handleNotificationUpdate('incidentAlerts')}
-                    />
+                    <Switch checked={notifications.incidentAlerts} onCheckedChange={() => handleNotificationUpdate('incidentAlerts')} />
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Report Updates</Label>
                       <p className="text-sm text-muted-foreground">Updates on report submissions and reviews</p>
                     </div>
-                    <Switch
-                      checked={notifications.reportUpdates}
-                      onCheckedChange={() => handleNotificationUpdate('reportUpdates')}
-                    />
+                    <Switch checked={notifications.reportUpdates} onCheckedChange={() => handleNotificationUpdate('reportUpdates')} />
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Team Messages</Label>
                       <p className="text-sm text-muted-foreground">Messages from team members</p>
                     </div>
-                    <Switch
-                      checked={notifications.teamMessages}
-                      onCheckedChange={() => handleNotificationUpdate('teamMessages')}
-                    />
+                    <Switch checked={notifications.teamMessages} onCheckedChange={() => handleNotificationUpdate('teamMessages')} />
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>System Updates</Label>
                       <p className="text-sm text-muted-foreground">Platform maintenance and feature updates</p>
                     </div>
-                    <Switch
-                      checked={notifications.systemUpdates}
-                      onCheckedChange={() => handleNotificationUpdate('systemUpdates')}
-                    />
+                    <Switch checked={notifications.systemUpdates} onCheckedChange={() => handleNotificationUpdate('systemUpdates')} />
                   </div>
                 </div>
               </div>
@@ -471,10 +375,7 @@ export default function UserSettings() {
                       Add an extra layer of security to your account
                     </p>
                   </div>
-                  <Switch
-                    checked={security.twoFactorEnabled}
-                    onCheckedChange={handleEnable2FA}
-                  />
+                  <Switch checked={security.twoFactorEnabled} onCheckedChange={handleEnable2FA} />
                 </div>
               </div>
 
@@ -502,10 +403,10 @@ export default function UserSettings() {
                         Currently set to {Math.floor(security.sessionTimeout / 60)} hours
                       </p>
                     </div>
-                    <Select
-                      value={security.sessionTimeout.toString()}
-                      onValueChange={(value) => setSecurity(prev => ({ ...prev, sessionTimeout: parseInt(value) }))}
-                    >
+                    <Select value={security.sessionTimeout.toString()} onValueChange={value => setSecurity(prev => ({
+                    ...prev,
+                    sessionTimeout: parseInt(value)
+                  }))}>
                       <SelectTrigger className="w-40">
                         <SelectValue />
                       </SelectTrigger>
@@ -544,10 +445,10 @@ export default function UserSettings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Timezone</Label>
-                  <Select
-                    value={formProfile.timezone}
-                    onValueChange={(value) => setFormProfile(prev => ({ ...prev, timezone: value }))}
-                  >
+                  <Select value={formProfile.timezone} onValueChange={value => setFormProfile(prev => ({
+                  ...prev,
+                  timezone: value
+                }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -562,10 +463,10 @@ export default function UserSettings() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="language">Language</Label>
-                  <Select
-                    value={formProfile.language}
-                    onValueChange={(value) => setFormProfile(prev => ({ ...prev, language: value }))}
-                  >
+                  <Select value={formProfile.language} onValueChange={value => setFormProfile(prev => ({
+                  ...prev,
+                  language: value
+                }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -604,7 +505,10 @@ export default function UserSettings() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={() => toast({ title: "Preferences Saved", description: "Your preferences have been updated." })}>
+                <Button onClick={() => toast({
+                title: "Preferences Saved",
+                description: "Your preferences have been updated."
+              })}>
                   <Save className="mr-2 h-4 w-4" />
                   Save Preferences
                 </Button>
@@ -613,6 +517,5 @@ export default function UserSettings() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 }
