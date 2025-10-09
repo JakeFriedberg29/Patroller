@@ -28,53 +28,35 @@ export const ActivationEmail = ({
   <Html>
     <Head />
     <Preview>
-      {isResend ? 'Reminder: ' : ''}Activate your account for {organizationName}
+      {isResend ? 'Reminder: ' : ''}Activate your account for Patroller
     </Preview>
     <Body style={main}>
       <Container style={container}>
+        <Text style={greeting}>
+          Hi {firstName},
+        </Text>
         <Heading style={h1}>
-          Welcome to {organizationName}!
+          Welcome to the <strong>Patroller Console</strong>!
         </Heading>
         <Text style={text}>
-          Hello {firstName},
-        </Text>
-        <Text style={text}>
-          You've been invited to join <strong>{organizationName}</strong> on our emergency management platform. 
-          To get started, please activate your account by clicking the button below.
+          To complete your registration and activate your account, please confirm your email by clicking the button below. You'll then be prompted to set your password and get started.
         </Text>
         
         <Section style={buttonContainer}>
           <Button style={button} href={activationUrl}>
-            Activate Account
+            Activate my Account
           </Button>
         </Section>
 
-        <Text style={textSmall}>
-          If the button doesn't work, copy and paste this link into your browser:
+        <Text style={footerText}>
+          If you didn't expect this email for Patroller, you can safely ignore this message.
         </Text>
-        <Text style={link}>
-          {activationUrl}
+        
+        <Text style={signature}>
+          Thanks,
         </Text>
-
-        <Hr style={hr} />
-
-        <Section style={securityBox}>
-          <Heading style={h3}>Important Security Information</Heading>
-          <ul style={list}>
-            <li>This invitation link will expire in 24 hours</li>
-            <li>The link can only be used once</li>
-            <li>If you didn't expect this invitation, please contact your administrator</li>
-            <li>Never share your login credentials with anyone</li>
-          </ul>
-        </Section>
-
-        <Hr style={hr} />
-
-        <Text style={footer}>
-          Need help? Contact your system administrator or reply to this email.
-        </Text>
-        <Text style={copyright}>
-          © {new Date().getFullYear()} {organizationName}. All rights reserved.
+        <Text style={signatureTeam}>
+          <strong>The Patroller Team</strong>
         </Text>
       </Container>
     </Body>
@@ -98,41 +80,26 @@ const container = {
   borderRadius: '8px',
 };
 
-const h1 = {
-  color: '#1f2937',
-  fontSize: '32px',
-  fontWeight: '700',
-  textAlign: 'center' as const,
-  margin: '0 0 30px',
+const greeting = {
+  color: '#000000',
+  fontSize: '16px',
+  lineHeight: '24px',
+  margin: '0 0 20px',
 };
 
-const h3 = {
-  color: '#92400e',
-  fontSize: '18px',
-  fontWeight: '600',
-  margin: '0 0 16px',
+const h1 = {
+  color: '#000000',
+  fontSize: '24px',
+  fontWeight: '400',
+  lineHeight: '32px',
+  margin: '0 0 24px',
 };
 
 const text = {
-  color: '#374151',
+  color: '#000000',
   fontSize: '16px',
-  lineHeight: '26px',
-  margin: '0 0 16px',
-};
-
-const textSmall = {
-  color: '#6b7280',
-  fontSize: '14px',
-  lineHeight: '22px',
-  margin: '16px 0 8px',
-};
-
-const link = {
-  color: '#2563eb',
-  fontSize: '14px',
-  lineHeight: '22px',
-  wordBreak: 'break-all' as const,
-  margin: '0 0 16px',
+  lineHeight: '24px',
+  margin: '0 0 32px',
 };
 
 const buttonContainer = {
@@ -141,7 +108,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: '#2563eb',
+  backgroundColor: '#000000',
   borderRadius: '6px',
   color: '#ffffff',
   fontSize: '16px',
@@ -152,39 +119,23 @@ const button = {
   padding: '14px 32px',
 };
 
-const hr = {
-  borderColor: '#e5e7eb',
-  margin: '32px 0',
-};
-
-const securityBox = {
-  backgroundColor: '#fef3c7',
-  border: '1px solid #fde68a',
-  borderRadius: '6px',
-  padding: '20px',
-  margin: '24px 0',
-};
-
-const list = {
-  color: '#92400e',
-  fontSize: '14px',
+const footerText = {
+  color: '#000000',
+  fontSize: '16px',
   lineHeight: '24px',
-  margin: '0',
-  paddingLeft: '20px',
+  margin: '40px 0 24px',
 };
 
-const footer = {
-  color: '#6b7280',
-  fontSize: '14px',
-  lineHeight: '22px',
-  textAlign: 'center' as const,
-  margin: '24px 0 8px',
+const signature = {
+  color: '#000000',
+  fontSize: '16px',
+  lineHeight: '24px',
+  margin: '0 0 4px',
 };
 
-const copyright = {
-  color: '#9ca3af',
-  fontSize: '12px',
-  lineHeight: '20px',
-  textAlign: 'center' as const,
+const signatureTeam = {
+  color: '#000000',
+  fontSize: '16px',
+  lineHeight: '24px',
   margin: '0',
 };
