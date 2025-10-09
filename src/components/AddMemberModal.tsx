@@ -174,7 +174,7 @@ export function AddMemberModal({
                           <RadioGroupItem value="admin" />
                         </FormControl>
                         <FormLabel className="font-normal cursor-pointer">
-                          Admin User (management role)
+                          Admin User
                         </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
@@ -182,7 +182,7 @@ export function AddMemberModal({
                           <RadioGroupItem value="patroller" />
                         </FormControl>
                         <FormLabel className="font-normal cursor-pointer">
-                          Patroller (field operations role)
+                          Patroller
                         </FormLabel>
                       </FormItem>
                     </RadioGroup>
