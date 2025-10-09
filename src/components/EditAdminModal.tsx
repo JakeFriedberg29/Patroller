@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -21,8 +20,7 @@ const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  accessRole: z.enum(["read", "write"]).optional(),
-  location: z.string().optional()
+  accessRole: z.enum(["read", "write"]).optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -67,8 +65,7 @@ export const EditAdminModal = ({
       fullName: admin ? `${admin.firstName} ${admin.lastName}` : '',
       email: admin?.email || '',
       phone: admin?.phone || '',
-      accessRole: "read",
-      location: ''
+      accessRole: "read"
     }
   });
 
@@ -97,8 +94,7 @@ export const EditAdminModal = ({
         fullName: `${admin.firstName} ${admin.lastName}`,
         email: admin.email,
         phone: admin.phone || '',
-        accessRole: currentAccessRole,
-        location: ''
+        accessRole: currentAccessRole
       });
     }
   }, [admin, form, currentAccessRole]);
@@ -271,20 +267,6 @@ export const EditAdminModal = ({
     }
   };
 
-  const getLocationOptions = () => {
-    if (accountType === "organization") {
-      return [
-        "Headquarters",
-        "Station 1",
-        "Station 2", 
-        "Station 3",
-        "Field Office",
-        "Training Facility"
-      ];
-    }
-    return ["Main Office", "Regional Office", "Branch Office"];
-  };
-
   if (!admin) return null;
 
   return (
@@ -383,33 +365,6 @@ export const EditAdminModal = ({
                   </FormItem>
                 )}
               />
-            )}
-
-            {accountType !== "platform" && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select location" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {getLocationOptions().map((loc) => (
-                            <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
             )}
 
             <Separator className="my-6" />
