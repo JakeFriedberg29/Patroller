@@ -109,8 +109,7 @@ export const useAccounts = () => {
       // Get user counts for each tenant/organization
       const { data: userCounts, error: userCountsError } = await supabase
         .from('users')
-        .select('tenant_id, organization_id')
-        .eq('status', 'active');
+        .select('tenant_id, organization_id');
 
       if (userCountsError) throw userCountsError;
 
