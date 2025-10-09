@@ -78,18 +78,16 @@ export function AddMemberModal({
         throw new Error('No organization found');
       }
       
-      // If using provided organizationId, get the tenant_id from that organization
-      let tenantId = currentUser?.tenant_id;
-      if (organizationId && organizationId !== currentUser?.organization_id) {
-        const { data: org } = await supabase
-          .from('organizations')
-          .select('tenant_id')
-          .eq('id', organizationId)
-          .single();
-        
-        // For standalone organizations (tenant_id is null), use organization_id as tenant_id
-        tenantId = org?.tenant_id || organizationId;
-      }
+      // Always fetch the organization's tenant_id to ensure correct mapping
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('tenant_id')
+        .eq('id', targetOrgId)
+        .single();
+      
+      // For standalone organizations (tenant_id is null), use organization_id as tenant_id
+      // For organizations under an enterprise, use the organization's tenant_id
+      const tenantId = org?.tenant_id || targetOrgId;
       const result = await createUser({
         email: values.email,
         fullName: values.fullName,
