@@ -35,7 +35,7 @@ interface Admin {
   email: string;
   phone?: string;
   role: string;
-  activation_status: "pending" | "active" | "disabled" | "deleted" | "suspended";
+  activation_status: "pending" | "active" | "disabled" | "deleted";
 }
 
 interface EditAdminModalProps {
@@ -185,7 +185,7 @@ export const EditAdminModal = ({
     
     setIsSuspending(true);
     try {
-      const newStatus = admin.activation_status === 'suspended' ? 'active' : 'suspended';
+      const newStatus = admin.activation_status === 'disabled' ? 'active' : 'disabled';
       
       const { error } = await supabase
         .from('users')
@@ -197,16 +197,16 @@ export const EditAdminModal = ({
 
       if (error) {
         console.error('Error updating admin status:', error);
-        toast.error(`Failed to ${newStatus === 'suspended' ? 'suspend' : 'unsuspend'} administrator`);
+        toast.error(`Failed to ${newStatus === 'disabled' ? 'disable' : 'enable'} administrator`);
         return;
       }
 
-      toast.success(`Administrator ${newStatus === 'suspended' ? 'suspended' : 'unsuspended'} successfully`);
+      toast.success(`Administrator ${newStatus === 'disabled' ? 'disabled' : 'enabled'} successfully`);
       onSuccess?.();
       setShowSuspendDialog(false);
     } catch (error) {
       console.error('Error updating admin status:', error);
-      toast.error(`Failed to ${admin.activation_status === 'suspended' ? 'unsuspend' : 'suspend'} administrator`);
+      toast.error(`Failed to ${admin.activation_status === 'disabled' ? 'enable' : 'disable'} administrator`);
     } finally {
       setIsSuspending(false);
     }
@@ -420,28 +420,28 @@ export const EditAdminModal = ({
                 <div>
                   <h4 className="font-medium text-sm">Administrator Status</h4>
                   <p className="text-xs text-muted-foreground">
-                    {admin.activation_status === 'suspended' 
-                      ? 'This administrator is currently suspended and cannot log in' 
+                    {admin.activation_status === 'disabled' 
+                      ? 'This administrator is currently disabled and cannot log in' 
                       : 'This administrator can log in and access the platform'
                     }
                   </p>
                 </div>
                 <Button
                   type="button"
-                  variant={admin.activation_status === 'suspended' ? "default" : "secondary"}
+                  variant={admin.activation_status === 'disabled' ? "default" : "secondary"}
                   size="sm"
                   onClick={() => setShowSuspendDialog(true)}
                   disabled={admin.activation_status === 'pending'}
                 >
-                  {admin.activation_status === 'suspended' ? (
+                  {admin.activation_status === 'disabled' ? (
                     <>
                       <Shield className="mr-2 h-4 w-4" />
-                      Unsuspend
+                      Enable
                     </>
                   ) : (
                     <>
                       <ShieldX className="mr-2 h-4 w-4" />
-                      Suspend
+                      Disable
                     </>
                   )}
                 </Button>
@@ -509,12 +509,12 @@ export const EditAdminModal = ({
               </div>
               <div>
                 <AlertDialogTitle>
-                  {admin?.activation_status === 'suspended' ? 'Unsuspend Administrator' : 'Suspend Administrator'}
+                  {admin?.activation_status === 'disabled' ? 'Enable Administrator' : 'Disable Administrator'}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  {admin?.activation_status === 'suspended' 
-                    ? `Are you sure you want to unsuspend ${admin?.firstName} ${admin?.lastName}? They will be able to log in and access the platform again.`
-                    : `Are you sure you want to suspend ${admin?.firstName} ${admin?.lastName}? They will not be able to log in until unsuspended.`
+                  {admin?.activation_status === 'disabled' 
+                    ? `Are you sure you want to enable ${admin?.firstName} ${admin?.lastName}? They will be able to log in and access the platform again.`
+                    : `Are you sure you want to disable ${admin?.firstName} ${admin?.lastName}? They will not be able to log in until enabled.`
                   }
                 </AlertDialogDescription>
               </div>
@@ -525,15 +525,15 @@ export const EditAdminModal = ({
             <AlertDialogAction
               onClick={handleSuspendToggle}
               disabled={isSuspending}
-              className={admin?.activation_status !== 'suspended' ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+              className={admin?.activation_status !== 'disabled' ? "bg-yellow-600 hover:bg-yellow-700" : ""}
             >
               {isSuspending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {admin?.activation_status === 'suspended' ? 'Unsuspending...' : 'Suspending...'}
+                  {admin?.activation_status === 'disabled' ? 'Enabling...' : 'Disabling...'}
                 </>
               ) : (
-                admin?.activation_status === 'suspended' ? 'Unsuspend Administrator' : 'Suspend Administrator'
+                admin?.activation_status === 'disabled' ? 'Enable Administrator' : 'Disable Administrator'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

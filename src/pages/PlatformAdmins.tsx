@@ -32,7 +32,7 @@ interface PlatformAdmin {
   email: string;
   phone?: string;
   role: string;
-  activation_status: "pending" | "active" | "disabled" | "deleted" | "suspended";
+  activation_status: "pending" | "active" | "disabled" | "deleted";
   activation_sent_at?: string;
 }
 // Remove mock data - will be loaded from database
@@ -118,7 +118,7 @@ export default function PlatformAdmins() {
         email: user.email,
         phone: user.phone || '',
         role: 'Platform Admin',
-        activation_status: user.status as "pending" | "active" | "disabled" | "deleted" | "suspended",
+        activation_status: user.status as "pending" | "active" | "disabled" | "deleted",
         activation_sent_at: user.profile_data?.activation_sent_at
       }));
       setAdmins(transformedAdmins);

@@ -27,7 +27,7 @@ interface EnterpriseAdmin {
   email: string;
   phone: string;
   role: string;
-  activation_status: "pending" | "active" | "disabled" | "deleted" | "suspended";
+  activation_status: "pending" | "active" | "disabled" | "deleted";
   location: string;
   lastLogin: string;
   createdDate: string;
@@ -127,7 +127,7 @@ export default function EnterpriseUsers() {
           email: user.email,
           phone: '',
           role: accountUser.access_role === 'write' ? 'Admin' : 'User',
-          activation_status: status as "pending" | "active" | "disabled" | "deleted" | "suspended",
+          activation_status: status as "pending" | "active" | "disabled" | "deleted",
           location: '',
           lastLogin: '',
           createdDate: '',

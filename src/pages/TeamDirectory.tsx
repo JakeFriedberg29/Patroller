@@ -149,7 +149,7 @@ export default function OrganizationUsers() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <UserStatusBadge status={member.status as 'pending' | 'active' | 'disabled' | 'deleted' | 'suspended'} />
+                        <UserStatusBadge status={member.status as 'pending' | 'active' | 'disabled' | 'deleted'} />
                         {member.status === 'pending' && <ResendActivationButton userId={member.id} email={member.email} fullName={member.full_name} size="sm" />}
                       </div>
                     </TableCell>
