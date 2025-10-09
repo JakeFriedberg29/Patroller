@@ -102,24 +102,18 @@ serve(async (req: Request): Promise<Response> => {
     );
 
     const emailText = `
-Welcome to ${orgName}!
+Hi ${firstName},
 
-Hello ${firstName},
+Welcome to the Patroller Console!
 
-You've been invited to join ${orgName} on our emergency management platform.
+To complete your registration and activate your account, please confirm your email by clicking the link below. You'll then be prompted to set your password and get started.
 
-To get started, please activate your account by visiting this link:
 ${activationUrl}
 
-Important Security Information:
-- This invitation link will expire in 24 hours
-- The link can only be used once
-- If you didn't expect this invitation, please contact your administrator
-- Never share your login credentials with anyone
+If you didn't expect this email for Patroller, you can safely ignore this message.
 
-Need help? Contact your system administrator.
-
-© ${new Date().getFullYear()} ${orgName}. All rights reserved.
+Thanks,
+The Patroller Team
     `;
 
     const sendSupabaseInviteFallback = async (): Promise<Response> => {
@@ -181,7 +175,7 @@ Need help? Contact your system administrator.
       const emailResponse = await resend.emails.send({
         from: resendFrom,
         to: [email],
-        subject: `${isResend ? 'Reminder: ' : ''}Welcome to ${orgName} - Account Activation Required`,
+        subject: `${isResend ? 'Reminder: ' : ''}Activate your Patroller account`,
         html: emailHtml,
         text: emailText,
         headers: { 'X-Entity-Ref-ID': userId },
