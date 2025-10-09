@@ -37,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify user exists
+    // Verify user exists and get user details
     const { data: authUser, error: userError } = await supabase.auth.admin.listUsers();
     
     if (userError) {
@@ -72,6 +72,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Get user's full name from users table
+    const { data: userData } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('auth_user_id', user.id)
+      .single();
+    
+    const firstName = userData?.full_name?.split(' ')[0] || 'there';
+
     // Generate password reset link
     const { data: resetData, error: resetError } = await supabase.auth.admin.generateLink({
       type: 'recovery',
@@ -95,15 +104,31 @@ const handler = async (req: Request): Promise<Response> => {
       React.createElement(PasswordResetEmail, {
         resetUrl,
         userEmail: email,
+        firstName,
       })
     );
+
+    // Plain text version
+    const plainText = `Hi ${firstName},
+
+We received a request to reset the password for your Patroller Console account.
+
+If you made this request, click the link below to set a new password. This link will expire in 24 hours for your security.
+
+${resetUrl}
+
+If you didn't expect this email for Patroller, you can safely ignore this message.
+
+Thanks,
+The Patroller Team`;
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: 'Patroller <notifications@patroller.io>',
       to: [email],
-      subject: 'Reset Your Password',
+      subject: 'Reset your Patroller password',
       html,
+      text: plainText,
     });
 
     if (emailError) {

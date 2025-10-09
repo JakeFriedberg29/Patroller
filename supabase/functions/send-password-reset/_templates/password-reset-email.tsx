@@ -14,26 +14,29 @@ import * as React from 'npm:react@18.3.1'
 interface PasswordResetEmailProps {
   resetUrl: string
   userEmail: string
+  firstName: string
 }
 
 export const PasswordResetEmail = ({
   resetUrl,
   userEmail,
+  firstName,
 }: PasswordResetEmailProps) => (
   <Html>
     <Head />
-    <Preview>Reset your password</Preview>
+    <Preview>Reset your Patroller password</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Reset Your Password</Heading>
-        
-        <Text style={text}>
-          Hello,
+        <Text style={greeting}>
+          Hi {firstName},
         </Text>
         
         <Text style={text}>
-          We received a request to reset the password for your account ({userEmail}). 
-          If you didn't make this request, you can safely ignore this email.
+          We received a request to reset the password for your <strong>Patroller Console</strong> account.
+        </Text>
+        
+        <Text style={text}>
+          If you made this request, click the button below to set a new password. This link will expire in <strong>24 hours</strong> for your security.
         </Text>
 
         <Section style={buttonContainer}>
@@ -42,35 +45,19 @@ export const PasswordResetEmail = ({
             target="_blank"
             style={button}
           >
-            Reset Password
+            Reset my Password
           </Link>
         </Section>
 
-        <Text style={text}>
-          Or copy and paste this link into your browser:
+        <Text style={footerText}>
+          If you didn't expect this email for Patroller, you can safely ignore this message.
         </Text>
         
-        <Text style={linkText}>
-          {resetUrl}
+        <Text style={signature}>
+          Thanks,
         </Text>
-
-        <Section style={infoBox}>
-          <Text style={infoText}>
-            🔒 <strong>Security Information</strong>
-          </Text>
-          <Text style={infoText}>
-            • This link will expire in 1 hour for security reasons
-          </Text>
-          <Text style={infoText}>
-            • If you didn't request this reset, please contact support immediately
-          </Text>
-          <Text style={infoText}>
-            • Never share this link with anyone
-          </Text>
-        </Section>
-
-        <Text style={footer}>
-          If you have any questions or concerns, please contact our support team.
+        <Text style={signatureTeam}>
+          <strong>The Patroller Team</strong>
         </Text>
       </Container>
     </Body>
@@ -93,20 +80,20 @@ const container = {
   maxWidth: '600px',
 }
 
-const h1 = {
-  color: '#1a1a1a',
-  fontSize: '32px',
-  fontWeight: 'bold',
-  margin: '40px 0',
+const greeting = {
+  color: '#000000',
+  fontSize: '16px',
+  lineHeight: '24px',
+  margin: '0 0 20px',
   padding: '0 40px',
-  textAlign: 'center' as const,
 }
 
 const text = {
-  color: '#444',
+  color: '#000000',
   fontSize: '16px',
-  lineHeight: '26px',
-  margin: '16px 40px',
+  lineHeight: '24px',
+  margin: '0 0 20px',
+  padding: '0 40px',
 }
 
 const buttonContainer = {
@@ -115,43 +102,36 @@ const buttonContainer = {
 }
 
 const button = {
-  backgroundColor: '#0066ff',
-  borderRadius: '8px',
-  color: '#fff',
+  backgroundColor: '#000000',
+  borderRadius: '6px',
+  color: '#ffffff',
   fontSize: '16px',
-  fontWeight: 'bold',
+  fontWeight: '600',
   textDecoration: 'none',
   textAlign: 'center' as const,
   display: 'inline-block',
-  padding: '16px 48px',
+  padding: '14px 32px',
 }
 
-const linkText = {
-  color: '#0066ff',
-  fontSize: '14px',
-  margin: '16px 40px',
-  wordBreak: 'break-all' as const,
+const footerText = {
+  color: '#000000',
+  fontSize: '16px',
+  lineHeight: '24px',
+  margin: '40px 40px 24px',
 }
 
-const infoBox = {
-  backgroundColor: '#f6f9fc',
-  borderRadius: '8px',
-  margin: '32px 40px',
-  padding: '24px',
-  border: '1px solid #e1e8ed',
+const signature = {
+  color: '#000000',
+  fontSize: '16px',
+  lineHeight: '24px',
+  margin: '0 0 4px',
+  padding: '0 40px',
 }
 
-const infoText = {
-  color: '#444',
-  fontSize: '14px',
-  lineHeight: '22px',
-  margin: '8px 0',
-}
-
-const footer = {
-  color: '#898989',
-  fontSize: '12px',
-  lineHeight: '22px',
-  margin: '32px 40px',
-  textAlign: 'center' as const,
+const signatureTeam = {
+  color: '#000000',
+  fontSize: '16px',
+  lineHeight: '24px',
+  margin: '0',
+  padding: '0 40px',
 }
