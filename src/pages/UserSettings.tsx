@@ -398,7 +398,7 @@ export default function UserSettings() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Session Timeout</Label>
+                      
                       <p className="text-sm text-muted-foreground">
                         Currently set to {Math.floor(security.sessionTimeout / 60)} hours
                       </p>
