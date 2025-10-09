@@ -202,7 +202,7 @@ export function AddMemberModal({
                             <RadioGroupItem value="write" />
                           </FormControl>
                           <FormLabel className="font-normal cursor-pointer">
-                            Write (can manage users and settings)
+                            Write (manage)
                           </FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
@@ -210,7 +210,7 @@ export function AddMemberModal({
                             <RadioGroupItem value="read" />
                           </FormControl>
                           <FormLabel className="font-normal cursor-pointer">
-                            Read (can view but not edit)
+                            Read (view only)
                           </FormLabel>
                         </FormItem>
                       </RadioGroup>
