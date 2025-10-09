@@ -14,17 +14,24 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  accessLevel: z.enum(["write", "read"], {
-    required_error: "Please select an access level"
-  }),
-  isPatroller: z.boolean().default(false),
   email: z.string().email("Please enter a valid email address"),
+  userType: z.enum(["patroller", "admin"], {
+    required_error: "Please select a user type"
+  }),
+  accessLevel: z.enum(["write", "read"]).optional(),
   phone: z.string().optional(),
   radioCallSign: z.string().optional(),
-  specialization: z.enum(["Medical", "Water Rescue", "Climbing", "Navigation"], {
-    required_error: "Please select a specialization"
-  }).optional(),
+  specialization: z.enum(["Medical", "Water Rescue", "Climbing", "Navigation"]).optional(),
   certifications: z.array(z.string()).optional()
+}).refine(data => {
+  // If admin user type, access level is required
+  if (data.userType === "admin" && !data.accessLevel) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Access level is required for admin users",
+  path: ["accessLevel"]
 });
 interface AddMemberModalProps {
   open: boolean;
@@ -47,16 +54,16 @@ export function AddMemberModal({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
-      accessLevel: "read",
-      isPatroller: false,
       email: "",
+      userType: "admin",
+      accessLevel: "read",
       phone: "",
       radioCallSign: "",
       certifications: []
     }
   });
 
-  const isPatroller = form.watch("isPatroller");
+  const userType = form.watch("userType");
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
@@ -91,9 +98,9 @@ export function AddMemberModal({
       const result = await createUser({
         email: values.email,
         fullName: values.fullName,
-        role: values.isPatroller ? 'Patroller' : 'User',
-        accessRole: values.accessLevel,
-        isPatroller: values.isPatroller,
+        role: values.userType === 'patroller' ? 'Patroller' : 'User',
+        accessRole: values.userType === 'admin' ? values.accessLevel : undefined,
+        isPatroller: values.userType === 'patroller',
         tenantId: tenantId!,
         organizationId: targetOrgId,
         phone: values.phone
@@ -156,26 +163,26 @@ export function AddMemberModal({
                   <FormMessage />
                 </FormItem>} />
 
-            <FormField control={form.control} name="accessLevel" render={({
+            <FormField control={form.control} name="userType" render={({
             field
           }) => <FormItem className="space-y-3">
-                  <FormLabel>Access *</FormLabel>
+                  <FormLabel>User Type *</FormLabel>
                   <FormControl>
                     <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-1">
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="write" />
+                          <RadioGroupItem value="admin" />
                         </FormControl>
                         <FormLabel className="font-normal cursor-pointer">
-                          Write (manage)
+                          Admin User (management role)
                         </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="read" />
+                          <RadioGroupItem value="patroller" />
                         </FormControl>
                         <FormLabel className="font-normal cursor-pointer">
-                          Read (view only)
+                          Patroller (field operations role)
                         </FormLabel>
                       </FormItem>
                     </RadioGroup>
@@ -183,41 +190,57 @@ export function AddMemberModal({
                   <FormMessage />
                 </FormItem>} />
 
-            <FormField control={form.control} name="isPatroller" render={({
-            field
-          }) => <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel className="font-normal cursor-pointer">
-                      Patroller
-                    </FormLabel>
-                  </div>
-                </FormItem>} />
-
-            {isPatroller && (
-              <FormField control={form.control} name="phone" render={({
+            {userType === "admin" && (
+              <FormField control={form.control} name="accessLevel" render={({
               field
-            }) => <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+            }) => <FormItem className="space-y-3">
+                    <FormLabel>Access Level *</FormLabel>
                     <FormControl>
-                      <Input placeholder="(555) 123-4567" className="bg-white" {...field} />
+                      <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-1">
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="write" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">
+                            Write (can manage users and settings)
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="read" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">
+                            Read (can view but not edit)
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
             )}
 
-            {isPatroller && (
-              <FormField control={form.control} name="radioCallSign" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>Radio Call Sign</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter radio call sign" className="bg-white" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>} />
+            {userType === "patroller" && (
+              <>
+                <FormField control={form.control} name="phone" render={({
+                field
+              }) => <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(555) 123-4567" className="bg-white" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>} />
+
+                <FormField control={form.control} name="radioCallSign" render={({
+                field
+              }) => <FormItem>
+                      <FormLabel>Radio Call Sign</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter radio call sign" className="bg-white" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>} />
+              </>
             )}
 
             <div className="flex justify-between pt-4">
