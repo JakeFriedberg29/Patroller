@@ -83,10 +83,11 @@ serve(async (req: Request): Promise<Response> => {
       // Not fatal if we end up using Supabase invite; continue
     }
 
-    const baseUrl = origin || 'https://response-chain.lovable.app';
+    // Use proper base URL - prefer origin from request, otherwise use the Lovable project URL
+    const baseUrl = origin || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.lovableproject.com';
     const activationUrl = tokenData?.activation_token
       ? `${baseUrl}/activate?token=${tokenData.activation_token}`
-      : `${baseUrl}/auth`;
+      : `${baseUrl}/activate`;
 
     const firstName = fullName.split(' ')[0];
     const orgName = organizationName || 'the organization';
@@ -128,7 +129,7 @@ The Patroller Team
             user_id: userId,
             invited_by_admin: true,
           },
-          redirectTo: `${baseUrl}/auth`,
+          redirectTo: `${baseUrl}/activate`,
         }
       );
 
