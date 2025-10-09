@@ -1287,6 +1287,10 @@ export type Database = {
         Args: { p_payload: Json; p_request_id?: string; p_tenant_id: string }
         Returns: undefined
       }
+      generate_activation_token: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       log_user_action: {
         Args: {
           p_action: string
