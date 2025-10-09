@@ -490,14 +490,6 @@ export default function UserSettings() {
                     <Label className="text-muted-foreground">Role</Label>
                     <p>{formProfile.role}</p>
                   </div>
-                  <div>
-                    <Label className="text-muted-foreground">Account Status</Label>
-                    <p className="capitalize">{formProfile.status}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Email</Label>
-                    <p>{formProfile.email}</p>
-                  </div>
                 </div>
               </div>
 
