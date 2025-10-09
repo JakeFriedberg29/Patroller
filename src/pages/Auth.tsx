@@ -43,35 +43,60 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const {
-      error
-    } = await supabase.auth.signInWithPassword({
+    
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password: loginPassword
     });
-    if (error) {
-      setError(error.message);
-      toast.error(error.message);
-    } else {
-      // Log successful login
-      try {
-        await supabase.rpc('log_user_action', {
-          p_action: 'LOGIN',
-          p_resource_type: 'session',
-          p_resource_id: null,
-          p_metadata: {
-            email: loginEmail,
-            login_method: 'email_password',
-            timestamp: new Date().toISOString()
-          }
-        });
-      } catch (logError) {
-        console.log('Failed to log login action:', logError);
-      }
-      toast.success("Welcome back!");
-      setRedirecting(true);
-      // Redirect will be handled by useAuthRedirect hook
+    
+    if (authError) {
+      setError(authError.message);
+      toast.error(authError.message);
+      setLoading(false);
+      return;
     }
+
+    // Check if user account is disabled
+    if (authData.user) {
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('status')
+        .eq('auth_user_id', authData.user.id)
+        .maybeSingle();
+
+      if (userError) {
+        console.error('Error checking user status:', userError);
+      }
+
+      // If user is disabled, sign them out and show error
+      if (userData?.status === 'disabled') {
+        await supabase.auth.signOut();
+        const errorMsg = 'Your account has been disabled. Please contact your administrator for assistance.';
+        setError(errorMsg);
+        toast.error(errorMsg);
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Log successful login
+    try {
+      await supabase.rpc('log_user_action', {
+        p_action: 'LOGIN',
+        p_resource_type: 'session',
+        p_resource_id: null,
+        p_metadata: {
+          email: loginEmail,
+          login_method: 'email_password',
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (logError) {
+      console.log('Failed to log login action:', logError);
+    }
+    
+    toast.success("Welcome back!");
+    setRedirecting(true);
     setLoading(false);
   };
   const handlePasswordChange = (password: string) => {
