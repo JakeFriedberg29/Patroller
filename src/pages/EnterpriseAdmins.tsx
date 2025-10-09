@@ -27,7 +27,7 @@ interface EnterpriseAdmin {
   email: string;
   phone: string;
   role: string;
-  activation_status: "pending" | "active" | "suspended";
+  activation_status: "pending" | "active" | "disabled" | "deleted" | "suspended";
   location: string;
   lastLogin: string;
   createdDate: string;
@@ -118,7 +118,7 @@ export default function EnterpriseUsers() {
       });
       const transformedAdmins: EnterpriseAdmin[] = filteredUsers.map(accountUser => {
         const user = accountUser.users as any;
-        const status = user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended';
+        const status = user.status || 'pending';
         return {
           id: accountUser.id,
           user_id: user.id,
@@ -127,7 +127,7 @@ export default function EnterpriseUsers() {
           email: user.email,
           phone: '',
           role: accountUser.access_role === 'write' ? 'Admin' : 'User',
-          activation_status: status as "pending" | "active" | "suspended",
+          activation_status: status as "pending" | "active" | "disabled" | "deleted" | "suspended",
           location: '',
           lastLogin: '',
           createdDate: '',
@@ -262,8 +262,9 @@ export default function EnterpriseUsers() {
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="suspended">Suspended</SelectItem>
+              <SelectItem value="pending">Pending Activation</SelectItem>
+              <SelectItem value="disabled">Disabled</SelectItem>
+              <SelectItem value="deleted">Deleted</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" className="gap-2" onClick={handleBulkResend} disabled={selectedAdmins.length === 0 || isResending}>

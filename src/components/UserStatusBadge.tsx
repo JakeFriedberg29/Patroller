@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface UserStatusBadgeProps {
-  status: 'pending' | 'active' | 'suspended';
+  status: 'pending' | 'active' | 'disabled' | 'deleted' | 'suspended';
   className?: string;
 }
 
@@ -19,9 +19,19 @@ export const UserStatusBadge = ({ status, className }: UserStatusBadgeProps) => 
           label: 'Active',
           className: 'bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400'
         };
+      case 'disabled':
+        return {
+          label: 'Disabled',
+          className: 'bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400'
+        };
+      case 'deleted':
+        return {
+          label: 'Deleted',
+          className: 'bg-gray-100 text-gray-800 hover:bg-gray-100 dark:bg-gray-900/20 dark:text-gray-400'
+        };
       case 'suspended':
         return {
-          label: 'Suspended',
+          label: 'Disabled',
           className: 'bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400'
         };
       default:

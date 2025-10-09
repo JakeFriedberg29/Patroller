@@ -32,7 +32,7 @@ interface PlatformAdmin {
   email: string;
   phone?: string;
   role: string;
-  activation_status: "pending" | "active" | "suspended";
+  activation_status: "pending" | "active" | "disabled" | "deleted" | "suspended";
   activation_sent_at?: string;
 }
 // Remove mock data - will be loaded from database
@@ -118,7 +118,7 @@ export default function PlatformAdmins() {
         email: user.email,
         phone: user.phone || '',
         role: 'Platform Admin',
-        activation_status: user.status as "pending" | "active" | "suspended",
+        activation_status: user.status as "pending" | "active" | "disabled" | "deleted" | "suspended",
         activation_sent_at: user.profile_data?.activation_sent_at
       }));
       setAdmins(transformedAdmins);
@@ -314,9 +314,10 @@ export default function PlatformAdmins() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All Status">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="suspended">Suspended</SelectItem>
+              <SelectItem value="pending">Pending Activation</SelectItem>
+              <SelectItem value="disabled">Disabled</SelectItem>
+              <SelectItem value="deleted">Deleted</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" className="gap-2" onClick={handleBulkResend} disabled={selectedAdmins.length === 0 || isResending}>

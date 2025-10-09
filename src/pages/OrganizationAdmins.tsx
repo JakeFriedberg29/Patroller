@@ -50,7 +50,7 @@ interface OrganizationAdmin {
   email: string;
   phone: string;
   role: string;
-  activation_status: "pending" | "active" | "suspended";
+  activation_status: "pending" | "active" | "disabled" | "deleted" | "suspended";
   
   location: string;
   lastLogin: string;
@@ -122,7 +122,7 @@ export default function OrganizationUsers() {
 
       const transformedAdmins: OrganizationAdmin[] = filteredUsers.map(accountUser => {
         const user = accountUser.users as any;
-        const status = user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'suspended';
+        const status = user.status || 'pending';
         return {
           id: accountUser.id,
           user_id: user.id,
@@ -131,7 +131,7 @@ export default function OrganizationUsers() {
           email: user.email,
           phone: '',
           role: accountUser.access_role === 'write' ? 'Admin' : 'User',
-          activation_status: status as "pending" | "active" | "suspended",
+          activation_status: status as "pending" | "active" | "disabled" | "deleted" | "suspended",
           location: '',
           lastLogin: '',
           createdDate: '',
@@ -243,8 +243,9 @@ export default function OrganizationUsers() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="pending">Pending Activation</SelectItem>
+                  <SelectItem value="disabled">Disabled</SelectItem>
+                  <SelectItem value="deleted">Deleted</SelectItem>
                 </SelectContent>
               </Select>
             </div>

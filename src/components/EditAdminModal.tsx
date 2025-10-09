@@ -35,7 +35,7 @@ interface Admin {
   email: string;
   phone?: string;
   role: string;
-  activation_status: "pending" | "active" | "suspended";
+  activation_status: "pending" | "active" | "disabled" | "deleted" | "suspended";
 }
 
 interface EditAdminModalProps {
