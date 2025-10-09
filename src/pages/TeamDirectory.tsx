@@ -32,6 +32,8 @@ import { Users, Plus, Search, Phone, Mail, Filter, MoreHorizontal } from "lucide
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AddMemberModal } from "@/components/AddMemberModal";
 import { useToast } from "@/hooks/use-toast";
+import { UserStatusBadge } from "@/components/UserStatusBadge";
+import { ResendActivationButton } from "@/components/ResendActivationButton";
 
 export default function OrganizationUsers() {
   const { id } = useParams();
@@ -146,9 +148,10 @@ export default function OrganizationUsers() {
                       {member.profile_data?.role || 'N/A'}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusColor(member.status) as any}>
-                        {formatStatus(member.status)}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <UserStatusBadge status={member.status as 'pending' | 'active' | 'suspended'} />
+                        {member.status === 'pending' && <ResendActivationButton userId={member.id} email={member.email} fullName={member.full_name} size="sm" />}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">

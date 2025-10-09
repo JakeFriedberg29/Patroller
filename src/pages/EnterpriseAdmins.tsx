@@ -11,13 +11,14 @@ import { Shield, Search, Plus, MoreHorizontal, Mail, Phone, Filter, Send, Edit, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserManagement } from "@/hooks/useUserManagement";
-// Removed status components to simplify table to Name, Role, Contact
 import { AddAdminModal } from "@/components/AddAdminModal";
 import { EditAdminModal } from "@/components/EditAdminModal";
 import { DeleteAdminModal } from "@/components/DeleteAdminModal";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEmailService } from "@/hooks/useEmailService";
+import { UserStatusBadge } from "@/components/UserStatusBadge";
+import { ResendActivationButton } from "@/components/ResendActivationButton";
 interface EnterpriseAdmin {
   id: string;
   user_id: string;
@@ -283,6 +284,7 @@ export default function EnterpriseUsers() {
                 </TableHead>
                 <TableHead className="font-semibold">Name</TableHead>
                 <TableHead className="font-semibold">Role</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Contact</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
@@ -291,6 +293,7 @@ export default function EnterpriseUsers() {
               {isLoading ? Array.from({
               length: rowsPerPage
             }).map((_, index) => <TableRow key={index}>
+                    <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
                     <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
                     <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
                     <TableCell><div className="h-10 bg-muted animate-pulse rounded" /></TableCell>
@@ -317,6 +320,12 @@ export default function EnterpriseUsers() {
                       <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
                         {admin.role}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <UserStatusBadge status={admin.activation_status} />
+                        {admin.activation_status === 'pending' && <ResendActivationButton userId={admin.user_id} email={admin.email} fullName={`${admin.firstName} ${admin.lastName}`} size="sm" />}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
