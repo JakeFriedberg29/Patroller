@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { User, Mail, Phone, MapPin, Bell, Shield, Key, Save, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissions } from "@/hooks/usePermissions";
 interface FormProfile {
   id: string;
   firstName: string;
@@ -30,13 +31,7 @@ interface FormProfile {
   status: 'active' | 'inactive' | 'pending' | 'suspended';
 }
 interface NotificationSettings {
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  smsNotifications: boolean;
-  incidentAlerts: boolean;
-  reportUpdates: boolean;
-  teamMessages: boolean;
-  systemUpdates: boolean;
+  reportSubmitted: boolean;
 }
 interface SecuritySettings {
   twoFactorEnabled: boolean;
@@ -54,6 +49,7 @@ export default function UserSettings() {
     error,
     refetch
   } = useUserProfile();
+  const { isPatroller } = usePermissions();
   const [isEditing, setIsEditing] = useState(false);
 
   // Initialize form state with profile data
@@ -73,13 +69,7 @@ export default function UserSettings() {
     status: "active"
   });
   const [notifications, setNotifications] = useState<NotificationSettings>({
-    emailNotifications: true,
-    pushNotifications: true,
-    smsNotifications: false,
-    incidentAlerts: true,
-    reportUpdates: true,
-    teamMessages: true,
-    systemUpdates: false
+    reportSubmitted: true
   });
   const [security, setSecurity] = useState<SecuritySettings>({
     twoFactorEnabled: true,
@@ -195,9 +185,9 @@ export default function UserSettings() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className={`grid w-full ${isPatroller ? 'grid-cols-3' : 'grid-cols-4'}`}>
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          {!isPatroller && <TabsTrigger value="notifications">Notifications</TabsTrigger>}
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
         </TabsList>
@@ -286,77 +276,29 @@ export default function UserSettings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notification Preferences
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-                  </div>
-                  <Switch checked={notifications.emailNotifications} onCheckedChange={() => handleNotificationUpdate('emailNotifications')} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Push Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive browser push notifications</p>
-                  </div>
-                  <Switch checked={notifications.pushNotifications} onCheckedChange={() => handleNotificationUpdate('pushNotifications')} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>SMS Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive notifications via text message</p>
-                  </div>
-                  <Switch checked={notifications.smsNotifications} onCheckedChange={() => handleNotificationUpdate('smsNotifications')} />
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h4 className="font-medium">Notification Types</h4>
+        {!isPatroller && (
+          <TabsContent value="notifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Notification Preferences
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Incident Alerts</Label>
-                      <p className="text-sm text-muted-foreground">Critical incident notifications</p>
+                      <Label>Whenever a report is submitted</Label>
+                      <p className="text-sm text-muted-foreground">Get notified when reports are submitted</p>
                     </div>
-                    <Switch checked={notifications.incidentAlerts} onCheckedChange={() => handleNotificationUpdate('incidentAlerts')} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Report Updates</Label>
-                      <p className="text-sm text-muted-foreground">Updates on report submissions and reviews</p>
-                    </div>
-                    <Switch checked={notifications.reportUpdates} onCheckedChange={() => handleNotificationUpdate('reportUpdates')} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Team Messages</Label>
-                      <p className="text-sm text-muted-foreground">Messages from team members</p>
-                    </div>
-                    <Switch checked={notifications.teamMessages} onCheckedChange={() => handleNotificationUpdate('teamMessages')} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>System Updates</Label>
-                      <p className="text-sm text-muted-foreground">Platform maintenance and feature updates</p>
-                    </div>
-                    <Switch checked={notifications.systemUpdates} onCheckedChange={() => handleNotificationUpdate('systemUpdates')} />
+                    <Switch checked={notifications.reportSubmitted} onCheckedChange={() => handleNotificationUpdate('reportSubmitted')} />
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="security" className="space-y-6">
           <Card>
