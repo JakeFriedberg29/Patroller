@@ -1288,6 +1288,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      is_platform_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       log_user_action: {
         Args: {
           p_action: string
