@@ -1292,6 +1292,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_current_user_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       is_platform_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
