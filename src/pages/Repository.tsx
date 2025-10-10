@@ -279,15 +279,30 @@ export default function Repository() {
           .filter(Boolean)
           .map(subtypeId => ({
             tenant_id: tenantId,
-            element_type: 'report_template',
+            element_type: 'report_template' as const,
             element_id: assignTemplateId,
-            target_type: 'organization_type',
+            target_type: 'organization_type' as const,
             target_organization_subtype_id: subtypeId,
           }));
-        const { error: upErr } = await (supabase
-          .from('repository_assignments')
-          .upsert(rows as any, { onConflict: 'tenant_id,element_type,element_id,target_type,target_organization_subtype_id' } as any));
-        if (upErr) throw upErr;
+        // Insert new assignments (skip duplicates manually due to partial unique index)
+        for (const row of rows) {
+          const { data: existing } = await supabase
+            .from('repository_assignments')
+            .select('id')
+            .eq('tenant_id', row.tenant_id)
+            .eq('element_type', row.element_type)
+            .eq('element_id', row.element_id)
+            .eq('target_type', row.target_type)
+            .eq('target_organization_subtype_id', row.target_organization_subtype_id)
+            .maybeSingle();
+          
+          if (!existing) {
+            const { error: insertErr } = await supabase
+              .from('repository_assignments')
+              .insert(row);
+            if (insertErr) throw insertErr;
+          }
+        }
       }
 
       // Remove deselected organization_type assignments (via subtype FK)
