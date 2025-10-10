@@ -254,6 +254,7 @@ export default function ReportBuilder() {
   const [fieldRows, setFieldRows] = useState<FieldRow[]>([]);
   const [availableSubtypes, setAvailableSubtypes] = useState<string[]>([]);
   const [selectedSubtypes, setSelectedSubtypes] = useState<string[]>([]);
+  const [assignToAllOrgs, setAssignToAllOrgs] = useState<boolean>(false);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -297,6 +298,7 @@ export default function ReportBuilder() {
         setDescription("");
         setFieldRows([]);
         setSelectedSubtypes([]);
+        setAssignToAllOrgs(false);
         setLoading(false);
         return;
       }
@@ -333,23 +335,43 @@ export default function ReportBuilder() {
       if (tenantId) {
         const { data: assignments } = await supabase
           .from('repository_assignments')
-          .select('target_organization_subtype_id')
+          .select('target_organization_subtype_id, target_organization_id')
           .eq('tenant_id', tenantId)
           .eq('element_type', 'report_template')
-          .eq('element_id', templateId)
-          .eq('target_type', 'organization_type');
+          .eq('element_id', templateId);
         
-        const subtypeIds = (assignments || [])
-          .map((a: any) => a.target_organization_subtype_id)
-          .filter(Boolean);
+        // Check if assigned to all orgs in tenant (no specific subtypes)
+        const hasOrgAssignments = (assignments || []).some((a: any) => a.target_organization_id);
+        const hasSubtypeAssignments = (assignments || []).some((a: any) => a.target_organization_subtype_id);
         
-        if (subtypeIds.length > 0) {
-          const { data: subtypeNames } = await supabase
-            .from('organization_subtypes')
-            .select('name')
-            .eq('tenant_id', tenantId)
-            .in('id', subtypeIds as any);
-          setSelectedSubtypes((subtypeNames || []).map((s: any) => s.name));
+        if (hasOrgAssignments && !hasSubtypeAssignments) {
+          // Check if ALL organizations are assigned
+          const { data: allOrgs } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('tenant_id', tenantId);
+          
+          const assignedOrgIds = (assignments || [])
+            .map((a: any) => a.target_organization_id)
+            .filter(Boolean);
+          
+          if (allOrgs && assignedOrgIds.length === allOrgs.length) {
+            setAssignToAllOrgs(true);
+          }
+        } else {
+          // Load subtype assignments
+          const subtypeIds = (assignments || [])
+            .map((a: any) => a.target_organization_subtype_id)
+            .filter(Boolean);
+          
+          if (subtypeIds.length > 0) {
+            const { data: subtypeNames } = await supabase
+              .from('organization_subtypes')
+              .select('name')
+              .eq('tenant_id', tenantId)
+              .in('id', subtypeIds as any);
+            setSelectedSubtypes((subtypeNames || []).map((s: any) => s.name));
+          }
         }
       }
     } catch (e: any) {
@@ -472,33 +494,58 @@ export default function ReportBuilder() {
         }
         console.log('Successfully inserted report template:', data);
         
-        // Save organization subtype assignments for new template
-        if (data && data[0]?.id && selectedSubtypes.length > 0) {
+        // Save organization assignments for new template
+        if (data && data[0]?.id) {
           const newTemplateId = data[0].id;
           
-          // Get subtype IDs
-          const { data: subtypeData } = await supabase
-            .from('organization_subtypes')
-            .select('id, name')
-            .eq('tenant_id', tenantId)
-            .in('name', selectedSubtypes as any);
-          
-          const assignments = (subtypeData || []).map((subtype: any) => ({
-            tenant_id: tenantId,
-            element_type: 'report_template' as const,
-            element_id: newTemplateId,
-            target_type: 'organization_type' as const,
-            target_organization_subtype_id: subtype.id,
-          }));
-          
-          if (assignments.length > 0) {
-            const { error: assignError } = await supabase
-              .from('repository_assignments')
-              .insert(assignments);
+          if (assignToAllOrgs) {
+            // Assign to ALL organizations in the tenant
+            const { data: allOrgs } = await supabase
+              .from('organizations')
+              .select('id')
+              .eq('tenant_id', tenantId);
             
-            if (assignError) {
-              console.error('Assignment error:', assignError);
-              // Don't fail the whole operation, just log it
+            if (allOrgs && allOrgs.length > 0) {
+              const assignments = allOrgs.map((org: any) => ({
+                tenant_id: tenantId,
+                element_type: 'report_template' as const,
+                element_id: newTemplateId,
+                target_type: 'organization' as const,
+                target_organization_id: org.id,
+              }));
+              
+              const { error: assignError } = await supabase
+                .from('repository_assignments')
+                .insert(assignments);
+              
+              if (assignError) {
+                console.error('Assignment error:', assignError);
+              }
+            }
+          } else if (selectedSubtypes.length > 0) {
+            // Assign to specific subtypes
+            const { data: subtypeData } = await supabase
+              .from('organization_subtypes')
+              .select('id, name')
+              .eq('tenant_id', tenantId)
+              .in('name', selectedSubtypes as any);
+            
+            const assignments = (subtypeData || []).map((subtype: any) => ({
+              tenant_id: tenantId,
+              element_type: 'report_template' as const,
+              element_id: newTemplateId,
+              target_type: 'organization_type' as const,
+              target_organization_subtype_id: subtype.id,
+            }));
+            
+            if (assignments.length > 0) {
+              const { error: assignError } = await supabase
+                .from('repository_assignments')
+                .insert(assignments);
+              
+              if (assignError) {
+                console.error('Assignment error:', assignError);
+              }
             }
           }
         }
@@ -509,20 +556,39 @@ export default function ReportBuilder() {
           .eq('id', templateId);
         if (error) throw error;
         
-        // Update organization subtype assignments for existing template
+        // Update organization assignments for existing template
         const tenantId = profile?.profileData?.tenant_id;
         if (tenantId) {
-          // Delete existing assignments
+          // Delete ALL existing assignments (both org and subtype)
           await supabase
             .from('repository_assignments')
             .delete()
             .eq('tenant_id', tenantId)
             .eq('element_type', 'report_template')
-            .eq('element_id', templateId)
-            .eq('target_type', 'organization_type');
+            .eq('element_id', templateId);
           
-          // Insert new assignments
-          if (selectedSubtypes.length > 0) {
+          if (assignToAllOrgs) {
+            // Assign to ALL organizations in the tenant
+            const { data: allOrgs } = await supabase
+              .from('organizations')
+              .select('id')
+              .eq('tenant_id', tenantId);
+            
+            if (allOrgs && allOrgs.length > 0) {
+              const assignments = allOrgs.map((org: any) => ({
+                tenant_id: tenantId,
+                element_type: 'report_template' as const,
+                element_id: templateId,
+                target_type: 'organization' as const,
+                target_organization_id: org.id,
+              }));
+              
+              await supabase
+                .from('repository_assignments')
+                .insert(assignments);
+            }
+          } else if (selectedSubtypes.length > 0) {
+            // Insert new subtype assignments
             const { data: subtypeData } = await supabase
               .from('organization_subtypes')
               .select('id, name')
@@ -655,30 +721,56 @@ export default function ReportBuilder() {
                 <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe this report template" />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>Assign to Organization Subtypes</Label>
-                <p className="text-sm text-muted-foreground">Select which organization subtypes can access this report</p>
-                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-3 border rounded-lg">
-                  {availableSubtypes.length === 0 ? (
-                    <p className="text-sm text-muted-foreground col-span-2">No organization subtypes available</p>
-                  ) : (
-                    availableSubtypes.map((subtype) => (
-                      <div key={subtype} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`subtype-${subtype}`}
-                          checked={selectedSubtypes.includes(subtype)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedSubtypes([...selectedSubtypes, subtype]);
-                            } else {
-                              setSelectedSubtypes(selectedSubtypes.filter(s => s !== subtype));
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`subtype-${subtype}`} className="text-sm font-normal cursor-pointer">
-                          {subtype}
-                        </Label>
+                <Label>Assignment Options</Label>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/20">
+                    <Checkbox
+                      id="assign-all-orgs"
+                      checked={assignToAllOrgs}
+                      onCheckedChange={(checked) => {
+                        setAssignToAllOrgs(Boolean(checked));
+                        if (checked) {
+                          setSelectedSubtypes([]);
+                        }
+                      }}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="assign-all-orgs" className="font-medium cursor-pointer">
+                        Assign to entire enterprise (all organizations)
+                      </Label>
+                      <p className="text-sm text-muted-foreground">Make this report available to all organizations in this enterprise</p>
+                    </div>
+                  </div>
+
+                  {!assignToAllOrgs && (
+                    <div className="space-y-2">
+                      <Label>Or assign to specific organization subtypes:</Label>
+                      <p className="text-sm text-muted-foreground">Select which organization subtypes can access this report</p>
+                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-3 border rounded-lg">
+                        {availableSubtypes.length === 0 ? (
+                          <p className="text-sm text-muted-foreground col-span-2">No organization subtypes available</p>
+                        ) : (
+                          availableSubtypes.map((subtype) => (
+                            <div key={subtype} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`subtype-${subtype}`}
+                                checked={selectedSubtypes.includes(subtype)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedSubtypes([...selectedSubtypes, subtype]);
+                                  } else {
+                                    setSelectedSubtypes(selectedSubtypes.filter(s => s !== subtype));
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={`subtype-${subtype}`} className="text-sm font-normal cursor-pointer">
+                                {subtype}
+                              </Label>
+                            </div>
+                          ))
+                        )}
                       </div>
-                    ))
+                    </div>
                   )}
                 </div>
               </div>
