@@ -1288,6 +1288,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      get_current_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       is_platform_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1461,6 +1465,10 @@ export type Database = {
         Returns: string
       }
       user_get_current_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      user_get_current_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
