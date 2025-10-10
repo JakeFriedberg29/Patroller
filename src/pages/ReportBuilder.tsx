@@ -252,6 +252,8 @@ export default function ReportBuilder() {
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [fieldRows, setFieldRows] = useState<FieldRow[]>([]);
+  const [availableSubtypes, setAvailableSubtypes] = useState<string[]>([]);
+  const [selectedSubtypes, setSelectedSubtypes] = useState<string[]>([]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -276,11 +278,25 @@ export default function ReportBuilder() {
   const loadTemplate = async () => {
     try {
       setLoading(true);
+      
+      // Load available organization subtypes
+      const tenantId = profile?.profileData?.tenant_id;
+      if (tenantId) {
+        const { data: subtypes } = await supabase
+          .from('organization_subtypes')
+          .select('name')
+          .eq('tenant_id', tenantId)
+          .eq('is_active', true)
+          .order('name', { ascending: true });
+        setAvailableSubtypes((subtypes || []).map((s: any) => s.name));
+      }
+      
       if (!templateId || templateId === 'new') {
         // Create mode
         setName("");
         setDescription("");
         setFieldRows([]);
+        setSelectedSubtypes([]);
         setLoading(false);
         return;
       }
@@ -312,6 +328,30 @@ export default function ReportBuilder() {
           }))
         : [];
       setFieldRows(rows);
+      
+      // Load existing assignments
+      if (tenantId) {
+        const { data: assignments } = await supabase
+          .from('repository_assignments')
+          .select('target_organization_subtype_id')
+          .eq('tenant_id', tenantId)
+          .eq('element_type', 'report_template')
+          .eq('element_id', templateId)
+          .eq('target_type', 'organization_type');
+        
+        const subtypeIds = (assignments || [])
+          .map((a: any) => a.target_organization_subtype_id)
+          .filter(Boolean);
+        
+        if (subtypeIds.length > 0) {
+          const { data: subtypeNames } = await supabase
+            .from('organization_subtypes')
+            .select('name')
+            .eq('tenant_id', tenantId)
+            .in('id', subtypeIds as any);
+          setSelectedSubtypes((subtypeNames || []).map((s: any) => s.name));
+        }
+      }
     } catch (e: any) {
       toast({ title: 'Error', description: 'Failed to load template', variant: 'destructive' });
     } finally {
@@ -431,12 +471,79 @@ export default function ReportBuilder() {
           throw error;
         }
         console.log('Successfully inserted report template:', data);
+        
+        // Save organization subtype assignments for new template
+        if (data && data[0]?.id && selectedSubtypes.length > 0) {
+          const newTemplateId = data[0].id;
+          
+          // Get subtype IDs
+          const { data: subtypeData } = await supabase
+            .from('organization_subtypes')
+            .select('id, name')
+            .eq('tenant_id', tenantId)
+            .in('name', selectedSubtypes as any);
+          
+          const assignments = (subtypeData || []).map((subtype: any) => ({
+            tenant_id: tenantId,
+            element_type: 'report_template' as const,
+            element_id: newTemplateId,
+            target_type: 'organization_type' as const,
+            target_organization_subtype_id: subtype.id,
+          }));
+          
+          if (assignments.length > 0) {
+            const { error: assignError } = await supabase
+              .from('repository_assignments')
+              .insert(assignments);
+            
+            if (assignError) {
+              console.error('Assignment error:', assignError);
+              // Don't fail the whole operation, just log it
+            }
+          }
+        }
       } else {
         const { error } = await supabase
           .from('report_templates')
           .update({ name: name.trim(), description: description.trim() || null, template_schema: schema as any, status: status })
           .eq('id', templateId);
         if (error) throw error;
+        
+        // Update organization subtype assignments for existing template
+        const tenantId = profile?.profileData?.tenant_id;
+        if (tenantId) {
+          // Delete existing assignments
+          await supabase
+            .from('repository_assignments')
+            .delete()
+            .eq('tenant_id', tenantId)
+            .eq('element_type', 'report_template')
+            .eq('element_id', templateId)
+            .eq('target_type', 'organization_type');
+          
+          // Insert new assignments
+          if (selectedSubtypes.length > 0) {
+            const { data: subtypeData } = await supabase
+              .from('organization_subtypes')
+              .select('id, name')
+              .eq('tenant_id', tenantId)
+              .in('name', selectedSubtypes as any);
+            
+            const assignments = (subtypeData || []).map((subtype: any) => ({
+              tenant_id: tenantId,
+              element_type: 'report_template' as const,
+              element_id: templateId,
+              target_type: 'organization_type' as const,
+              target_organization_subtype_id: subtype.id,
+            }));
+            
+            if (assignments.length > 0) {
+              await supabase
+                .from('repository_assignments')
+                .insert(assignments);
+            }
+          }
+        }
       }
       toast({ title: 'Report saved', description: 'Changes saved successfully.' });
       navigate('/repository');
@@ -546,6 +653,34 @@ export default function ReportBuilder() {
               <div className="space-y-2 md:col-span-2">
                 <Label>Description</Label>
                 <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe this report template" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Assign to Organization Subtypes</Label>
+                <p className="text-sm text-muted-foreground">Select which organization subtypes can access this report</p>
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-3 border rounded-lg">
+                  {availableSubtypes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground col-span-2">No organization subtypes available</p>
+                  ) : (
+                    availableSubtypes.map((subtype) => (
+                      <div key={subtype} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`subtype-${subtype}`}
+                          checked={selectedSubtypes.includes(subtype)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedSubtypes([...selectedSubtypes, subtype]);
+                            } else {
+                              setSelectedSubtypes(selectedSubtypes.filter(s => s !== subtype));
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`subtype-${subtype}`} className="text-sm font-normal cursor-pointer">
+                          {subtype}
+                        </Label>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>
