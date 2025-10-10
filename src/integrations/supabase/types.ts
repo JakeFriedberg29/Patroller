@@ -1267,6 +1267,10 @@ export type Database = {
         Args: { p_month: number; p_year: number }
         Returns: string
       }
+      ensure_current_user_platform_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       enterprise_delete_tx: {
         Args: {
           p_actor_id: string
