@@ -80,7 +80,10 @@ export const useUserProfile = () => {
           firstName: data.first_name || data.full_name?.split(' ')[0] || '',
           lastName: data.last_name || data.full_name?.split(' ').slice(1).join(' ') || '',
           phone: data.phone || '',
-          role: primaryRole === 'platform_admin' ? 'Platform Admin' : (primaryRole === 'patroller' || primaryRole === 'member') ? 'Patroller' : 'User',
+          role: primaryRole === 'platform_admin' ? 'Platform Admin' : 
+                primaryRole === 'enterprise_user' ? 'Enterprise User' : 
+                primaryRole === 'organization_user' ? 'Organization User' : 
+                primaryRole === 'patroller' ? 'Patroller' : 'User',
           roleType: primaryRole,
           status: data.status,
           profileData: {
@@ -104,11 +107,9 @@ export const useUserProfile = () => {
   const getRoleDisplayName = (roleType: string): string => {
     switch (roleType) {
       case 'platform_admin': return 'Platform Administrator';
-      case 'enterprise_admin': return 'User';
-      case 'organization_admin': return 'User';
-      case 'supervisor': return 'Supervisor';
+      case 'enterprise_user': return 'Enterprise User';
+      case 'organization_user': return 'Organization User';
       case 'patroller': return 'Patroller';
-      case 'member': return 'Member';
       default: return roleType;
     }
   };

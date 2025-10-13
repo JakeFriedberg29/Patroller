@@ -47,7 +47,7 @@ export const usePermissions = () => {
   }, [profile?.profileData?.user_id, profile?.profileData?.tenant_id, profile?.profileData?.organization_id]);
 
   const isPlatformAdmin = profile?.roleType === 'platform_admin';
-  const isPatroller = profile?.roleType === 'patroller' || profile?.roleType === 'member';
+  const isPatroller = profile?.roleType === 'patroller';
 
   // Respect active persona when determining capabilities
   const isActiveAdmin = activePersona === 'admin';

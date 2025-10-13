@@ -6,40 +6,52 @@ alwaysApply: true
 
 # User Rules
 
-## Platform Admin
+## Platform Admin (`platform_admin`)
 - **Scope**: Global system access.  
-- **Permissions**: Full (create, edit, delete) or view-only.  
+- **Permissions**: Assigned to specific accounts or has global access.  
 - **Capabilities**:  
-  - Can assign Platform Admins to accounts.  
-  - Cannot see accounts they are not assigned to.  
+  - Can manage all enterprises and organizations.
+  - Can assign Platform Admins to specific accounts.  
+  - Cannot see accounts they are not assigned to (if assignments exist).
 
-## Account-level User
-### Enterprise User
+## Account-level Roles
+### Enterprise User (`enterprise_user`)
 - **Scope**: Access limited to their Enterprise + its Organizations.  
-- **Permissions**: Full or view-only.  
-- **Full Capabilities**:  
-  - Can add Enterprise Admins within their Enterprise. 
+- **Permissions**: Controlled via `account_users.access_role` (read/write).  
+- **Full Access (write)**:  
+  - Can add/manage users within their Enterprise.
   - Can manage Enterprise settings.  
-  - Cannot see Organizations outside their Enterprise or that they're not assigned to.   
-- **View-on Capabilities**:  
-  - Can view and contribute.  
-  - Cannot manage users or accounts.
+  - Can view all Organizations under their Enterprise.
+- **Read-Only Access (read)**:  
+  - Can view Enterprise and Organization data.
+  - Cannot modify users, settings, or data.
   
-### Organization User 
+### Organization User (`organization_user`)
 - **Scope**: Access limited to their Organization.  
-- **Permissions**: Full or view-only.  
-- **Full Capabilities**:  
-  - Can add Organization Users (Admin, User, Patroller).  
-  - Can manage Organization settings.  
-- **View-Only Capabilities**:  
-  - Can log in and view Organization data.  
-  - Cannot modify data or manage users.  
+- **Permissions**: Controlled via `account_users.access_role` (read/write).  
+- **Full Access (write)**:  
+  - Can add/manage users within their Organization.
+  - Can manage Organization settings and data.
+- **Read-Only Access (read)**:  
+  - Can view Organization data.
+  - Cannot modify users, settings, or data.
 
-##Patroller
+## Patroller (`patroller`)
 - **Scope**: Access limited to their Organization.  
 - **Capabilities**:  
-  - Can log in and submit reports.  
-  - Cannot manage users or settings.  
+  - Can submit reports and view assigned data.
+  - Cannot manage users or settings.
+
+---
+
+## Role Consolidation Notes
+- **Deprecated roles** (automatically migrated):
+  - `enterprise_admin` → `enterprise_user`
+  - `organization_admin` → `organization_user`
+  - `member` → `patroller`
+  - `responder` → `patroller`
+- **Removed roles** (unused):
+  - `supervisor`, `observer`, `team_leader`
 
 ---
 

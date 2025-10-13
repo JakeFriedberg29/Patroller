@@ -978,7 +978,7 @@ export type Database = {
           is_active?: boolean
           organization_id?: string | null
           permission?: string | null
-          role_type: Database["public"]["Enums"]["role_type"]
+          role_type?: Database["public"]["Enums"]["role_type"]
           user_id: string
         }
         Update: {
@@ -1424,42 +1424,6 @@ export type Database = {
         Args: { p_activation_token: string; p_password: string }
         Returns: Json
       }
-      user_create: {
-        Args: {
-          p_email: string
-          p_employee_id?: string
-          p_full_name: string
-          p_organization_id?: string
-          p_phone?: string
-          p_role_type?: Database["public"]["Enums"]["role_type"]
-          p_tenant_id: string
-        }
-        Returns: string
-      }
-      user_create_pending: {
-        Args: {
-          p_email: string
-          p_full_name: string
-          p_organization_id?: string
-          p_phone?: string
-          p_role_type?: Database["public"]["Enums"]["role_type"]
-          p_tenant_id: string
-        }
-        Returns: Json
-      }
-      user_create_with_activation: {
-        Args: {
-          p_email: string
-          p_full_name: string
-          p_organization_id?: string
-          p_permission?: string
-          p_phone?: string
-          p_request_id?: string
-          p_role_type?: Database["public"]["Enums"]["role_type"]
-          p_tenant_id: string
-        }
-        Returns: Json
-      }
       user_generate_activation_token: {
         Args: { p_user_id: string }
         Returns: Json
@@ -1476,20 +1440,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      user_has_full_permission: {
-        Args: { _role_type: Database["public"]["Enums"]["role_type"] }
-        Returns: boolean
-      }
       user_has_org_read: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
       user_has_org_write: {
         Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      user_has_role: {
-        Args: { _role_type: Database["public"]["Enums"]["role_type"] }
         Returns: boolean
       }
       user_has_tenant_read: {
@@ -1532,13 +1488,6 @@ export type Database = {
         | "archive"
       role_type:
         | "platform_admin"
-        | "enterprise_admin"
-        | "organization_admin"
-        | "supervisor"
-        | "member"
-        | "observer"
-        | "responder"
-        | "team_leader"
         | "enterprise_user"
         | "organization_user"
         | "patroller"
@@ -1712,13 +1661,6 @@ export const Constants = {
       ],
       role_type: [
         "platform_admin",
-        "enterprise_admin",
-        "organization_admin",
-        "supervisor",
-        "member",
-        "observer",
-        "responder",
-        "team_leader",
         "enterprise_user",
         "organization_user",
         "patroller",

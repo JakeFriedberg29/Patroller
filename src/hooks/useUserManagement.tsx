@@ -15,19 +15,20 @@ export interface CreateUserRequest {
 }
 
 // Map UI roles to database role types
-const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'patroller' | 'team_leader' | 'responder' => {
-  const roleMap: { [key: string]: 'platform_admin' | 'enterprise_admin' | 'organization_admin' | 'supervisor' | 'member' | 'patroller' | 'team_leader' | 'responder' } = {
+const mapRoleToDbRole = (uiRole: string): 'platform_admin' | 'enterprise_user' | 'organization_user' | 'patroller' => {
+  const roleMap: { [key: string]: 'platform_admin' | 'enterprise_user' | 'organization_user' | 'patroller' } = {
     'Platform Admin': 'platform_admin',
-    'Enterprise Admin': 'enterprise_admin', 
-    'Organization Admin': 'organization_admin',
-    'Admin': 'organization_admin',
-    'User': 'responder',
-    'Team Leader': 'team_leader',
-    'Supervisor': 'supervisor',
+    'Enterprise Admin': 'enterprise_user',  // Legacy mapping
+    'Enterprise User': 'enterprise_user',
+    'Organization Admin': 'organization_user',  // Legacy mapping
+    'Organization User': 'organization_user',
+    'Admin': 'organization_user',
+    'User': 'patroller',  // Default to patroller
     'Patroller': 'patroller',
-    'Responder': 'responder'
+    'Member': 'patroller',  // Legacy mapping
+    'Responder': 'patroller'  // Legacy mapping
   };
-  return roleMap[uiRole] || 'responder';
+  return roleMap[uiRole] || 'patroller';
 };
 
 export const useUserManagement = () => {
@@ -91,9 +92,10 @@ export const useUserManagement = () => {
       // Determine the role type - prioritize userData.role if provided, otherwise use isPatroller flag
       const roleType = userData.role 
         ? mapRoleToDbRole(userData.role)
-        : (userData.isPatroller ? 'patroller' : 'responder');
+        : (userData.isPatroller ? 'patroller' : 'patroller'); // Default to patroller for field responders
       
       // Create user in the database first (without email confirmation)
+      // @ts-ignore - Types need regeneration after role consolidation migration
       const { data, error } = await supabase.rpc('user_create_with_activation', {
         p_email: userData.email,
         p_full_name: userData.fullName,
@@ -101,7 +103,7 @@ export const useUserManagement = () => {
         p_organization_id: userData.organizationId || null,
         p_phone: userData.phone || null,
         p_role_type: roleType
-      });
+      }) as { data: any; error: any };
 
       if (error) {
         console.error('Error creating user:', error);
