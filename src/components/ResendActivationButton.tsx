@@ -45,5 +45,26 @@ export const ResendActivationButton = ({
       setIsLoading(false);
     }
   };
-  return;
+
+  return (
+    <Button
+      onClick={handleResendActivation}
+      disabled={isLoading}
+      variant={variant}
+      size={size}
+      className={className}
+    >
+      {isLoading ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Sending...
+        </>
+      ) : (
+        <>
+          <Mail className="h-4 w-4" />
+          Resend
+        </>
+      )}
+    </Button>
+  );
 };
