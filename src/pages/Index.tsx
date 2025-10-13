@@ -1,20 +1,21 @@
+import { useMemo, useState, useEffect } from "react";
+import { format } from "date-fns";
+import { Users, FileText, Shield, RefreshCw, Calendar as CalendarIcon, Building2 } from "lucide-react";
+import { DateRange } from "react-day-picker";
 import { MetricCard } from "@/components/ui/metric-card";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { AccountsOverTimeChart, UsersOverTimeChart, ReportsByTypeChart } from "@/components/DashboardCharts";
-import { CleanupDataButton } from "@/components/CleanupDataButton";
-import { Users, FileText, Shield, RefreshCw, Calendar as CalendarIcon, Building2 } from "lucide-react";
-import { format } from "date-fns";
-import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { DateRange } from "react-day-picker";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useGlobalDashboardData } from "@/hooks/useGlobalDashboardData";
-import type { OrganizationSubtype, ReportTypeFilter, UserRoleFilter, AccountTypeFilter, EnterpriseSubtype } from "@/hooks/useGlobalDashboardData";
-import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { AccountsOverTimeChart } from "@/components/dashboard/AccountsOverTimeChart";
+import { UsersOverTimeChart } from "@/components/dashboard/UsersOverTimeChart";
+import { ReportsByTypeChart } from "@/components/dashboard/ReportsByTypeChart";
+import { CleanupDataButton } from "@/components/CleanupDataButton";
+import type { OrganizationSubtype, ReportTypeFilter, UserRoleFilter, AccountTypeFilter, EnterpriseSubtype } from "@/hooks/useGlobalDashboardData";
 
 const Index = () => {
   const { profile } = useUserProfile();
