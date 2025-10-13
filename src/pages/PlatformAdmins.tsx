@@ -14,8 +14,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
-import { EditAdminModal } from "@/components/EditAdminModal";
-import { DeleteAdminModal } from "@/components/DeleteAdminModal";
+import { UserModal } from "@/components/user-management/UserModal";
+import { DeleteUserModal } from "@/components/user-management/DeleteUserModal";
+import { SuspendUserModal } from "@/components/user-management/SuspendUserModal";
+import { useUserModal } from "@/hooks/useUserModal";
 import { useSeedData } from "@/hooks/useSeedData";
 import { useEmailService } from "@/hooks/useEmailService";
 import { DataTable, type ColumnDef, type FilterConfig } from "@/components/ui/data-table";
@@ -50,18 +52,23 @@ export default function PlatformAdmins() {
   const [admins, setAdmins] = useState<PlatformAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const modals = useCrudModals<PlatformAdmin>();
+  const [showSuspendDialog, setShowSuspendDialog] = useState(false);
+  const [userToSuspend, setUserToSuspend] = useState<PlatformAdmin | null>(null);
+  const { isSuspending, handleSuspendToggle } = useUserModal({ 
+    accountType: "platform", 
+    mode: "edit",
+    userId: userToSuspend?.user_id 
+  });
   const [selectedAdmins, setSelectedAdmins] = useState<string[]>([]);
   const [isResending, setIsResending] = useState(false);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const {
     sendActivationEmail
   } = useEmailService();
-  const [newAdmin, setNewAdmin] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    accessRole: "read" as "read" | "write"
-  });
+
+  const handleAddSuccess = () => {
+    loadPlatformAdmins();
+  };
 
   // Load platform admins from database
   useEffect(() => {
@@ -400,93 +407,60 @@ export default function PlatformAdmins() {
         onRowsPerPageChange={dataTable.handleRowsPerPageChange}
       />
 
-      {/* Add Admin Dialog */}
-      <Dialog open={modals.add.isOpen} onOpenChange={(open) => !open && modals.add.close()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                  <Plus className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <DialogTitle className="text-xl font-bold">Add Platform Admin</DialogTitle>
-                  <DialogDescription className="text-sm text-muted-foreground mt-1">
-                    Add a new administrator to the platform.
-                  </DialogDescription>
-                </div>
-              </div>
-              
-            </div>
-          </DialogHeader>
+      {/* Add User Dialog */}
+      <UserModal
+        open={modals.add.isOpen}
+        onOpenChange={(open) => !open && modals.add.close()}
+        mode="add"
+        accountType="platform"
+        onSuccess={handleAddSuccess}
+      />
 
-          <div className="space-y-4 mt-6">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name *</Label>
-              <Input id="fullName" className="bg-white" value={newAdmin.fullName} onChange={e => setNewAdmin({
-                ...newAdmin,
-                fullName: e.target.value
-              })} placeholder="John Doe" />
-            </div>
+      {/* Edit User Dialog */}
+      {modals.selected && (
+        <UserModal 
+          open={modals.edit.isOpen} 
+          onOpenChange={(open) => !open && modals.edit.close()} 
+          mode="edit"
+          user={modals.selected} 
+          accountType="platform" 
+          onSuccess={handleEditSuccess}
+          onSuspendClick={() => {
+            setUserToSuspend(modals.selected);
+            setShowSuspendDialog(true);
+          }}
+          onDeleteClick={() => modals.delete.open(modals.selected!)}
+        />
+      )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
-              <Input id="email" type="email" className="bg-white" value={newAdmin.email} onChange={e => setNewAdmin({
-              ...newAdmin,
-              email: e.target.value
-            })} placeholder="admin@platform.com" />
-            </div>
+      {/* Delete User Dialog */}
+      {modals.selected && (
+        <DeleteUserModal 
+          open={modals.delete.isOpen} 
+          onOpenChange={(open) => !open && modals.delete.close()} 
+          user={modals.selected as any} 
+          accountType="platform" 
+          onSuccess={handleDeleteSuccess} 
+        />
+      )}
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" type="tel" className="bg-white" value={newAdmin.phone} onChange={e => setNewAdmin({
-              ...newAdmin,
-              phone: e.target.value
-            })} placeholder="(555) 123-4567" />
-            </div>
-
-            <div className="space-y-3">
-              <Label>Access *</Label>
-              <RadioGroup 
-                value={newAdmin.accessRole} 
-                onValueChange={(value: "read" | "write") => setNewAdmin({
-                  ...newAdmin,
-                  accessRole: value
-                })}
-                className="flex flex-col space-y-1"
-              >
-                <div className="flex items-center space-x-3 space-y-0">
-                  <RadioGroupItem value="write" id="write" />
-                  <Label htmlFor="write" className="font-normal cursor-pointer">
-                    Write (manage)
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 space-y-0">
-                  <RadioGroupItem value="read" id="read" />
-                  <Label htmlFor="read" className="font-normal cursor-pointer">
-                    Read (view only)
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-          </div>
-
-          <div className="flex justify-between mt-6">
-            <Button variant="outline" onClick={modals.add.close}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddAdmin} disabled={!newAdmin.fullName || !newAdmin.email || isCreatingUser}>
-              {isCreatingUser ? 'Creating...' : 'Add Platform Admin'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Admin Dialog */}
-      {modals.selected && <EditAdminModal open={modals.edit.isOpen} onOpenChange={(open) => !open && modals.edit.close()} admin={modals.selected} accountType="platform" onSuccess={handleEditSuccess} />}
-
-      {/* Delete Admin Dialog */}
-      {modals.selected && <DeleteAdminModal open={modals.delete.isOpen} onOpenChange={(open) => !open && modals.delete.close()} admin={modals.selected as any} accountType="platform" onSuccess={handleDeleteSuccess} />}
+      {/* Suspend/Enable User Dialog */}
+      {userToSuspend && (
+        <SuspendUserModal
+          open={showSuspendDialog}
+          onOpenChange={setShowSuspendDialog}
+          user={userToSuspend}
+          isSuspending={isSuspending}
+          onConfirm={async () => {
+            const success = await handleSuspendToggle(userToSuspend.activation_status);
+            if (success) {
+              setShowSuspendDialog(false);
+              setUserToSuspend(null);
+              handleEditSuccess();
+            }
+          }}
+        />
+      )}
       
       {/* Bulk Delete Admin Dialog */}
       {selectedAdmins.length > 0 && (
