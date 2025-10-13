@@ -17,6 +17,7 @@ import { UserStatusBadge } from "@/components/UserStatusBadge";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { DataTable, type ColumnDef, type FilterConfig } from "@/components/ui/data-table";
 import { useDataTable } from "@/hooks/useDataTable";
+import { useCrudModals } from "@/hooks/useCrudModals";
 interface EnterpriseAdmin {
   id: string;
   user_id: string;
@@ -47,10 +48,7 @@ export default function EnterpriseUsers() {
   } = useUserManagement();
   const [admins, setAdmins] = useState<EnterpriseAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedAdmin, setSelectedAdmin] = useState<EnterpriseAdmin | null>(null);
+  const modals = useCrudModals<EnterpriseAdmin>();
   const [selectedAdmins, setSelectedAdmins] = useState<string[]>([]);
   const [isResending, setIsResending] = useState(false);
   const {
@@ -149,21 +147,14 @@ export default function EnterpriseUsers() {
   const handleAddAdminSuccess = () => {
     loadEnterpriseAdmins();
   };
-  const handleEditAdmin = (admin: EnterpriseAdmin) => {
-    setSelectedAdmin(admin);
-    setIsEditModalOpen(true);
-  };
-  const handleDeleteAdmin = (admin: EnterpriseAdmin) => {
-    setSelectedAdmin(admin);
-    setIsDeleteModalOpen(true);
-  };
   const handleEditSuccess = () => {
     loadEnterpriseAdmins();
-    setSelectedAdmin(null);
+    modals.edit.close();
   };
   const handleDeleteSuccess = () => {
     loadEnterpriseAdmins();
-    setSelectedAdmin(null);
+    modals.delete.close();
+    setSelectedAdmins([]);
   };
 
   const handleBulkResend = async () => {
@@ -286,11 +277,11 @@ export default function EnterpriseUsers() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={() => handleEditAdmin(admin)}>
+            <DropdownMenuItem onClick={() => modals.edit.open(admin)}>
               <Edit className="mr-2 h-4 w-4" />
               Edit Administrator
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDeleteAdmin(admin)} className="text-destructive">
+            <DropdownMenuItem onClick={() => modals.delete.open(admin)} className="text-destructive">
               <Trash2 className="mr-2 h-4 w-4" />
               Delete Administrator
             </DropdownMenuItem>
@@ -316,7 +307,7 @@ export default function EnterpriseUsers() {
           </h1>
           <p className="text-muted-foreground">Manage users across your enterprise</p>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)}>
+        <Button onClick={modals.add.open}>
           <Plus className="mr-2 h-4 w-4" />
           Add User
         </Button>
@@ -353,10 +344,14 @@ export default function EnterpriseUsers() {
         }
       />
 
-      <AddAdminModal open={isAddModalOpen} onOpenChange={setIsAddModalOpen} accountType="enterprise" onSuccess={handleAddAdminSuccess} />
+      <AddAdminModal open={modals.add.isOpen} onOpenChange={(open) => !open && modals.add.close()} accountType="enterprise" onSuccess={handleAddAdminSuccess} />
 
-      <EditAdminModal open={isEditModalOpen} onOpenChange={setIsEditModalOpen} admin={selectedAdmin} accountType="enterprise" onSuccess={handleEditSuccess} />
+      {modals.selected && (
+        <>
+          <EditAdminModal open={modals.edit.isOpen} onOpenChange={(open) => !open && modals.edit.close()} admin={modals.selected} accountType="enterprise" onSuccess={handleEditSuccess} />
 
-      <DeleteAdminModal open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen} admin={selectedAdmin} accountType="enterprise" onSuccess={handleDeleteSuccess} />
+          <DeleteAdminModal open={modals.delete.isOpen} onOpenChange={(open) => !open && modals.delete.close()} admin={modals.selected} accountType="enterprise" onSuccess={handleDeleteSuccess} />
+        </>
+      )}
     </div>;
 }

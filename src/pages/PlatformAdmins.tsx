@@ -20,9 +20,7 @@ import { useSeedData } from "@/hooks/useSeedData";
 import { useEmailService } from "@/hooks/useEmailService";
 import { DataTable, type ColumnDef, type FilterConfig } from "@/components/ui/data-table";
 import { useDataTable } from "@/hooks/useDataTable";
-// import { DeleteAdminModal } from "@/components/DeleteAdminModal";
-// import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
-// import { AdminAuditLog } from "@/components/AdminAuditLog";
+import { useCrudModals } from "@/hooks/useCrudModals";
 interface PlatformAdmin {
   id: string;
   user_id: string;
@@ -49,15 +47,12 @@ export default function PlatformAdmins() {
   } = useSeedData();
   const [admins, setAdmins] = useState<PlatformAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const modals = useCrudModals<PlatformAdmin>();
   const [selectedAdmins, setSelectedAdmins] = useState<string[]>([]);
   const [isResending, setIsResending] = useState(false);
   const {
     sendActivationEmail
   } = useEmailService();
-  const [currentAdmin, setCurrentAdmin] = useState<PlatformAdmin | null>(null);
   const [newAdmin, setNewAdmin] = useState({
     fullName: "",
     email: "",
@@ -196,26 +191,18 @@ export default function PlatformAdmins() {
           phone: "",
           accessRole: "read"
         });
-        setIsAddDialogOpen(false);
+        modals.add.close();
         loadPlatformAdmins(); // Refresh the list
       }
     }
   };
-  const handleEditAdmin = (admin: PlatformAdmin) => {
-    setCurrentAdmin(admin);
-    setIsEditDialogOpen(true);
-  };
   const handleEditSuccess = () => {
     loadPlatformAdmins();
-    setCurrentAdmin(null);
-  };
-  const handleDeleteAdmin = (admin: PlatformAdmin) => {
-    setCurrentAdmin(admin);
-    setIsDeleteDialogOpen(true);
+    modals.edit.close();
   };
   const handleDeleteSuccess = () => {
     loadPlatformAdmins();
-    setCurrentAdmin(null);
+    modals.delete.close();
     setSelectedAdmins([]);
   };
   
@@ -324,12 +311,12 @@ export default function PlatformAdmins() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleEditAdmin(admin)} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => modals.edit.open(admin)} className="cursor-pointer">
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem 
-              onClick={() => handleDeleteAdmin(admin)} 
+              onClick={() => modals.delete.open(admin)} 
               className="cursor-pointer text-destructive focus:text-destructive"
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -358,7 +345,7 @@ export default function PlatformAdmins() {
             <p className="text-muted-foreground">Manage platform administrators and system access</p>
           </div>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
+        <Button onClick={modals.add.open} className="gap-2">
           <Plus className="h-4 w-4" />
           Add Platform Admin
         </Button>
@@ -396,7 +383,7 @@ export default function PlatformAdmins() {
       />
 
       {/* Add Admin Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <Dialog open={modals.add.isOpen} onOpenChange={(open) => !open && modals.add.close()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -467,7 +454,7 @@ export default function PlatformAdmins() {
           </div>
 
           <div className="flex justify-between mt-6">
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+            <Button variant="outline" onClick={modals.add.close}>
               Cancel
             </Button>
             <Button onClick={handleAddAdmin} disabled={!newAdmin.fullName || !newAdmin.email || isCreatingUser}>
@@ -478,10 +465,10 @@ export default function PlatformAdmins() {
       </Dialog>
 
       {/* Edit Admin Dialog */}
-      {currentAdmin && <EditAdminModal open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} admin={currentAdmin} accountType="platform" onSuccess={handleEditSuccess} />}
+      {modals.selected && <EditAdminModal open={modals.edit.isOpen} onOpenChange={(open) => !open && modals.edit.close()} admin={modals.selected} accountType="platform" onSuccess={handleEditSuccess} />}
 
       {/* Delete Admin Dialog */}
-      {currentAdmin && <DeleteAdminModal open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} admin={currentAdmin as any} accountType="platform" onSuccess={handleDeleteSuccess} />}
+      {modals.selected && <DeleteAdminModal open={modals.delete.isOpen} onOpenChange={(open) => !open && modals.delete.close()} admin={modals.selected as any} accountType="platform" onSuccess={handleDeleteSuccess} />}
       {/* BulkDelete coming soon */}
     </div>;
 }

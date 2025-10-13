@@ -15,12 +15,11 @@ import { UserStatusBadge } from "@/components/UserStatusBadge";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { DataTable, type ColumnDef, type FilterConfig } from "@/components/ui/data-table";
 import { useDataTable } from "@/hooks/useDataTable";
+import { useCrudModals } from "@/hooks/useCrudModals";
 
 export default function OrganizationUsers() {
   const { id } = useParams();
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const modals = useCrudModals<any>();
   const { toast } = useToast();
   const { teamMembers, loading, updateTeamMember } = useTeamMembers();
 
@@ -114,10 +113,7 @@ export default function OrganizationUsers() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem 
-              onClick={() => {
-                setSelectedMember(member);
-                setIsEditModalOpen(true);
-              }}
+              onClick={() => modals.edit.open(member)}
             >
               Edit Member
             </DropdownMenuItem>
@@ -153,7 +149,7 @@ export default function OrganizationUsers() {
             <p className="text-muted-foreground">Manage users and contacts</p>
           </div>
         </div>
-        <Button className="gap-2" onClick={() => setIsAddModalOpen(true)}>
+        <Button className="gap-2" onClick={modals.add.open}>
           <Plus className="h-4 w-4" />
           Add User
         </Button>
@@ -179,24 +175,24 @@ export default function OrganizationUsers() {
       />
 
       <AddMemberModal 
-        open={isAddModalOpen} 
-        onOpenChange={setIsAddModalOpen}
-        organizationId={id}
+        open={modals.add.isOpen}
+        onOpenChange={(open) => !open && modals.add.close()}
+        organizationId={id || ''}
       />
 
       {/* Edit Member Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      <Dialog open={modals.edit.isOpen} onOpenChange={(open) => !open && modals.edit.close()}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Team Member</DialogTitle>
           </DialogHeader>
-          {selectedMember && (
+          {modals.selected && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Name</Label>
                 <Input
                   id="edit-name"
-                  defaultValue={selectedMember.full_name}
+                  defaultValue={modals.selected.full_name}
                 />
               </div>
               <div className="space-y-2">
@@ -204,19 +200,19 @@ export default function OrganizationUsers() {
                 <Input
                   id="edit-email"
                   type="email"
-                  defaultValue={selectedMember.email}
+                  defaultValue={modals.selected.email}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-phone">Phone</Label>
                 <Input
                   id="edit-phone"
-                  defaultValue={selectedMember.phone || ''}
+                  defaultValue={modals.selected.phone || ''}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-role">Role</Label>
-                <Select defaultValue={selectedMember.profile_data?.role || ''}>
+                <Select defaultValue={modals.selected.profile_data?.role || ''}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -229,7 +225,7 @@ export default function OrganizationUsers() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-status">Status</Label>
-                <Select defaultValue={selectedMember.status}>
+                <Select defaultValue={modals.selected.status}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -243,19 +239,18 @@ export default function OrganizationUsers() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+            <Button variant="outline" onClick={modals.edit.close}>
               Cancel
             </Button>
             <Button onClick={async () => {
-              if (selectedMember) {
-                await updateTeamMember(selectedMember.id, {
-                  full_name: (document.getElementById('edit-name') as HTMLInputElement)?.value || selectedMember.full_name,
-                  email: (document.getElementById('edit-email') as HTMLInputElement)?.value || selectedMember.email,
-                  phone: (document.getElementById('edit-phone') as HTMLInputElement)?.value || selectedMember.phone,
+              if (modals.selected) {
+                await updateTeamMember(modals.selected.id, {
+                  full_name: (document.getElementById('edit-name') as HTMLInputElement)?.value || modals.selected.full_name,
+                  email: (document.getElementById('edit-email') as HTMLInputElement)?.value || modals.selected.email,
+                  phone: (document.getElementById('edit-phone') as HTMLInputElement)?.value || modals.selected.phone,
                 });
               }
-              setIsEditModalOpen(false);
-              setSelectedMember(null);
+              modals.edit.close();
             }}>
               Save Changes
             </Button>
