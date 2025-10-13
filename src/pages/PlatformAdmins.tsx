@@ -25,6 +25,7 @@ import { useDataTable } from "@/hooks/useDataTable";
 import { useCrudModals } from "@/hooks/useCrudModals";
 import { BulkSelectionToolbar } from "@/components/BulkSelectionToolbar";
 import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
+import { createActivationStatusFilter } from "@/lib/filterConfigs";
 interface PlatformAdmin {
   id: string;
   user_id: string;
@@ -168,16 +169,7 @@ export default function PlatformAdmins() {
   };
 
   const filterConfigs: FilterConfig[] = [
-    {
-      key: 'activation_status',
-      label: 'Status',
-      options: [
-        { label: 'Active', value: 'active' },
-        { label: 'Pending', value: 'pending' },
-        { label: 'Disabled', value: 'disabled' },
-        { label: 'Deleted', value: 'deleted' },
-      ]
-    }
+    createActivationStatusFilter()
   ];
 
   const columns: ColumnDef<PlatformAdmin>[] = [

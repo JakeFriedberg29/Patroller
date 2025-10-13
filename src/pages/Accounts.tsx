@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { DataTable, ColumnDef } from "@/components/ui/data-table";
 import { useDataTable } from "@/hooks/useDataTable";
+import { createTypeFilter, createCategoryFilter, extractUniqueValues } from "@/lib/filterConfigs";
 const typeColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   "Enterprise": "default",
   "Organization": "secondary"
@@ -244,23 +245,15 @@ export default function Accounts() {
   };
 
   // Table state management
-  const accountTypes = [...new Set(accounts.map(account => account.type))];
-  const accountCategories = [...new Set(accounts.map(account => account.category))].filter(cat => cat !== 'Root Account');
+  const accountTypes = extractUniqueValues(accounts, 'type');
+  const accountCategories = extractUniqueValues(accounts, 'category').filter(cat => cat !== 'Root Account');
 
   const tableData = useDataTable({
     data: accounts,
     searchableFields: ['name', 'email', 'phone'],
     filterConfigs: [
-      {
-        key: 'type',
-        label: 'Type',
-        options: accountTypes.map(type => ({ label: type, value: type })),
-      },
-      {
-        key: 'category',
-        label: 'Subtype',
-        options: accountCategories.map(cat => ({ label: cat, value: cat })),
-      },
+      createTypeFilter(accountTypes),
+      createCategoryFilter(accountCategories, 'Subtype'),
     ],
   });
 
@@ -403,16 +396,8 @@ export default function Accounts() {
         searchValue={tableData.searchTerm}
         onSearchChange={tableData.handleSearch}
         filters={[
-          {
-            key: 'type',
-            label: 'Type',
-            options: accountTypes.map(type => ({ label: type, value: type })),
-          },
-          {
-            key: 'category',
-            label: 'Subtype',
-            options: accountCategories.map(cat => ({ label: cat, value: cat })),
-          },
+          createTypeFilter(accountTypes),
+          createCategoryFilter(accountCategories, 'Subtype'),
         ]}
         filterValues={tableData.filters}
         onFilterChange={tableData.handleFilter}

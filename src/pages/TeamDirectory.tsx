@@ -17,6 +17,7 @@ import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { DataTable, type ColumnDef, type FilterConfig } from "@/components/ui/data-table";
 import { useDataTable } from "@/hooks/useDataTable";
 import { useCrudModals } from "@/hooks/useCrudModals";
+import { createStatusFilter } from "@/lib/filterConfigs";
 
 export default function OrganizationUsers() {
   const { id } = useParams();
@@ -24,21 +25,10 @@ export default function OrganizationUsers() {
   const { toast } = useToast();
   const { teamMembers, loading, updateTeamMember } = useTeamMembers();
 
-  const formatStatus = (status: string) => {
-    return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const statusOptions = [...new Set(teamMembers.map(member => formatStatus(member.status)))];
+  const statusOptions = [...new Set(teamMembers.map(member => member.status))];
 
   const filterConfigs: FilterConfig[] = [
-    {
-      key: 'status',
-      label: 'Status',
-      options: statusOptions.map(status => ({ 
-        label: status, 
-        value: status.toLowerCase().replace(' ', '_') 
-      }))
-    }
+    createStatusFilter(statusOptions)
   ];
 
   const columns: ColumnDef<any>[] = [
