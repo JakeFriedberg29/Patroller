@@ -1448,6 +1448,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      user_has_role: {
+        Args:
+          | { p_role_type: Database["public"]["Enums"]["role_type"] }
+          | {
+              p_role_type: Database["public"]["Enums"]["role_type"]
+              p_user_id: string
+            }
+        Returns: boolean
+      }
       user_has_tenant_read: {
         Args: Record<PropertyKey, never>
         Returns: boolean
