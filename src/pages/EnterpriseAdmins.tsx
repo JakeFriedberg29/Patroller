@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Shield, Plus, MoreHorizontal, Mail, Phone, Send, Edit, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserManagement } from "@/hooks/useUserManagement";
 import { AddAdminModal } from "@/components/AddAdminModal";
 import { EditAdminModal } from "@/components/EditAdminModal";
 import { DeleteAdminModal } from "@/components/DeleteAdminModal";
@@ -189,7 +190,6 @@ export default function EnterpriseUsers() {
       key: 'activation_status',
       label: 'Status',
       options: [
-        { label: 'All Status', value: 'all' },
         { label: 'Active', value: 'active' },
         { label: 'Pending', value: 'pending' },
         { label: 'Disabled', value: 'disabled' },
@@ -201,15 +201,8 @@ export default function EnterpriseUsers() {
   const columns: ColumnDef<EnterpriseAdmin>[] = [
     {
       key: 'select',
-      header: () => (
-        <Checkbox 
-          checked={selectedAdmins.length === admins.length && admins.length > 0} 
-          onCheckedChange={(checked) => {
-            setSelectedAdmins(checked ? admins.map(a => a.id) : []);
-          }} 
-        />
-      ),
-      cell: (admin) => (
+      header: '',
+      render: (admin) => (
         <Checkbox 
           checked={selectedAdmins.includes(admin.id)} 
           onCheckedChange={(checked) => {
@@ -223,7 +216,7 @@ export default function EnterpriseUsers() {
     {
       key: 'firstName',
       header: 'Name',
-      cell: (admin) => (
+      render: (admin) => (
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarFallback>
@@ -240,7 +233,7 @@ export default function EnterpriseUsers() {
     {
       key: 'role',
       header: 'Role',
-      cell: (admin) => (
+      render: (admin) => (
         <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
           {admin.role}
         </Badge>
@@ -249,7 +242,7 @@ export default function EnterpriseUsers() {
     {
       key: 'activation_status',
       header: 'Status',
-      cell: (admin) => (
+      render: (admin) => (
         <div className="flex items-center gap-2">
           <UserStatusBadge status={admin.activation_status} />
           {admin.activation_status === 'pending' && (
@@ -266,7 +259,7 @@ export default function EnterpriseUsers() {
     {
       key: 'email',
       header: 'Contact',
-      cell: (admin) => (
+      render: (admin) => (
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm">
             <Mail className="h-4 w-4 text-muted-foreground" />
@@ -284,7 +277,7 @@ export default function EnterpriseUsers() {
     {
       key: 'actions',
       header: '',
-      cell: (admin) => (
+      render: (admin) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -335,11 +328,11 @@ export default function EnterpriseUsers() {
         searchPlaceholder="Search administrators..."
         isLoading={isLoading}
         emptyMessage="No administrators found"
-        searchTerm={dataTable.searchTerm}
+        searchValue={dataTable.searchTerm}
         onSearchChange={dataTable.handleSearch}
-        filters={dataTable.filters}
+        filterValues={dataTable.filters}
         onFilterChange={dataTable.handleFilter}
-        filterConfigs={filterConfigs}
+        filters={filterConfigs}
         currentPage={dataTable.currentPage}
         totalPages={dataTable.totalPages}
         rowsPerPage={dataTable.rowsPerPage}

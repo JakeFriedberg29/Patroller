@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -242,7 +243,6 @@ export default function PlatformAdmins() {
       key: 'activation_status',
       label: 'Status',
       options: [
-        { label: 'All Status', value: 'all' },
         { label: 'Active', value: 'active' },
         { label: 'Pending', value: 'pending' },
         { label: 'Disabled', value: 'disabled' },
@@ -254,15 +254,8 @@ export default function PlatformAdmins() {
   const columns: ColumnDef<PlatformAdmin>[] = [
     {
       key: 'select',
-      header: () => (
-        <Checkbox 
-          checked={selectedAdmins.length === admins.length && admins.length > 0} 
-          onCheckedChange={(checked) => {
-            setSelectedAdmins(checked ? admins.map(a => a.id) : []);
-          }} 
-        />
-      ),
-      cell: (admin) => (
+      header: '',
+      render: (admin) => (
         <Checkbox 
           checked={selectedAdmins.includes(admin.id)} 
           onCheckedChange={(checked) => {
@@ -276,7 +269,7 @@ export default function PlatformAdmins() {
     {
       key: 'firstName',
       header: 'Name',
-      cell: (admin) => (
+      render: (admin) => (
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
             <Plus className="h-4 w-4 text-primary" />
@@ -291,7 +284,7 @@ export default function PlatformAdmins() {
     {
       key: 'role',
       header: 'Role',
-      cell: (admin) => (
+      render: (admin) => (
         <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
           {admin.role}
         </Badge>
@@ -300,7 +293,7 @@ export default function PlatformAdmins() {
     {
       key: 'activation_status',
       header: 'Status',
-      cell: (admin) => (
+      render: (admin) => (
         <div className="flex items-center gap-2">
           <UserStatusBadge status={admin.activation_status} />
           {admin.activation_status === 'pending' && (
@@ -317,12 +310,12 @@ export default function PlatformAdmins() {
     {
       key: 'phone',
       header: 'Contact',
-      cell: (admin) => admin.phone ? <div className="text-sm">{admin.phone}</div> : null,
+      render: (admin) => admin.phone ? <div className="text-sm">{admin.phone}</div> : null,
     },
     {
       key: 'actions',
       header: '',
-      cell: (admin) => (
+      render: (admin) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -377,11 +370,11 @@ export default function PlatformAdmins() {
         searchPlaceholder="Search platform admins by name or email..."
         isLoading={isLoading}
         emptyMessage="No platform admins found"
-        searchTerm={dataTable.searchTerm}
+        searchValue={dataTable.searchTerm}
         onSearchChange={dataTable.handleSearch}
-        filters={dataTable.filters}
+        filterValues={dataTable.filters}
         onFilterChange={dataTable.handleFilter}
-        filterConfigs={filterConfigs}
+        filters={filterConfigs}
         currentPage={dataTable.currentPage}
         totalPages={dataTable.totalPages}
         rowsPerPage={dataTable.rowsPerPage}
@@ -400,20 +393,7 @@ export default function PlatformAdmins() {
             {isResending ? 'Resending...' : `Resend Activation Email${selectedAdmins.length ? ` (${selectedAdmins.length})` : ''}`}
           </Button>
         }
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>
-                  Previous
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>
-                  Next
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Audit Log Section - Coming Soon */}
-      {/* showAuditLog && <AdminAuditLog accountType="platform" /> */}
+      />
 
       {/* Add Admin Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

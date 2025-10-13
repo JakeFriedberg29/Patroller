@@ -34,10 +34,10 @@ export default function OrganizationUsers() {
     {
       key: 'status',
       label: 'Status',
-      options: [
-        { label: 'All Status', value: 'all' },
-        ...statusOptions.map(status => ({ label: status, value: status.toLowerCase().replace(' ', '_') }))
-      ]
+      options: statusOptions.map(status => ({ 
+        label: status, 
+        value: status.toLowerCase().replace(' ', '_') 
+      }))
     }
   ];
 
@@ -45,7 +45,7 @@ export default function OrganizationUsers() {
     {
       key: 'full_name',
       header: 'Name',
-      cell: (member) => (
+      render: (member) => (
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
             <Users className="h-4 w-4 text-primary" />
@@ -57,12 +57,12 @@ export default function OrganizationUsers() {
     {
       key: 'profile_data',
       header: 'Role',
-      cell: (member) => <span className="text-muted-foreground">{member.profile_data?.role || 'N/A'}</span>,
+      render: (member) => <span className="text-muted-foreground">{member.profile_data?.role || 'N/A'}</span>,
     },
     {
       key: 'status',
       header: 'Status',
-      cell: (member) => (
+      render: (member) => (
         <div className="flex items-center gap-2">
           <UserStatusBadge status={member.status as 'pending' | 'active' | 'disabled' | 'deleted'} />
           {member.status === 'pending' && (
@@ -79,7 +79,7 @@ export default function OrganizationUsers() {
     {
       key: 'email',
       header: 'Contact',
-      cell: (member) => (
+      render: (member) => (
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm">
             <Phone className="h-3 w-3 text-muted-foreground" />
@@ -95,7 +95,7 @@ export default function OrganizationUsers() {
     {
       key: 'specialization',
       header: 'Specialization',
-      cell: (member) => (
+      render: (member) => (
         <Badge variant="outline">
           {member.profile_data?.specialization || 'N/A'}
         </Badge>
@@ -104,7 +104,7 @@ export default function OrganizationUsers() {
     {
       key: 'actions',
       header: '',
-      cell: (member) => (
+      render: (member) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -165,11 +165,11 @@ export default function OrganizationUsers() {
         searchPlaceholder="Search team members..."
         isLoading={loading}
         emptyMessage="No team members found"
-        searchTerm={dataTable.searchTerm}
+        searchValue={dataTable.searchTerm}
         onSearchChange={dataTable.handleSearch}
-        filters={dataTable.filters}
+        filterValues={dataTable.filters}
         onFilterChange={dataTable.handleFilter}
-        filterConfigs={filterConfigs}
+        filters={filterConfigs}
         currentPage={dataTable.currentPage}
         totalPages={dataTable.totalPages}
         rowsPerPage={dataTable.rowsPerPage}
