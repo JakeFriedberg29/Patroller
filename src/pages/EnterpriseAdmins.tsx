@@ -7,9 +7,10 @@ import { Shield, Plus, MoreHorizontal, Mail, Phone, Send, Edit, Trash2 } from "l
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserManagement } from "@/hooks/useUserManagement";
-import { AddAdminModal } from "@/components/AddAdminModal";
-import { EditAdminModal } from "@/components/EditAdminModal";
-import { DeleteAdminModal } from "@/components/DeleteAdminModal";
+import { UserModal } from "@/components/user-management/UserModal";
+import { DeleteUserModal } from "@/components/user-management/DeleteUserModal";
+import { SuspendUserModal } from "@/components/user-management/SuspendUserModal";
+import { useUserModal } from "@/hooks/useUserModal";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEmailService } from "@/hooks/useEmailService";
@@ -51,6 +52,13 @@ export default function EnterpriseUsers() {
   const modals = useCrudModals<EnterpriseAdmin>();
   const [selectedAdmins, setSelectedAdmins] = useState<string[]>([]);
   const [isResending, setIsResending] = useState(false);
+  const [showSuspendDialog, setShowSuspendDialog] = useState(false);
+  const [userToSuspend, setUserToSuspend] = useState<EnterpriseAdmin | null>(null);
+  const { isSuspending, handleSuspendToggle } = useUserModal({ 
+    accountType: "enterprise", 
+    mode: "edit",
+    userId: userToSuspend?.user_id 
+  });
   const {
     sendActivationEmail
   } = useEmailService();
@@ -344,13 +352,56 @@ export default function EnterpriseUsers() {
         }
       />
 
-      <AddAdminModal open={modals.add.isOpen} onOpenChange={(open) => !open && modals.add.close()} accountType="enterprise" onSuccess={handleAddAdminSuccess} />
+      <UserModal
+        open={modals.add.isOpen}
+        onOpenChange={(open) => !open && modals.add.close()}
+        mode="add"
+        accountType="enterprise"
+        accountId={tenantId}
+        onSuccess={handleAddAdminSuccess}
+      />
 
       {modals.selected && (
         <>
-          <EditAdminModal open={modals.edit.isOpen} onOpenChange={(open) => !open && modals.edit.close()} admin={modals.selected} accountType="enterprise" onSuccess={handleEditSuccess} />
+          <UserModal
+            open={modals.edit.isOpen}
+            onOpenChange={(open) => !open && modals.edit.close()}
+            mode="edit"
+            user={modals.selected}
+            accountType="enterprise"
+            accountId={tenantId}
+            onSuccess={handleEditSuccess}
+            onSuspendClick={() => {
+              setUserToSuspend(modals.selected);
+              setShowSuspendDialog(true);
+            }}
+            onDeleteClick={() => modals.delete.open(modals.selected!)}
+          />
 
-          <DeleteAdminModal open={modals.delete.isOpen} onOpenChange={(open) => !open && modals.delete.close()} admin={modals.selected} accountType="enterprise" onSuccess={handleDeleteSuccess} />
+          <DeleteUserModal
+            open={modals.delete.isOpen}
+            onOpenChange={(open) => !open && modals.delete.close()}
+            user={modals.selected}
+            accountType="enterprise"
+            onSuccess={handleDeleteSuccess}
+          />
+
+          <SuspendUserModal
+            open={showSuspendDialog}
+            onOpenChange={setShowSuspendDialog}
+            user={userToSuspend!}
+            isSuspending={isSuspending}
+            onConfirm={async () => {
+              if (userToSuspend) {
+                const success = await handleSuspendToggle(userToSuspend.activation_status);
+                if (success) {
+                  setShowSuspendDialog(false);
+                  setUserToSuspend(null);
+                  handleEditSuccess();
+                }
+              }
+            }}
+          />
         </>
       )}
     </div>;

@@ -37,9 +37,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { supabase } from "@/integrations/supabase/client";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
-import { AddAdminModal } from "@/components/AddAdminModal";
-import { EditAdminModal } from "@/components/EditAdminModal";
-import { DeleteAdminModal } from "@/components/DeleteAdminModal";
+import { UserModal } from "@/components/user-management/UserModal";
+import { DeleteUserModal } from "@/components/user-management/DeleteUserModal";
+import { SuspendUserModal } from "@/components/user-management/SuspendUserModal";
 import { useToast } from "@/hooks/use-toast";
 
 interface OrganizationAdmin {
@@ -392,25 +392,34 @@ export default function OrganizationUsers() {
         </CardContent>
       </Card>
 
-      <AddAdminModal
+      <UserModal
         open={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
+        mode="add"
         accountType="organization"
+        accountId={organizationId}
         onSuccess={handleAddAdminSuccess}
       />
 
-      <EditAdminModal
+      <UserModal
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
-        admin={selectedAdmin}
+        mode="edit"
+        user={selectedAdmin || undefined}
         accountType="organization"
+        accountId={organizationId}
         onSuccess={handleEditSuccess}
+        onSuspendClick={() => {}}
+        onDeleteClick={() => {
+          setIsEditModalOpen(false);
+          setIsDeleteModalOpen(true);
+        }}
       />
 
-      <DeleteAdminModal
+      <DeleteUserModal
         open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}
-        admin={selectedAdmin}
+        user={selectedAdmin || undefined}
         accountType="organization"
         onSuccess={handleDeleteSuccess}
       />

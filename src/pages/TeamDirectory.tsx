@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Users, Plus, Phone, Mail, MoreHorizontal } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AddMemberModal } from "@/components/AddMemberModal";
+import { UserModal } from "@/components/user-management/UserModal";
+import { DeleteUserModal } from "@/components/user-management/DeleteUserModal";
 import { useToast } from "@/hooks/use-toast";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
 import { ResendActivationButton } from "@/components/ResendActivationButton";
@@ -174,10 +175,18 @@ export default function OrganizationUsers() {
         onRowsPerPageChange={dataTable.handleRowsPerPageChange}
       />
 
-      <AddMemberModal 
+      <UserModal
         open={modals.add.isOpen}
         onOpenChange={(open) => !open && modals.add.close()}
-        organizationId={id || ''}
+        mode="add"
+        accountType="organization"
+        accountId={id}
+        onSuccess={() => {
+          toast({
+            title: "Member Added",
+            description: "New team member has been added successfully.",
+          });
+        }}
       />
 
       {/* Edit Member Modal */}
