@@ -19,6 +19,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 const Index = () => {
   const { profile } = useUserProfile();
   const tenantId = profile?.profileData?.tenant_id as string | undefined;
+  
   // Redirect users to their tenant/organization dashboards based on role and profile
   useAuthRedirect();
 
