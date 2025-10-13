@@ -3,18 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Building2, Mail, Phone, Users, Filter, Loader2, Copy, ChevronRight } from "lucide-react";
+import { Plus, Building2, Mail, Phone, Users, Loader2, Copy, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAccounts, CreateAccountRequest, Account } from "@/hooks/useAccounts";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { DataTable, ColumnDef } from "@/components/ui/data-table";
+import { useDataTable } from "@/hooks/useDataTable";
 const typeColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   "Enterprise": "default",
   "Organization": "secondary"
@@ -39,11 +39,6 @@ export default function Accounts() {
     canManageAccounts
   } = useAccounts();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState("All Types");
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("All Subtypes");
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
 
   // State for dynamic subtypes
@@ -248,18 +243,115 @@ export default function Accounts() {
     }
   };
 
-  // Filter and pagination logic
-  const filteredAccounts = accounts.filter(account => {
-    const matchesSearch = account.name.toLowerCase().includes(searchTerm.toLowerCase()) || account.email.toLowerCase().includes(searchTerm.toLowerCase()) || account.phone.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTypeFilter = selectedTypeFilter === "All Types" || account.type === selectedTypeFilter;
-    const matchesCategoryFilter = selectedCategoryFilter === "All Subtypes" || account.category === selectedCategoryFilter;
-    return matchesSearch && matchesTypeFilter && matchesCategoryFilter;
-  });
-  const totalPages = Math.ceil(filteredAccounts.length / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const paginatedAccounts = filteredAccounts.slice(startIndex, startIndex + rowsPerPage);
+  // Table state management
   const accountTypes = [...new Set(accounts.map(account => account.type))];
   const accountCategories = [...new Set(accounts.map(account => account.category))].filter(cat => cat !== 'Root Account');
+
+  const tableData = useDataTable({
+    data: accounts,
+    searchableFields: ['name', 'email', 'phone'],
+    filterConfigs: [
+      {
+        key: 'type',
+        label: 'Type',
+        options: accountTypes.map(type => ({ label: type, value: type })),
+      },
+      {
+        key: 'category',
+        label: 'Subtype',
+        options: accountCategories.map(cat => ({ label: cat, value: cat })),
+      },
+    ],
+  });
+
+  // Define table columns
+  const columns: ColumnDef<Account>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (account) => (
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+            <Building2 className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <div className="font-semibold">{account.name}</div>
+            <div className="text-sm text-muted-foreground">Created {account.created}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'type',
+      header: 'Type',
+      render: (account) => (
+        <Badge variant={typeColors[account.type] || "default"}>
+          {account.type}
+        </Badge>
+      ),
+    },
+    {
+      key: 'category',
+      header: 'Subtype',
+      render: (account) => (
+        <Badge variant={categoryColors[account.category] || "default"}>
+          {account.category}
+        </Badge>
+      ),
+    },
+    {
+      key: 'members',
+      header: 'Users',
+      render: (account) => (
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{account.members}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'contact',
+      header: 'Contact',
+      render: (account) => (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm">
+            <Mail className="h-3 w-3 text-muted-foreground" />
+            <span>{account.email}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Phone className="h-3 w-3 text-muted-foreground" />
+            <span>{account.phone}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      className: 'w-12',
+      render: (account) => (
+        <div className="flex items-center gap-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleCopyId(account.id)}>
+                  <Copy className="h-4 w-4" />
+                  <span className="sr-only">Copy Account ID</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Copy Account ID
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleViewAccount(account.id)}>
+            <ChevronRight className="h-4 w-4" />
+            <span className="sr-only">View More</span>
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   // Show loading state
   if (loading) {
@@ -302,149 +394,36 @@ export default function Accounts() {
         </Button>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search accounts by name, email, or phone..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-        </div>
-        <Select value={selectedTypeFilter} onValueChange={setSelectedTypeFilter}>
-          <SelectTrigger className="w-[180px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All Types">All Types</SelectItem>
-            {accountTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-          <SelectTrigger className="w-[180px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All Subtypes">All Subtypes</SelectItem>
-            {accountCategories.map(category => <SelectItem key={category} value={category}>{category}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Accounts Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-semibold">Name</TableHead>
-                <TableHead className="font-semibold">Type</TableHead>
-                <TableHead className="font-semibold">Subtype</TableHead>
-                <TableHead className="font-semibold">Users</TableHead>
-                <TableHead className="font-semibold">Contact</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedAccounts.map(account => <TableRow key={account.id} className="hover:bg-muted/50">
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                        <Building2 className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <div className="font-semibold">{account.name}</div>
-                        <div className="text-sm text-muted-foreground">Created {account.created}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={typeColors[account.type] || "default"}>
-                      {account.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={categoryColors[account.category] || "default"}>
-                      {account.category}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{account.members}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        <span>{account.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone className="h-3 w-3 text-muted-foreground" />
-                        <span>{account.phone}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleCopyId(account.id)}>
-                              <Copy className="h-4 w-4" />
-                              <span className="sr-only">Copy Account ID</span>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            Copy Account ID
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleViewAccount(account.id)}>
-                        <ChevronRight className="h-4 w-4" />
-                        <span className="sr-only">View More</span>
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>)}
-            </TableBody>
-          </Table>
-          
-          {/* Pagination */}
-          <div className="flex items-center justify-between p-4 border-t">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Rows per page:</span>
-              <Select value={rowsPerPage.toString()} onValueChange={value => {
-              setRowsPerPage(Number(value));
-              setCurrentPage(1);
-            }}>
-                <SelectTrigger className="w-16">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {startIndex + 1}-{Math.min(startIndex + rowsPerPage, filteredAccounts.length)} of {filteredAccounts.length}
-              </span>
-              <div className="flex gap-1">
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>
-                  Previous
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>
-                  Next
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <DataTable
+        data={tableData.paginatedData}
+        columns={columns}
+        isLoading={loading}
+        searchPlaceholder="Search accounts by name, email, or phone..."
+        searchValue={tableData.searchTerm}
+        onSearchChange={tableData.handleSearch}
+        filters={[
+          {
+            key: 'type',
+            label: 'Type',
+            options: accountTypes.map(type => ({ label: type, value: type })),
+          },
+          {
+            key: 'category',
+            label: 'Subtype',
+            options: accountCategories.map(cat => ({ label: cat, value: cat })),
+          },
+        ]}
+        filterValues={tableData.filters}
+        onFilterChange={tableData.handleFilter}
+        currentPage={tableData.currentPage}
+        totalPages={tableData.totalPages}
+        rowsPerPage={tableData.rowsPerPage}
+        totalRecords={tableData.totalRecords}
+        onPageChange={tableData.handlePageChange}
+        onRowsPerPageChange={tableData.handleRowsPerPageChange}
+        emptyMessage="No accounts found"
+      />
 
       {/* Add Account Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
