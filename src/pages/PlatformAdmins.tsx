@@ -21,6 +21,8 @@ import { useEmailService } from "@/hooks/useEmailService";
 import { DataTable, type ColumnDef, type FilterConfig } from "@/components/ui/data-table";
 import { useDataTable } from "@/hooks/useDataTable";
 import { useCrudModals } from "@/hooks/useCrudModals";
+import { BulkSelectionToolbar } from "@/components/BulkSelectionToolbar";
+import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
 interface PlatformAdmin {
   id: string;
   user_id: string;
@@ -50,6 +52,7 @@ export default function PlatformAdmins() {
   const modals = useCrudModals<PlatformAdmin>();
   const [selectedAdmins, setSelectedAdmins] = useState<string[]>([]);
   const [isResending, setIsResending] = useState(false);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const {
     sendActivationEmail
   } = useEmailService();
@@ -205,6 +208,12 @@ export default function PlatformAdmins() {
     modals.delete.close();
     setSelectedAdmins([]);
   };
+
+  const handleBulkDeleteSuccess = () => {
+    loadPlatformAdmins();
+    setIsBulkDeleteOpen(false);
+    setSelectedAdmins([]);
+  };
   
   const handleBulkResend = async () => {
     if (selectedAdmins.length === 0) return;
@@ -351,6 +360,27 @@ export default function PlatformAdmins() {
         </Button>
       </div>
 
+      <BulkSelectionToolbar
+        selectedCount={selectedAdmins.length}
+        totalCount={admins.length}
+        onClearSelection={() => setSelectedAdmins([])}
+        actions={[
+          {
+            label: isResending ? 'Resending...' : 'Resend Activation',
+            icon: Send,
+            onClick: handleBulkResend,
+            disabled: isResending,
+            variant: 'outline',
+          },
+          {
+            label: 'Delete Selected',
+            icon: Trash2,
+            onClick: () => setIsBulkDeleteOpen(true),
+            variant: 'destructive',
+          },
+        ]}
+      />
+
       <DataTable
         data={dataTable.paginatedData}
         columns={columns}
@@ -368,18 +398,6 @@ export default function PlatformAdmins() {
         totalRecords={dataTable.totalRecords}
         onPageChange={dataTable.handlePageChange}
         onRowsPerPageChange={dataTable.handleRowsPerPageChange}
-        actions={
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2" 
-            onClick={handleBulkResend} 
-            disabled={selectedAdmins.length === 0 || isResending}
-          >
-            <Send className="h-4 w-4" />
-            {isResending ? 'Resending...' : `Resend Activation Email${selectedAdmins.length ? ` (${selectedAdmins.length})` : ''}`}
-          </Button>
-        }
       />
 
       {/* Add Admin Dialog */}
@@ -469,6 +487,24 @@ export default function PlatformAdmins() {
 
       {/* Delete Admin Dialog */}
       {modals.selected && <DeleteAdminModal open={modals.delete.isOpen} onOpenChange={(open) => !open && modals.delete.close()} admin={modals.selected as any} accountType="platform" onSuccess={handleDeleteSuccess} />}
-      {/* BulkDelete coming soon */}
+      
+      {/* Bulk Delete Admin Dialog */}
+      {selectedAdmins.length > 0 && (
+        <BulkDeleteAdminModal
+          open={isBulkDeleteOpen}
+          onOpenChange={setIsBulkDeleteOpen}
+          admins={admins.filter(a => selectedAdmins.includes(a.id)).map(a => ({
+            id: a.id,
+            user_id: a.user_id,
+            firstName: a.firstName,
+            lastName: a.lastName,
+            name: `${a.firstName} ${a.lastName}`,
+            email: a.email,
+            role: a.role,
+          }))}
+          accountType="platform"
+          onSuccess={handleBulkDeleteSuccess}
+        />
+      )}
     </div>;
 }
