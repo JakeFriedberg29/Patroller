@@ -1500,12 +1500,7 @@ export type Database = {
         | "enterprise_user"
         | "organization_user"
         | "patroller"
-      subscription_tier:
-        | "free"
-        | "basic"
-        | "professional"
-        | "enterprise"
-        | "custom"
+      subscription_tier: "bronze" | "silver" | "gold" | "platinum"
       user_status:
         | "pending"
         | "active"
@@ -1674,13 +1669,7 @@ export const Constants = {
         "organization_user",
         "patroller",
       ],
-      subscription_tier: [
-        "free",
-        "basic",
-        "professional",
-        "enterprise",
-        "custom",
-      ],
+      subscription_tier: ["bronze", "silver", "gold", "platinum"],
       user_status: [
         "pending",
         "active",
