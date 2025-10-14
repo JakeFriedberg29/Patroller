@@ -107,9 +107,14 @@ export function DataTable<T extends Record<string, any>>({
                 onValueChange={(value) => onFilterChange?.(filter.key, value)}
               >
                 <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder={filter.label} />
+                  <SelectValue placeholder={`${filter.label}: All`}>
+                    {filterValues[filter.key] && filterValues[filter.key] !== 'all'
+                      ? `${filter.label}: ${filter.options.find(opt => opt.value === filterValues[filter.key])?.label || filterValues[filter.key]}`
+                      : `${filter.label}: All`}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
                   {filter.options.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
