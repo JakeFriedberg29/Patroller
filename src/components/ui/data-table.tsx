@@ -24,6 +24,7 @@ export interface ColumnDef<T> {
   key: string;
   header: string;
   render?: (row: T) => React.ReactNode;
+  cell?: (row: T) => React.ReactNode;
   className?: string;
 }
 
@@ -154,7 +155,7 @@ export function DataTable<T extends Record<string, any>>({
                   <TableRow key={index}>
                     {columns.map((column) => (
                       <TableCell key={column.key} className={column.className}>
-                        {column.render ? column.render(row) : row[column.key]}
+                        {column.cell ? column.cell(row) : column.render ? column.render(row) : row[column.key]}
                       </TableCell>
                     ))}
                   </TableRow>
