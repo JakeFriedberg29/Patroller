@@ -101,22 +101,26 @@ export function DataTable<T extends Record<string, any>>({
               </div>
             )}
             {filters.map((filter) => (
-              <Select
-                key={filter.key}
-                value={filterValues[filter.key] || 'all'}
-                onValueChange={(value) => onFilterChange?.(filter.key, value)}
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder={filter.label} />
-                </SelectTrigger>
-                <SelectContent>
-                  {filter.options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div key={filter.key} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                  {filter.label}:
+                </span>
+                <Select
+                  value={filterValues[filter.key] || 'all'}
+                  onValueChange={(value) => onFilterChange?.(filter.key, value)}
+                >
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filter.options.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             ))}
           </div>
         )}
