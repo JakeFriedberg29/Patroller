@@ -12,7 +12,6 @@ export interface Incident {
   priority: 'low' | 'medium' | 'high' | 'critical' | 'emergency';
   status: string;
   organization_id: string;
-  location_id?: string;
   reported_by: string;
   resolved_by?: string;
   occurred_at: string;

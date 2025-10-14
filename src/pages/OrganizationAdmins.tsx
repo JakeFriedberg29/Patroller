@@ -29,7 +29,6 @@ import {
   Phone,
   Filter,
   Calendar,
-  MapPin,
   Edit, 
   Trash2
 } from "lucide-react";
@@ -51,8 +50,6 @@ interface OrganizationAdmin {
   phone: string;
   role: string;
   activation_status: "pending" | "active" | "disabled" | "deleted";
-  
-  location: string;
   lastLogin: string;
   createdDate: string;
   permissions: string[];
@@ -132,7 +129,6 @@ export default function OrganizationUsers() {
           phone: '',
           role: accountUser.access_role === 'write' ? 'Admin' : 'User',
           activation_status: status as "pending" | "active" | "disabled" | "deleted",
-          location: '',
           lastLogin: '',
           createdDate: '',
           permissions: accountUser.access_role === 'write' ? ['Team Management', 'Report Management'] : ['Read Only'],
@@ -259,7 +255,6 @@ export default function OrganizationUsers() {
                 <TableRow>
                   <TableHead>Administrator</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Login</TableHead>
                   <TableHead>Permissions</TableHead>
@@ -293,12 +288,6 @@ export default function OrganizationUsers() {
                           <Phone className="h-4 w-4" />
                           {admin.phone || 'Not provided'}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        {admin.location || 'Not assigned'}
                       </div>
                     </TableCell>
                     <TableCell>

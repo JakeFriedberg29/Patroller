@@ -22,9 +22,7 @@ const orgEnumValues: string[] = [
   "Mountain Rescue",
   "Search and Rescue",
   "Park Rangers",
-  "Fire Department",
-  "EMS",
-  "Police Department"
+  "EMS"
 ];
 
 export default function Subtypes() {

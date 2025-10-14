@@ -28,7 +28,6 @@ interface EnterpriseAdmin {
   phone: string;
   role: string;
   activation_status: "pending" | "active" | "disabled" | "deleted";
-  location: string;
   lastLogin: string;
   createdDate: string;
   permissions: string[];
@@ -128,7 +127,6 @@ export default function EnterpriseUsers() {
           phone: '',
           role: accountUser.access_role === 'write' ? 'Admin' : 'User',
           activation_status: status as "pending" | "active" | "disabled" | "deleted",
-          location: '',
           lastLogin: '',
           createdDate: '',
           permissions: accountUser.access_role === 'write' ? ['User Management', 'Organization Management'] : ['Read Only'],

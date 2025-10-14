@@ -19,7 +19,6 @@ export interface OrganizationSummary {
   users: number;
   status: string;
   lastActivity: string;
-  location?: any;
   email?: string;
   phone?: string;
   created?: string;
@@ -110,7 +109,6 @@ export const useEnterpriseAnalytics = (tenantId?: string) => {
           users: userCount || 0,
           status: 'Active',
           lastActivity: '—',
-          location: org.address,
           email: (org as any).contact_email || 'N/A',
           phone: (org as any).contact_phone || 'N/A',
           created: org.created_at ? new Date(org.created_at as any).toLocaleDateString() : undefined,

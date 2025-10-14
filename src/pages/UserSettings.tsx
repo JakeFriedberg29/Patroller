@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Phone, MapPin, Bell, Shield, Key, Save, Camera } from "lucide-react";
+import { User, Mail, Phone, Bell, Shield, Key, Save, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 interface FormProfile {
   id: string;
@@ -21,7 +21,6 @@ interface FormProfile {
   email: string;
   phone: string;
   title: string;
-  location: string;
   bio: string;
   avatar: string;
   timezone: string;
@@ -64,7 +63,6 @@ export default function UserSettings() {
     email: "",
     phone: "",
     title: "",
-    location: "",
     bio: "",
     avatar: "",
     timezone: "America/New_York",
@@ -99,7 +97,6 @@ export default function UserSettings() {
         email: profile.email,
         phone: profile.phone,
         title: profile.role,
-        location: profile.profileData?.location || '',
         bio: profile.profileData?.bio || '',
         avatar: profile.profileData?.avatar_url || '',
         timezone: profile.profileData?.timezone || 'America/New_York',
@@ -133,7 +130,6 @@ export default function UserSettings() {
         phone: formProfile.phone,
         profile_data: {
           ...profile.profileData,
-          location: formProfile.location,
           bio: formProfile.bio,
           timezone: formProfile.timezone,
           language: formProfile.language
