@@ -283,12 +283,12 @@ export default function Repository() {
       ),
     },
     {
-      key: 'name' as const,
+      key: 'actions' as const,
       header: 'Actions',
       cell: (item: ReportTemplate) => (
         <div className="flex justify-end gap-1">
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openAssignModal(item.id)}>
-            <LayersIcon className="h-4 w-4" />
+            <Layers className="h-4 w-4" />
             <span className="sr-only">Assign Subtypes</span>
           </Button>
           {canDeleteReport((item.status || 'draft') as ReportStatus) && (
