@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePlatformAdminAssignments } from "@/hooks/usePlatformAdminAssignments";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -20,8 +21,8 @@ const ProtectedRoute = ({ children, requireAssignment, accountType }: ProtectedR
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner />
       </div>
     );
   }
@@ -34,8 +35,8 @@ const ProtectedRoute = ({ children, requireAssignment, accountType }: ProtectedR
   if (requireAssignment && isPlatformAdmin) {
     if (loadingAssignments) {
       return (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <LoadingSpinner />
         </div>
       );
     }
