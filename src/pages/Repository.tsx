@@ -283,7 +283,7 @@ export default function Repository() {
       ),
     },
     {
-      key: 'id' as const,
+      key: 'name' as const,
       header: 'Actions',
       cell: (item: ReportTemplate) => (
         <div className="flex justify-end gap-1">
