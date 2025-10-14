@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { DateRange } from 'react-day-picker';
 
-export interface MissionControlData {
+export interface OrganizationAnalyticsData {
   totalUsers: number;
   totalReportsSubmitted: number;
   avgTimeToReportHours: number;
@@ -12,8 +12,8 @@ export interface MissionControlData {
   reportsByType: { type: string; count: number }[];
 }
 
-export const useMissionControlData = (organizationId?: string, dateRange?: DateRange) => {
-  const [data, setData] = useState<MissionControlData>({
+export const useOrganizationAnalytics = (organizationId?: string, dateRange?: DateRange) => {
+  const [data, setData] = useState<OrganizationAnalyticsData>({
     totalUsers: 0,
     totalReportsSubmitted: 0,
     avgTimeToReportHours: 0,
@@ -23,7 +23,7 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchMissionControlData = async () => {
+  const fetchAnalyticsData = async () => {
     if (!organizationId || organizationId === "undefined") return;
     
     try {
@@ -87,10 +87,10 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
       });
 
     } catch (error) {
-      console.error('Error fetching mission control data:', error);
+      console.error('Error fetching analytics data:', error);
       toast({
         title: "Error",
-        description: "Failed to load dashboard data",
+        description: "Failed to load analytics data",
         variant: "destructive"
       });
     } finally {
@@ -99,8 +99,8 @@ export const useMissionControlData = (organizationId?: string, dateRange?: DateR
   };
 
   useEffect(() => {
-    fetchMissionControlData();
+    fetchAnalyticsData();
   }, [organizationId, dateRange?.from?.toString(), dateRange?.to?.toString()]);
 
-  return { data, loading, refetch: fetchMissionControlData };
+  return { data, loading, refetch: fetchAnalyticsData };
 };

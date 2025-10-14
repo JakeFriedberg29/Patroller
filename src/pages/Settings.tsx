@@ -16,7 +16,7 @@ import {
 import { Settings as SettingsIcon, Save, Mail, Phone, MapPin, Building2, UserX, Trash2, Users, Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAccounts, Account } from "@/hooks/useAccounts";
-import { useEnterpriseData } from "@/hooks/useEnterpriseData";
+import { useEnterpriseAnalytics } from "@/hooks/useEnterpriseAnalytics";
 import { supabase } from "@/integrations/supabase/client";
 import { safeMutation } from "@/lib/safeMutation";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -262,7 +262,7 @@ export default function Settings() {
     organizations: enterpriseOrganizations,
     loading: loadingEnterpriseOrgs,
     refetch: refetchEnterpriseData
-  } = useEnterpriseData((currentAccount?.type === 'Enterprise' ? currentAccount?.id : undefined) as string | undefined);
+  } = useEnterpriseAnalytics((currentAccount?.type === 'Enterprise' ? currentAccount?.id : undefined) as string | undefined);
 
   // Map database organization types to UI categories (duplicate of internal map in useAccounts)
   const mapOrgTypeToCategory = (orgType?: string): string => {

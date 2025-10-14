@@ -9,18 +9,18 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
-import { useMissionControlData } from "@/hooks/useMissionControlData";
+import { useOrganizationAnalytics } from "@/hooks/useOrganizationAnalytics";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
-export default function MissionControl() {
+export default function OrganizationAnalytics() {
   const { id } = useParams();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(2024, 0, 1),
     to: new Date()
   });
   
-  const { data, loading, refetch } = useMissionControlData(id, dateRange);
+  const { data, loading, refetch } = useOrganizationAnalytics(id, dateRange);
 
   return (
     <div className="space-y-6">

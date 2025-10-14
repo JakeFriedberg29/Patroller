@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Building2, Search, Users, Filter, Mail, Phone, Copy, ChevronRight } from "lucide-react";
-import { useEnterpriseData } from "@/hooks/useEnterpriseData";
+import { useEnterpriseAnalytics } from "@/hooks/useEnterpriseAnalytics";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -38,7 +38,7 @@ export default function EnterpriseOrganizations() {
   const { id: tenantId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { organizations, loading } = useEnterpriseData(tenantId);
+  const { organizations, loading } = useEnterpriseAnalytics(tenantId);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("All Subtypes");

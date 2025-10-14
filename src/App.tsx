@@ -20,7 +20,7 @@ const PlatformAdmins = lazy(() => import("./pages/PlatformAdmins"));
 const Subtypes = lazy(() => import("./pages/Subtypes"));
 const Logs = lazy(() => import("./pages/Logs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const MissionControl = lazy(() => import("./pages/MissionControl"));
+const OrganizationAnalytics = lazy(() => import("./pages/OrganizationAnalytics"));
 const OrganizationUsers = lazy(() => import("./pages/OrganizationUsers"));
 const OrganizationReports = lazy(() => import("./pages/OrganizationReports"));
 const OrganizationLogs = lazy(() => import("./pages/OrganizationLogs"));
@@ -28,7 +28,7 @@ const CreateReport = lazy(() => import("./pages/CreateReport"));
 const ReportDetail = lazy(() => import("./pages/ReportDetail"));
 const Settings = lazy(() => import("./pages/Settings"));
 const UserSettings = lazy(() => import("./pages/UserSettings"));
-const EnterpriseView = lazy(() => import("./pages/EnterpriseView"));
+const EnterpriseAnalytics = lazy(() => import("./pages/EnterpriseAnalytics"));
 const EnterpriseOrganizations = lazy(() => import("./pages/EnterpriseOrganizations"));
 const EnterpriseUsers = lazy(() => import("./pages/EnterpriseUsers"));
 const EnterpriseLogs = lazy(() => import("./pages/EnterpriseLogs"));
@@ -82,9 +82,7 @@ const App = () => (
                           <Route index element={<Index />} />
                           <Route path="accounts" element={<Accounts />} />
                           <Route path="organization/:id" element={<ProtectedRoute requireAssignment accountType="Organization"><AccountDetail /></ProtectedRoute>} />
-                          <Route path="organization/:id/analytics" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
-                          {/* Backward-compat: support old path */}
-                          <Route path="organization/:id/mission-control" element={<ProtectedRoute requireAssignment accountType="Organization"><MissionControl /></ProtectedRoute>} />
+                          <Route path="organization/:id/analytics" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationAnalytics /></ProtectedRoute>} />
                           <Route path="organization/:id/patroller-dashboard" element={<ProtectedRoute requireAssignment accountType="Organization"><PatrollerDashboard /></ProtectedRoute>} />
                           <Route path="organization/:id/users" element={<ProtectedRoute requireAssignment accountType="Organization"><OrganizationUsers /></ProtectedRoute>} />
                           {/* Backward-compat: old Team Directory path */}
@@ -96,9 +94,7 @@ const App = () => (
                           <Route path="organization/:id/licenses" element={<ProtectedRoute requireAssignment accountType="Organization"><LicensesCatalog /></ProtectedRoute>} />
                           <Route path="organization/:id/billing" element={<ProtectedRoute requireAssignment accountType="Organization"><Billing /></ProtectedRoute>} />
                           <Route path="organization/:id/settings" element={<ProtectedRoute requireAssignment accountType="Organization"><Settings /></ProtectedRoute>} />
-                          <Route path="enterprises/:id/analytics" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseView /></ProtectedRoute>} />
-                          {/* Backward-compat: support old path */}
-                          <Route path="enterprises/:id/enterprise-view" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseView /></ProtectedRoute>} />
+                          <Route path="enterprises/:id/analytics" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseAnalytics /></ProtectedRoute>} />
                           <Route path="enterprises/:id/organizations" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseOrganizations /></ProtectedRoute>} />
                           <Route path="enterprises/:id/users" element={<ProtectedRoute requireAssignment accountType="Enterprise"><EnterpriseUsers /></ProtectedRoute>} />
                           {/* Backward-compat: old Enterprise Admins path */}

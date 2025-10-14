@@ -5,17 +5,17 @@ import { Building2, Users, AlertTriangle, CheckCircle, Activity, TrendingUp, Plu
 import { MetricCard } from "@/components/ui/metric-card";
 import { useToast } from "@/hooks/use-toast";
 import { useParams } from "react-router-dom";
-import { useEnterpriseData } from "@/hooks/useEnterpriseData";
+import { useEnterpriseAnalytics } from "@/hooks/useEnterpriseAnalytics";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
-export default function EnterpriseView() {
+export default function EnterpriseAnalytics() {
   const { id } = useParams();
   const { toast } = useToast();
   const { isPlatformAdmin } = usePermissions();
   
-  const { enterpriseData, organizations, reportsByOrganization, loading } = useEnterpriseData(id);
+  const { enterpriseData, organizations, reportsByOrganization, loading } = useEnterpriseAnalytics(id);
 
   if (loading) {
     return (

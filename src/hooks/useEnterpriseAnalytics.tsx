@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export interface EnterpriseData {
+export interface EnterpriseAnalyticsData {
   id: string;
   name: string;
   description?: string;
@@ -31,14 +31,14 @@ export interface ReportsByOrganizationDatum {
   count: number;
 }
 
-export const useEnterpriseData = (tenantId?: string) => {
-  const [enterpriseData, setEnterpriseData] = useState<EnterpriseData | null>(null);
+export const useEnterpriseAnalytics = (tenantId?: string) => {
+  const [enterpriseData, setEnterpriseData] = useState<EnterpriseAnalyticsData | null>(null);
   const [organizations, setOrganizations] = useState<OrganizationSummary[]>([]);
   const [reportsByOrganization, setReportsByOrganization] = useState<ReportsByOrganizationDatum[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchEnterpriseData = async () => {
+  const fetchAnalyticsData = async () => {
     if (!tenantId || tenantId === "undefined") return;
     
     try {
@@ -162,10 +162,10 @@ export const useEnterpriseData = (tenantId?: string) => {
       setReportsByOrganization(byOrg);
 
     } catch (error) {
-      console.error('Error fetching enterprise data:', error);
+      console.error('Error fetching analytics data:', error);
       toast({
         title: "Error",
-        description: "Failed to load enterprise data",
+        description: "Failed to load analytics data",
         variant: "destructive"
       });
     } finally {
@@ -174,7 +174,7 @@ export const useEnterpriseData = (tenantId?: string) => {
   };
 
   useEffect(() => {
-    fetchEnterpriseData();
+    fetchAnalyticsData();
   }, [tenantId]);
 
   return { 
@@ -182,6 +182,6 @@ export const useEnterpriseData = (tenantId?: string) => {
     organizations, 
     reportsByOrganization,
     loading, 
-    refetch: fetchEnterpriseData 
+    refetch: fetchAnalyticsData 
   };
 };
