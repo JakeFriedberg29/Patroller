@@ -50,10 +50,17 @@ export function useUserModal({ accountType, accountId, mode, userId }: UserModal
         tenantIdToUse = await resolveTenantId(accountId);
       }
       
+      // Determine role based on account type
+      const role = accountType === "platform" 
+        ? "Platform Admin" 
+        : accountType === "enterprise" 
+        ? "Enterprise User" 
+        : "Organization User";
+      
       const result = await createUser({
         email: values.email,
         fullName: values.fullName,
-        role: 'User',
+        role,
         accessRole: values.accessRole || 'read',
         tenantId: tenantIdToUse,
         organizationId: accountType === "organization" ? accountId : undefined
