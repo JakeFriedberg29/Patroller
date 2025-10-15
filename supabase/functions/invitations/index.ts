@@ -83,8 +83,8 @@ serve(async (req: Request): Promise<Response> => {
       // Not fatal if we end up using Supabase invite; continue
     }
 
-    // Use proper base URL - prefer origin from request, otherwise use the Lovable project URL
-    const baseUrl = origin || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.lovableproject.com';
+    // Use proper base URL - prefer PUBLIC_SITE_URL, then request origin, else Patroller app domain
+    const baseUrl = Deno.env.get('PUBLIC_SITE_URL') || origin || 'https://app.patroller.io';
     const activationUrl = tokenData?.activation_token
       ? `${baseUrl}/activate?token=${tokenData.activation_token}`
       : `${baseUrl}/activate`;
@@ -129,7 +129,7 @@ The Patroller Team
             user_id: userId,
             invited_by_admin: true,
           },
-          redirectTo: `${baseUrl}/activate`,
+          redirectTo: `${baseUrl}/auth`,
         }
       );
 

@@ -27,7 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     const canUseResend = !!resendApiKey;
-    const resendFrom = Deno.env.get('RESEND_FROM') || 'Platform Admin <onboarding@resend.dev>';
+    const resendFrom = Deno.env.get('RESEND_FROM') || 'Patroller <notifications@patroller.io>';
 
     const resend = canUseResend ? new Resend(resendApiKey as string) : null;
 
@@ -68,8 +68,8 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Failed to generate activation token');
     }
 
-    // Create activation URL
-    const baseUrl = origin || 'https://response-chain.lovable.app';
+    // Create activation URL using PUBLIC_SITE_URL or origin, defaulting to Patroller domain
+    const baseUrl = Deno.env.get('PUBLIC_SITE_URL') || origin || 'https://app.patroller.io';
     const activationUrl = `${baseUrl}/activate?token=${tokenData.activation_token}`;
 
     // Prepare email content

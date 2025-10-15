@@ -50,7 +50,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     try {
       // Use Supabase Auth to invite user by email
-      const baseUrl = req.headers.get('origin') || 'https://6c039858-7863-42e5-8960-ab1a72f8f4e3.sandbox.lovable.dev';
+      const baseUrl = Deno.env.get('PUBLIC_SITE_URL') || req.headers.get('origin') || 'https://app.patroller.io';
       
       const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
         email,
