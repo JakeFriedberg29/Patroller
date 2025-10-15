@@ -20,7 +20,10 @@ export const useEmailService = () => {
 
   const invokeCreateInvitation = async (request: SendEmailRequest) => {
     const { data, error } = await supabase.functions.invoke('invitations', {
-      body: request
+      body: {
+        ...request,
+        organizationName: request.organizationName || 'Patroller Platform'
+      }
     });
     return { data, error };
   };

@@ -79,18 +79,26 @@ serve(async (req: Request): Promise<Response> => {
       .rpc('generate_activation_token', { p_user_id: userId });
 
     if (tokenError || !tokenData?.success) {
-      console.error('Error generating activation token:', tokenError);
-      // Not fatal if we end up using Supabase invite; continue
+      console.error('Error generating activation token:', tokenError || tokenData);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Failed to generate activation token. User may not be in pending status or token generation failed.',
+          details: tokenError?.message || tokenData?.error || 'Unknown error'
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
 
     // Use proper base URL - prefer PUBLIC_SITE_URL, then request origin, else Patroller app domain
     const baseUrl = Deno.env.get('PUBLIC_SITE_URL') || origin || 'https://app.patroller.io';
-    const activationUrl = tokenData?.activation_token
-      ? `${baseUrl}/activate?token=${tokenData.activation_token}`
-      : `${baseUrl}/activate`;
+    const activationUrl = `${baseUrl}/activate?token=${tokenData.activation_token}`;
 
     const firstName = fullName.split(' ')[0];
-    const orgName = organizationName || 'the organization';
+    const orgName = organizationName || 'Patroller Platform';
 
     // Render React Email template
     const emailHtml = await renderAsync(

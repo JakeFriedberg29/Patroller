@@ -283,7 +283,7 @@ export const useAccounts = () => {
           p_org_type: mapCategoryToOrgType(accountData.category) as any,
           p_admin_email: accountData.primaryEmail,
           p_admin_name: `${accountData.name} Administrator`,
-          p_subscription_tier: 'enterprise'
+          p_subscription_tier: 'platinum'
         });
 
         if (error) throw error;
