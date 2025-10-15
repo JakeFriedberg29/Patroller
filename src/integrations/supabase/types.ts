@@ -1432,6 +1432,17 @@ export type Database = {
         Args: { p_activation_token: string; p_password: string }
         Returns: Json
       }
+      user_create_with_activation: {
+        Args: {
+          p_email: string
+          p_full_name: string
+          p_organization_id?: string
+          p_phone?: string
+          p_role_type?: Database["public"]["Enums"]["role_type"]
+          p_tenant_id: string
+        }
+        Returns: Json
+      }
       user_generate_activation_token: {
         Args: { p_user_id: string }
         Returns: Json
