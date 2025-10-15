@@ -93,8 +93,9 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Use proper base URL - prefer PUBLIC_SITE_URL, then request origin, else Patroller app domain
-    const baseUrl = Deno.env.get('PUBLIC_SITE_URL') || origin || 'https://app.patroller.io';
+    // Use Patroller branded domain - prefer PUBLIC_SITE_URL env, fallback to Patroller domain
+    // Don't use request origin to avoid development/staging URLs in production emails
+    const baseUrl = Deno.env.get('PUBLIC_SITE_URL') || 'https://app.patroller.io';
     const activationUrl = `${baseUrl}/activate?token=${tokenData.activation_token}`;
 
     const firstName = fullName.split(' ')[0];
