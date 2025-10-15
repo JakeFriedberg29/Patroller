@@ -68,8 +68,8 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Failed to generate activation token');
     }
 
-    // Create activation URL using PUBLIC_SITE_URL or origin, defaulting to Patroller domain
-    const baseUrl = Deno.env.get('PUBLIC_SITE_URL') || origin || 'https://app.patroller.io';
+    // Create activation URL using PUBLIC_SITE_URL, defaulting to console.patroller.io
+    const baseUrl = Deno.env.get('PUBLIC_SITE_URL') || 'https://console.patroller.io';
     const activationUrl = `${baseUrl}/activate?token=${tokenData.activation_token}`;
 
     // Prepare email content

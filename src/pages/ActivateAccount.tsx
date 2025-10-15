@@ -18,6 +18,7 @@ const ActivateAccount = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [token, setToken] = useState<string | null>(null);
+  const passwordsValid = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
 
   useEffect(() => {
     const t = searchParams.get('token');
@@ -86,7 +87,10 @@ const ActivateAccount = () => {
                 <label htmlFor="confirm-password" className="text-sm font-medium">Confirm Password</label>
                 <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter your password" />
               </div>
-              <Button className="w-full" onClick={() => token && activateAccount(token)} disabled={!token}>
+              {!passwordsValid && (
+                <p className="text-sm text-destructive">Passwords must be non-empty and match.</p>
+              )}
+              <Button className="w-full" onClick={() => token && passwordsValid && activateAccount(token)} disabled={!token || !passwordsValid}>
                 Activate Account
               </Button>
             </div>
