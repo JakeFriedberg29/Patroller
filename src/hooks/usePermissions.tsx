@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "./useUserProfile";
-import { queryKeys } from "@/lib/queryClient";
+import { queryKeys, queryConfig } from "@/lib/queryClient";
+import { useMemo } from "react";
 
 interface PermissionsData {
   hasTenantWrite: boolean;
@@ -65,6 +66,7 @@ export const usePermissions = () => {
       profile?.profileData?.organization_id
     ),
     enabled: !!profile?.id && !!profile?.profileData?.tenant_id,
+    ...queryConfig.permissions, // 5 minute stale time
     initialData: {
       hasTenantWrite: false,
       hasTenantRead: false,
@@ -80,14 +82,17 @@ export const usePermissions = () => {
   const isActiveAdmin = activePersona === 'admin';
   const isActivePatroller = activePersona === 'patroller';
 
-  const canManageUsers = isActiveAdmin && (isPlatformAdmin || permissions.hasTenantWrite || permissions.hasOrgWrite);
-  const canManageIncidents = isActiveAdmin ? (isPlatformAdmin || permissions.hasOrgWrite) : isActivePatroller && isPatroller;
-  const canReportIncidents = isActivePatroller && isPatroller;
-  const canSubmitReports = isActivePatroller && isPatroller;
-  const canViewAllData = isActiveAdmin && isPlatformAdmin;
-  const canManageOrganizations = isActiveAdmin && (isPlatformAdmin || permissions.hasTenantWrite);
-  const canManageEnterprise = isActiveAdmin && (isPlatformAdmin || permissions.hasTenantWrite);
-  const canManageOrgSettings = isActiveAdmin && (isPlatformAdmin || permissions.hasOrgWrite);
+  // Memoize derived capabilities to prevent unnecessary re-renders
+  const capabilities = useMemo(() => ({
+    canManageUsers: isActiveAdmin && (isPlatformAdmin || permissions.hasTenantWrite || permissions.hasOrgWrite),
+    canManageIncidents: isActiveAdmin ? (isPlatformAdmin || permissions.hasOrgWrite) : isActivePatroller && isPatroller,
+    canReportIncidents: isActivePatroller && isPatroller,
+    canSubmitReports: isActivePatroller && isPatroller,
+    canViewAllData: isActiveAdmin && isPlatformAdmin,
+    canManageOrganizations: isActiveAdmin && (isPlatformAdmin || permissions.hasTenantWrite),
+    canManageEnterprise: isActiveAdmin && (isPlatformAdmin || permissions.hasTenantWrite),
+    canManageOrgSettings: isActiveAdmin && (isPlatformAdmin || permissions.hasOrgWrite),
+  }), [isActiveAdmin, isActivePatroller, isPlatformAdmin, isPatroller, permissions]);
 
   return {
     // core actors
@@ -102,15 +107,8 @@ export const usePermissions = () => {
     // new access model
     ...permissions,
 
-    // capabilities
-    canManageUsers,
-    canManageIncidents,
-    canViewAllData,
-    canManageOrganizations,
-    canManageEnterprise,
-    canReportIncidents,
-    canSubmitReports,
-    canManageOrgSettings,
+    // capabilities (memoized)
+    ...capabilities,
 
     profile
   };

@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Trash2, GripVertical } from "lucide-react";
 import { ReportDivider } from "@/components/ReportDivider";
 import { ReportPageBreak } from "@/components/ReportPageBreak";
+import { memo, useCallback, useMemo } from "react";
 
 export type FieldType = 'short_answer' | 'paragraph' | 'date' | 'checkbox' | 'dropdown' | 'file_upload' | 'divider' | 'page_break';
 export type FieldWidth = '1/3' | '1/2' | 'full';
@@ -33,13 +34,16 @@ interface FieldEditorProps {
   addFieldRow: (type: FieldType, insertAfterIndex?: number) => void;
 }
 
-export function FieldEditor({ 
+export const FieldEditor = memo(function FieldEditor({ 
   row, 
   index,
   updateFieldRow, 
   removeFieldRow,
   addFieldRow 
 }: FieldEditorProps) {
+  // Memoize sortable config
+  const sortableConfig = useMemo(() => ({ id: row.id }), [row.id]);
+  
   const {
     attributes,
     listeners,
@@ -47,13 +51,50 @@ export function FieldEditor({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: row.id });
+  } = useSortable(sortableConfig);
 
-  const style = {
+  const style = useMemo(() => ({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-  };
+  }), [transform, transition, isDragging]);
+
+  // Memoize callbacks
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    updateFieldRow(row.id, { name: e.target.value });
+  }, [row.id, updateFieldRow]);
+
+  const handleTypeChange = useCallback((v: string) => {
+    updateFieldRow(row.id, { type: v as FieldType });
+  }, [row.id, updateFieldRow]);
+
+  const handleWidthChange = useCallback((v: string) => {
+    updateFieldRow(row.id, { width: v as FieldWidth });
+  }, [row.id, updateFieldRow]);
+
+  const handleRequiredChange = useCallback((checked: boolean) => {
+    updateFieldRow(row.id, { required: checked });
+  }, [row.id, updateFieldRow]);
+
+  const handleLabelChange = useCallback((label: string) => {
+    updateFieldRow(row.id, { label });
+  }, [row.id, updateFieldRow]);
+
+  const handleRemove = useCallback(() => {
+    removeFieldRow(row.id);
+  }, [row.id, removeFieldRow]);
+
+  const handleMultiSelectChange = useCallback((value: string) => {
+    updateFieldRow(row.id, { multiSelect: value === "multi" });
+  }, [row.id, updateFieldRow]);
+
+  const handleOptionsChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    updateFieldRow(row.id, { options: e.target.value.split('\n') });
+  }, [row.id, updateFieldRow]);
+
+  const handleAddField = useCallback((type: string) => {
+    addFieldRow(type as FieldType, index);
+  }, [addFieldRow, index]);
 
   return (
     <div ref={setNodeRef} style={style} className="space-y-4">
@@ -61,7 +102,7 @@ export function FieldEditor({
         <div className="relative">
           <ReportDivider 
             label={row.label} 
-            onLabelChange={(label) => updateFieldRow(row.id, { label })} 
+            onLabelChange={handleLabelChange} 
           />
           <div className="absolute top-2 left-2 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
             <GripVertical className="h-5 w-5 text-muted-foreground" />
@@ -69,7 +110,7 @@ export function FieldEditor({
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => removeFieldRow(row.id)} 
+            onClick={handleRemove} 
             className="absolute top-2 right-2 text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
@@ -79,7 +120,7 @@ export function FieldEditor({
         <div className="relative">
           <ReportPageBreak 
             label={row.label} 
-            onLabelChange={(label) => updateFieldRow(row.id, { label })} 
+            onLabelChange={handleLabelChange} 
           />
           <div className="absolute top-2 left-2 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
             <GripVertical className="h-5 w-5 text-muted-foreground" />
@@ -87,7 +128,7 @@ export function FieldEditor({
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => removeFieldRow(row.id)} 
+            onClick={handleRemove} 
             className="absolute top-2 right-2 text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
@@ -107,12 +148,12 @@ export function FieldEditor({
               <Input 
                 placeholder="Enter field name" 
                 value={row.name} 
-                onChange={(e) => updateFieldRow(row.id, { name: e.target.value })} 
+                onChange={handleNameChange} 
               />
             </div>
             <div className="space-y-2">
               <Label>Field Type</Label>
-              <Select value={row.type} onValueChange={(v) => updateFieldRow(row.id, { type: v as FieldType })}>
+              <Select value={row.type} onValueChange={handleTypeChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select field type" />
                 </SelectTrigger>
@@ -128,7 +169,7 @@ export function FieldEditor({
             </div>
             <div className="space-y-2">
               <Label>Field Width</Label>
-              <Select value={row.width || 'full'} onValueChange={(v) => updateFieldRow(row.id, { width: v as FieldWidth })}>
+              <Select value={row.width || 'full'} onValueChange={handleWidthChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select width" />
                 </SelectTrigger>
@@ -145,7 +186,7 @@ export function FieldEditor({
             <Checkbox 
               id={`required-${row.id}`}
               checked={row.required} 
-              onCheckedChange={(checked) => updateFieldRow(row.id, { required: Boolean(checked) })} 
+              onCheckedChange={handleRequiredChange} 
             />
             <Label htmlFor={`required-${row.id}`} className="text-sm">
               Required field
@@ -157,7 +198,7 @@ export function FieldEditor({
               <Label>Selection Type</Label>
               <RadioGroup 
                 value={row.multiSelect ? "multi" : "single"} 
-                onValueChange={(value) => updateFieldRow(row.id, { multiSelect: value === "multi" })}
+                onValueChange={handleMultiSelectChange}
                 className="flex gap-6"
               >
                 <div className="flex items-center space-x-2">
@@ -178,14 +219,14 @@ export function FieldEditor({
               <Textarea
                 placeholder="Option 1&#10;Option 2&#10;Option 3"
                 value={row.options?.join('\n') || ''}
-                onChange={(e) => updateFieldRow(row.id, { options: e.target.value.split('\n') })}
+                onChange={handleOptionsChange}
                 rows={4}
               />
             </div>
           )}
 
           <div className="flex justify-end pl-8">
-            <Button variant="ghost" size="sm" onClick={() => removeFieldRow(row.id)} className="text-destructive hover:text-destructive">
+            <Button variant="ghost" size="sm" onClick={handleRemove} className="text-destructive hover:text-destructive">
               <Trash2 className="h-4 w-4 mr-1" />
               Remove
             </Button>
@@ -195,7 +236,7 @@ export function FieldEditor({
 
       {/* Add Field button after each field */}
       <div className="flex justify-center py-2">
-        <Select onValueChange={(type) => addFieldRow(type as FieldType, index)}>
+        <Select onValueChange={handleAddField}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="+ Add Field" />
           </SelectTrigger>
@@ -213,4 +254,4 @@ export function FieldEditor({
       </div>
     </div>
   );
-}
+});
