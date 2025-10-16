@@ -47,29 +47,13 @@ export function DeleteUserModal({
       `delete-user-${user.id}`,
       {
         op: async () => {
-          // Soft delete by setting status to disabled (not inactive)
-          const { error: userError } = await supabase
+          // Hard delete - remove user from database (cascade deletes will handle related records)
+          const { error: deleteError } = await supabase
             .from('users')
-            .update({
-              status: 'disabled',
-              updated_at: new Date().toISOString()
-            })
+            .delete()
             .eq('id', user.id);
 
-          if (userError) throw userError;
-
-          // Deactivate all roles
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .update({
-              is_active: false
-            })
-            .eq('user_id', user.id);
-
-          if (roleError) {
-            console.warn('Warning: Failed to deactivate user roles:', roleError);
-            // Don't throw - user was successfully disabled
-          }
+          if (deleteError) throw deleteError;
         },
         refetch: onSuccess ? async () => { onSuccess(); } : undefined,
         tags: { operation: 'delete_user', user_id: user.id },
@@ -111,10 +95,10 @@ export function DeleteUserModal({
         
         <AlertDialogDescription className="text-base">
           Are you sure you want to delete <strong>{user.firstName} {user.lastName}</strong>? 
-          This action will deactivate their account and revoke all privileges.
+          This action will permanently remove their account from the database.
           
           <p className="text-destructive font-medium mt-4">
-            This action cannot be easily undone.
+            This action cannot be undone.
           </p>
         </AlertDialogDescription>
 

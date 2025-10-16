@@ -66,27 +66,13 @@ export const BulkDeleteAdminModal = ({
       `bulk-delete-admins-${adminIds.join(',')}`,
       {
         op: async () => {
-          // Soft delete by updating status to disabled (not inactive)
-          const { error: updateError } = await supabase
+          // Hard delete - remove users from database (cascade deletes will handle related records)
+          const { error: deleteError } = await supabase
             .from('users')
-            .update({ 
-              status: 'disabled',
-              updated_at: new Date().toISOString()
-            })
+            .delete()
             .in('id', adminIds);
 
-          if (updateError) throw updateError;
-
-          // Deactivate user roles
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .update({ is_active: false })
-            .in('user_id', adminIds);
-
-          if (roleError) {
-            console.warn('Warning: Failed to deactivate some roles:', roleError);
-            // Don't throw - users were successfully disabled
-          }
+          if (deleteError) throw deleteError;
         },
         refetch: onSuccess ? async () => { onSuccess(); } : undefined,
         tags: { operation: 'bulk_delete_admins', count: admins.length.toString() },
@@ -125,7 +111,7 @@ export const BulkDeleteAdminModal = ({
         <AlertDialogDescription className="text-base">
           <p className="mb-4">
             Are you sure you want to delete <strong>{admins.length} admin{admins.length > 1 ? 's' : ''}</strong>? 
-            This action will deactivate their accounts and revoke all administrative privileges.
+            This action will permanently remove their accounts from the database.
           </p>
           
           <div className="max-h-40 overflow-y-auto p-3 bg-muted rounded-md">
