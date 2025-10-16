@@ -272,14 +272,14 @@ export default function EnterpriseUsers() {
               <span className="sr-only">Open menu</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => modals.edit.open(admin)}>
               <Edit className="mr-2 h-4 w-4" />
-              Edit Administrator
+              Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => modals.delete.open(admin)} className="text-destructive">
+            <DropdownMenuItem onClick={() => modals.delete.open(admin)} className="text-destructive focus:text-destructive">
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete Administrator
+              Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
