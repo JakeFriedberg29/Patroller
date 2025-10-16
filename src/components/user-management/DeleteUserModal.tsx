@@ -3,6 +3,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { safeMutation } from "@/lib/safeMutation";
 
 interface User {
   id: string;
@@ -33,45 +34,58 @@ export function DeleteUserModal({
   const handleDelete = async () => {
     if (!user) return;
     
+    // UUID validation
+    if (!user.user_id || user.user_id === 'undefined' || user.user_id.length !== 36) {
+      console.error('Invalid user ID:', user.user_id);
+      toast.error('Invalid user ID. Cannot delete user.');
+      return;
+    }
+    
     setIsDeleting(true);
-    try {
-      // Soft delete by setting status to inactive
-      const { error: userError } = await supabase
-        .from('users')
-        .update({
-          status: 'inactive',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.user_id);
+    
+    const success = await safeMutation(
+      `delete-user-${user.user_id}`,
+      {
+        op: async () => {
+          // Soft delete by setting status to disabled (not inactive)
+          const { error: userError } = await supabase
+            .from('users')
+            .update({
+              status: 'disabled',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.user_id);
 
-      if (userError) {
-        console.error('Error deleting user:', userError);
-        toast.error('Failed to delete user');
-        return;
+          if (userError) throw userError;
+
+          // Deactivate all roles
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .update({
+              is_active: false
+            })
+            .eq('user_id', user.user_id);
+
+          if (roleError) {
+            console.warn('Warning: Failed to deactivate user roles:', roleError);
+            // Don't throw - user was successfully disabled
+          }
+        },
+        refetch: onSuccess ? async () => { onSuccess(); } : undefined,
+        tags: { operation: 'delete_user', user_id: user.user_id },
+        name: 'DeleteUser',
+        retry: { enabled: true, maxRetries: 2 },
+        timeout: 10000
       }
-
-      // Deactivate all roles
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .update({
-          is_active: false,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.user_id);
-
-      if (roleError) {
-        console.error('Error deactivating user roles:', roleError);
-        // Don't return here, user deletion was successful
-      }
-
+    );
+    
+    setIsDeleting(false);
+    
+    if (success) {
       toast.success(`${user.firstName} ${user.lastName} has been deleted successfully`);
-      onSuccess?.();
       onOpenChange(false);
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error('Failed to delete user');
-    } finally {
-      setIsDeleting(false);
+    } else {
+      toast.error('Failed to delete user. Please try again.');
     }
   };
 

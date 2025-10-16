@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { safeMutation } from "@/lib/safeMutation";
 
 interface Admin {
   id: string;
@@ -43,43 +44,62 @@ export const BulkDeleteAdminModal = ({
   const handleBulkDelete = async () => {
     if (admins.length === 0) return;
 
+    // UUID validation for all admin IDs
+    const invalidIds = admins.filter(admin => 
+      !admin.id || admin.id === 'undefined' || admin.id.length !== 36
+    );
+    
+    if (invalidIds.length > 0) {
+      console.error('Invalid admin IDs found:', invalidIds);
+      toast.error('Some admin IDs are invalid. Cannot proceed with deletion.');
+      return;
+    }
+
     setIsDeleting(true);
-    try {
-      const adminIds = admins.map(admin => admin.id);
+    
+    const adminIds = admins.map(admin => admin.id);
+    
+    const success = await safeMutation(
+      `bulk-delete-admins-${adminIds.join(',')}`,
+      {
+        op: async () => {
+          // Soft delete by updating status to disabled (not inactive)
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ 
+              status: 'disabled',
+              updated_at: new Date().toISOString()
+            })
+            .in('id', adminIds);
 
-      // Soft delete by updating status
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ 
-          status: 'inactive',
-          updated_at: new Date().toISOString()
-        })
-        .in('id', adminIds);
+          if (updateError) throw updateError;
 
-      if (updateError) {
-        console.error('Error bulk deleting admins:', updateError);
-        toast.error('Failed to delete admins');
-        return;
+          // Deactivate user roles
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .update({ is_active: false })
+            .in('user_id', adminIds);
+
+          if (roleError) {
+            console.warn('Warning: Failed to deactivate some roles:', roleError);
+            // Don't throw - users were successfully disabled
+          }
+        },
+        refetch: onSuccess ? async () => { onSuccess(); } : undefined,
+        tags: { operation: 'bulk_delete_admins', count: admins.length.toString() },
+        name: 'BulkDeleteAdmins',
+        retry: { enabled: true, maxRetries: 2 },
+        timeout: 15000
       }
-
-      // Deactivate user roles
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .update({ is_active: false })
-        .in('user_id', adminIds);
-
-      if (roleError) {
-        console.error('Error deactivating roles:', roleError);
-      }
-
+    );
+    
+    setIsDeleting(false);
+    
+    if (success) {
       toast.success(`Successfully deleted ${admins.length} admin${admins.length > 1 ? 's' : ''}`);
-      onSuccess?.();
       onOpenChange(false);
-    } catch (error) {
-      console.error('Error bulk deleting admins:', error);
-      toast.error('Failed to delete admins');
-    } finally {
-      setIsDeleting(false);
+    } else {
+      toast.error('Failed to delete admins. Please try again.');
     }
   };
 
