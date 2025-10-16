@@ -8,6 +8,10 @@ export interface UserFormData {
   email: string;
   phone?: string;
   accessRole?: "read" | "write";
+  roleTypes?: {
+    admin: boolean;
+    patroller: boolean;
+  };
 }
 
 export interface UserModalHookProps {
@@ -57,13 +61,21 @@ export function useUserModal({ accountType, accountId, mode, userId }: UserModal
         ? "Enterprise User" 
         : "Organization User";
       
+      // For organization users, determine role types
+      const roleTypes: string[] = [];
+      if (accountType === "organization" && values.roleTypes) {
+        if (values.roleTypes.admin) roleTypes.push("organization_user");
+        if (values.roleTypes.patroller) roleTypes.push("patroller");
+      }
+      
       const result = await createUser({
         email: values.email,
         fullName: values.fullName,
         role,
         accessRole: values.accessRole || 'read',
         tenantId: tenantIdToUse,
-        organizationId: accountType === "organization" ? accountId : undefined
+        organizationId: accountType === "organization" ? accountId : undefined,
+        roleTypes: roleTypes.length > 0 ? roleTypes : undefined
       });
       
       return result.success;

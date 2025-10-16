@@ -22,10 +22,10 @@ export function PersonaSwitcher() {
   }
 
   const hasAdmin = profile.availablePersonas.some(p => 
-    ['platform_admin', 'enterprise_admin', 'organization_admin', 'team_leader'].includes(p)
+    ['platform_admin', 'enterprise_user', 'organization_user'].includes(p)
   );
   const hasPatroller = profile.availablePersonas.some(p => 
-    ['patroller', 'member', 'responder'].includes(p)
+    p === 'patroller'
   );
 
   const currentPersona = profile.activePersona || 'admin';

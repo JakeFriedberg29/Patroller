@@ -17,7 +17,14 @@ const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().optional(),
-  accessRole: z.enum(["read", "write"]).optional()
+  accessRole: z.enum(["read", "write"]).optional(),
+  roleTypes: z.object({
+    admin: z.boolean(),
+    patroller: z.boolean()
+  }).optional().refine((data) => {
+    if (!data) return true;
+    return data.admin || data.patroller;
+  }, "At least one role must be selected")
 });
 
 interface User {
@@ -75,7 +82,11 @@ export function UserModal({
       fullName: "",
       email: "",
       phone: "",
-      accessRole: "read"
+      accessRole: "read",
+      roleTypes: {
+        admin: accountType === "organization",
+        patroller: false
+      }
     }
   });
 
@@ -112,7 +123,11 @@ export function UserModal({
         fullName: "",
         email: "",
         phone: "",
-        accessRole: "read"
+        accessRole: "read",
+        roleTypes: {
+          admin: accountType === "organization",
+          patroller: false
+        }
       });
     }
   }, [user, mode, currentAccessRole, open]);
@@ -268,6 +283,63 @@ export function UserModal({
                 </FormItem>
               )}
             />
+
+            {/* Organization: Role Type Selection */}
+            {accountType === "organization" && mode === "add" && (
+              <FormField
+                control={form.control}
+                name="roleTypes"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Role Type *</FormLabel>
+                    <div className="space-y-2">
+                      <div className="flex items-start space-x-2">
+                        <input
+                          type="checkbox"
+                          id="admin-role"
+                          checked={field.value?.admin ?? false}
+                          onChange={(e) => field.onChange({
+                            ...field.value,
+                            admin: e.target.checked
+                          })}
+                          className="mt-1 h-4 w-4 rounded border-input"
+                        />
+                        <label
+                          htmlFor="admin-role"
+                          className="text-sm leading-tight cursor-pointer"
+                        >
+                          <div className="font-medium">Organization Admin</div>
+                          <div className="text-muted-foreground">Can manage users, settings, and all data</div>
+                        </label>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <input
+                          type="checkbox"
+                          id="patroller-role"
+                          checked={field.value?.patroller ?? false}
+                          onChange={(e) => field.onChange({
+                            ...field.value,
+                            patroller: e.target.checked
+                          })}
+                          className="mt-1 h-4 w-4 rounded border-input"
+                        />
+                        <label
+                          htmlFor="patroller-role"
+                          className="text-sm leading-tight cursor-pointer"
+                        >
+                          <div className="font-medium">Patroller</div>
+                          <div className="text-muted-foreground">Can submit reports and view assigned data</div>
+                        </label>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Users with both roles will choose their view when logging in
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Edit Mode Only: Admin Actions */}
             {mode === "edit" && user && (

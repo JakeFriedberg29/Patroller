@@ -12,6 +12,7 @@ export interface CreateUserRequest {
   tenantId?: string;
   organizationId?: string;
   phone?: string;
+  roleTypes?: string[]; // Array of role_type values
 }
 
 // Map UI roles to database role types
@@ -89,8 +90,11 @@ export const useUserManagement = () => {
         return { success: false, error: 'Email already exists in another account' };
       }
       
-      // Determine the role type - prioritize userData.role if provided, otherwise use isPatroller flag
-      const roleType = userData.role 
+      // Determine the role type - prioritize roleTypes if provided, otherwise userData.role, otherwise use isPatroller flag
+      type RoleType = 'platform_admin' | 'enterprise_user' | 'organization_user' | 'patroller';
+      const primaryRoleType: RoleType = userData.roleTypes && userData.roleTypes.length > 0
+        ? userData.roleTypes[0] as RoleType
+        : userData.role 
         ? mapRoleToDbRole(userData.role)
         : (userData.isPatroller ? 'patroller' : 'patroller'); // Default to patroller for field responders
       
@@ -102,7 +106,7 @@ export const useUserManagement = () => {
         p_tenant_id: tenantId,
         p_organization_id: userData.organizationId || null,
         p_phone: userData.phone || null,
-        p_role_type: roleType
+        p_role_type: primaryRoleType
       }) as { data: any; error: any };
 
       if (error) {
@@ -129,6 +133,26 @@ export const useUserManagement = () => {
       }
 
       console.log('User created successfully, sending activation email for userId:', result.user_id);
+      
+      // Create additional role entries if multiple roleTypes provided
+      if (userData.roleTypes && userData.roleTypes.length > 1) {
+        try {
+          const additionalRoles = userData.roleTypes.slice(1);
+          for (const roleType of additionalRoles) {
+            // @ts-ignore - Types need regeneration
+            await supabase.from('user_roles').insert({
+              user_id: result.user_id,
+              role_type: roleType as RoleType,
+              organization_id: userData.organizationId || null,
+              is_active: true
+            });
+          }
+          console.log(`Created ${additionalRoles.length} additional role(s) for user`);
+        } catch (roleError) {
+          console.error('Error creating additional roles:', roleError);
+          // Don't fail the entire operation if additional roles fail
+        }
+      }
       
       // Insert account access (unified) after user creation if accessRole provided
       // Admin access is always required now

@@ -22,10 +22,10 @@ export const useAuthRedirect = () => {
     // Check if user has multiple personas and hasn't selected one yet
     const hasMultiplePersonas = profile.availablePersonas && profile.availablePersonas.length > 1;
     const hasAdminRole = profile.availablePersonas?.some(p => 
-      ['platform_admin', 'enterprise_admin', 'organization_admin', 'team_leader'].includes(p)
+      ['platform_admin', 'enterprise_user', 'organization_user'].includes(p)
     );
     const hasPatrollerRole = profile.availablePersonas?.some(p => 
-      ['patroller', 'member', 'responder'].includes(p)
+      p === 'patroller'
     );
     
     if (hasMultiplePersonas && hasAdminRole && hasPatrollerRole && !profile.activePersona) {
@@ -54,15 +54,14 @@ export const useAuthRedirect = () => {
       case 'platform_admin':
         navigate('/', { replace: true });
         break;
-      case 'enterprise_admin':
+      case 'enterprise_user':
         if (tenantId) {
           navigate(`/enterprises/${tenantId}/analytics`, { replace: true });
         } else {
           navigate('/', { replace: true });
         }
         break;
-      case 'organization_admin':
-      case 'team_leader':
+      case 'organization_user':
         if (organizationId) {
           navigate(`/organization/${organizationId}/analytics`, { replace: true });
         } else {
@@ -70,8 +69,6 @@ export const useAuthRedirect = () => {
         }
         break;
       case 'patroller':
-      case 'member':
-      case 'responder':
         if (organizationId) {
           navigate(`/organization/${organizationId}/patroller-dashboard`, { replace: true });
         } else {

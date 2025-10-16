@@ -39,10 +39,10 @@ export function PersonaSelector({ availablePersonas, onPersonaSelected }: Person
   };
 
   const hasAdmin = availablePersonas.some(p => 
-    ['platform_admin', 'enterprise_admin', 'organization_admin', 'team_leader'].includes(p)
+    ['platform_admin', 'enterprise_user', 'organization_user'].includes(p)
   );
   const hasPatroller = availablePersonas.some(p => 
-    ['patroller', 'member', 'responder'].includes(p)
+    p === 'patroller'
   );
 
   return (
