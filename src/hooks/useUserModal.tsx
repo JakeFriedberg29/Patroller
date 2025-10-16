@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { safeMutation } from "@/lib/safeMutation";
+import { isValidUUID, UUID_ERROR_MESSAGES } from "@/lib/uuidValidation";
 
 export interface UserFormData {
   fullName: string;
@@ -93,9 +94,9 @@ export function useUserModal({ accountType, accountId, mode, userId }: UserModal
 
   const handleEdit = async (values: UserFormData): Promise<boolean> => {
     // UUID validation
-    if (!userId || userId === 'undefined' || userId.length !== 36) {
+    if (!isValidUUID(userId)) {
       console.error('Invalid user ID:', userId);
-      toast.error('Invalid user ID. Cannot update user.');
+      toast.error(UUID_ERROR_MESSAGES.INVALID_USER);
       return false;
     }
     
@@ -190,9 +191,9 @@ export function useUserModal({ accountType, accountId, mode, userId }: UserModal
     currentStatus: "pending" | "active" | "disabled" | "deleted"
   ): Promise<boolean> => {
     // UUID validation
-    if (!userId || userId === 'undefined' || userId.length !== 36) {
+    if (!isValidUUID(userId)) {
       console.error('Invalid user ID:', userId);
-      toast.error('Invalid user ID. Cannot modify user status.');
+      toast.error(UUID_ERROR_MESSAGES.INVALID_USER);
       return false;
     }
     

@@ -28,7 +28,6 @@ const formSchema = z.object({
 
 interface User {
   id: string;
-  user_id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -72,7 +71,7 @@ export function UserModal({
     accountType,
     accountId,
     mode,
-    userId: user?.user_id
+    userId: user?.id
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -96,7 +95,7 @@ export function UserModal({
         const { data } = await supabase
           .from('account_users')
           .select('access_role')
-          .eq('user_id', user.user_id)
+          .eq('user_id', user.id)
           .maybeSingle();
         
         if (data?.access_role) {
@@ -447,7 +446,7 @@ export function UserModal({
                 <Separator className="my-6" />
                 <div className="space-y-4">
                   <AccountAssignmentManager
-                    platformAdminId={user.user_id}
+                    platformAdminId={user.id}
                     platformAdminName={`${user.firstName} ${user.lastName}`}
                     onAutoAssignChange={setAutoAssignAll}
                   />

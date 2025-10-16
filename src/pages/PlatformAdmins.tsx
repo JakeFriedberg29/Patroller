@@ -28,7 +28,6 @@ import { BulkDeleteAdminModal } from "@/components/BulkDeleteAdminModal";
 import { createActivationStatusFilter } from "@/lib/filterConfigs";
 interface PlatformAdmin {
   id: string;
-  user_id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -58,7 +57,7 @@ export default function PlatformAdmins() {
   const { isSuspending, handleSuspendToggle } = useUserModal({ 
     accountType: "platform", 
     mode: "edit",
-    userId: userToSuspend?.user_id 
+    userId: userToSuspend?.id 
   });
   const [selectedAdmins, setSelectedAdmins] = useState<string[]>([]);
   const [isResending, setIsResending] = useState(false);
@@ -110,8 +109,6 @@ export default function PlatformAdmins() {
       }
       const transformedAdmins: PlatformAdmin[] = data.map((user: any) => ({
         id: user.id,
-        user_id: user.id,
-        // In our new structure, user_id is same as id
         firstName: user.first_name || user.full_name?.split(' ')[0] || '',
         lastName: user.last_name || user.full_name?.split(' ').slice(1).join(' ') || '',
         email: user.email,
@@ -156,7 +153,7 @@ export default function PlatformAdmins() {
       const selected = admins.filter(a => selectedAdmins.includes(a.id));
       for (const admin of selected) {
         await sendActivationEmail({
-          userId: admin.user_id,
+          userId: admin.id,
           email: admin.email,
           fullName: `${admin.firstName} ${admin.lastName}`,
           isResend: true,
@@ -369,7 +366,6 @@ export default function PlatformAdmins() {
           onOpenChange={setIsBulkDeleteOpen}
           admins={admins.filter(a => selectedAdmins.includes(a.id)).map(a => ({
             id: a.id,
-            user_id: a.user_id,
             firstName: a.firstName,
             lastName: a.lastName,
             name: `${a.firstName} ${a.lastName}`,

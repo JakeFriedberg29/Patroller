@@ -4,10 +4,10 @@ import { Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { safeMutation } from "@/lib/safeMutation";
+import { isValidUUID, UUID_ERROR_MESSAGES } from "@/lib/uuidValidation";
 
 interface User {
   id: string;
-  user_id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -35,16 +35,16 @@ export function DeleteUserModal({
     if (!user) return;
     
     // UUID validation
-    if (!user.user_id || user.user_id === 'undefined' || user.user_id.length !== 36) {
-      console.error('Invalid user ID:', user.user_id);
-      toast.error('Invalid user ID. Cannot delete user.');
+    if (!isValidUUID(user.id)) {
+      console.error('Invalid user ID:', user.id);
+      toast.error(UUID_ERROR_MESSAGES.INVALID_USER);
       return;
     }
     
     setIsDeleting(true);
     
     const success = await safeMutation(
-      `delete-user-${user.user_id}`,
+      `delete-user-${user.id}`,
       {
         op: async () => {
           // Soft delete by setting status to disabled (not inactive)
@@ -54,7 +54,7 @@ export function DeleteUserModal({
               status: 'disabled',
               updated_at: new Date().toISOString()
             })
-            .eq('id', user.user_id);
+            .eq('id', user.id);
 
           if (userError) throw userError;
 
@@ -64,7 +64,7 @@ export function DeleteUserModal({
             .update({
               is_active: false
             })
-            .eq('user_id', user.user_id);
+            .eq('user_id', user.id);
 
           if (roleError) {
             console.warn('Warning: Failed to deactivate user roles:', roleError);
@@ -72,7 +72,7 @@ export function DeleteUserModal({
           }
         },
         refetch: onSuccess ? async () => { onSuccess(); } : undefined,
-        tags: { operation: 'delete_user', user_id: user.user_id },
+        tags: { operation: 'delete_user', user_id: user.id },
         name: 'DeleteUser',
         retry: { enabled: true, maxRetries: 2 },
         timeout: 10000

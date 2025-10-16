@@ -1,10 +1,10 @@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { isValidUUID, UUID_ERROR_MESSAGES } from "@/lib/uuidValidation";
 
 interface User {
   id: string;
-  user_id: string;
   firstName: string;
   lastName: string;
   activation_status: "pending" | "active" | "disabled" | "deleted";
@@ -28,9 +28,9 @@ export function SuspendUserModal({
   if (!user) return null;
 
   // UUID validation
-  if (!user.user_id || user.user_id === 'undefined' || user.user_id.length !== 36) {
-    console.error('Invalid user ID:', user.user_id);
-    toast.error('Invalid user ID. Cannot modify user status.');
+  if (!isValidUUID(user.id)) {
+    console.error('Invalid user ID:', user.id);
+    toast.error(UUID_ERROR_MESSAGES.INVALID_USER);
     return null;
   }
 

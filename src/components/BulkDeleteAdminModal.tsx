@@ -14,10 +14,10 @@ import { Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { safeMutation } from "@/lib/safeMutation";
+import { filterValidIds, UUID_ERROR_MESSAGES } from "@/lib/uuidValidation";
 
 interface Admin {
   id: string;
-  user_id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -44,20 +44,23 @@ export const BulkDeleteAdminModal = ({
   const handleBulkDelete = async () => {
     if (admins.length === 0) return;
 
-    // UUID validation for all admin IDs
-    const invalidIds = admins.filter(admin => 
-      !admin.id || admin.id === 'undefined' || admin.id.length !== 36
-    );
+    // Filter to only valid IDs and validate
+    const validAdmins = filterValidIds(admins);
     
-    if (invalidIds.length > 0) {
-      console.error('Invalid admin IDs found:', invalidIds);
-      toast.error('Some admin IDs are invalid. Cannot proceed with deletion.');
+    if (validAdmins.length === 0) {
+      console.error('No valid admin IDs found:', admins);
+      toast.error(UUID_ERROR_MESSAGES.INVALID_USER);
       return;
+    }
+    
+    if (validAdmins.length < admins.length) {
+      console.warn(`${admins.length - validAdmins.length} invalid admin IDs filtered out`);
+      toast.warning(`${admins.length - validAdmins.length} users skipped due to invalid IDs`);
     }
 
     setIsDeleting(true);
     
-    const adminIds = admins.map(admin => admin.id);
+    const adminIds = validAdmins.map(admin => admin.id);
     
     const success = await safeMutation(
       `bulk-delete-admins-${adminIds.join(',')}`,
