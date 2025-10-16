@@ -68,11 +68,14 @@ export function useUserModal({ accountType, accountId, mode, userId }: UserModal
         if (values.roleTypes.patroller) roleTypes.push("patroller");
       }
       
+      // Use 'read' as default access role if not specified
+      const accessRole = values.accessRole || 'read';
+      
       const result = await createUser({
         email: values.email,
         fullName: values.fullName,
         role,
-        accessRole: values.accessRole || 'read',
+        accessRole,
         tenantId: tenantIdToUse,
         organizationId: accountType === "organization" ? accountId : undefined,
         roleTypes: roleTypes.length > 0 ? roleTypes : undefined
