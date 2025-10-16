@@ -113,8 +113,10 @@ export default function OrganizationUsers() {
       const filteredUsers = (accountUsersData || []).filter(accountUser => {
         const user = accountUser.users as any;
         const roles = user?.user_roles || [];
-        // Exclude users who have platform_admin role
-        return !roles.some((role: any) => role.role_type === 'platform_admin' && role.is_active);
+        // Exclude users who have platform_admin role or are inactive/deleted
+        const isPlatformAdmin = roles.some((role: any) => role.role_type === 'platform_admin' && role.is_active);
+        const isInactiveOrDeleted = user.status === 'inactive' || user.status === 'deleted';
+        return !isPlatformAdmin && !isInactiveOrDeleted;
       });
 
       const transformedAdmins: OrganizationAdmin[] = filteredUsers.map(accountUser => {

@@ -94,7 +94,7 @@ export default function PlatformAdmins() {
           created_at,
           profile_data,
           user_roles!user_roles_user_id_fkey!inner(role_type, is_active)
-        `).eq('user_roles.role_type', 'platform_admin').eq('user_roles.is_active', true).order('created_at', {
+        `).eq('user_roles.role_type', 'platform_admin').eq('user_roles.is_active', true).neq('status', 'inactive').neq('status', 'deleted').order('created_at', {
         ascending: false
       });
       
