@@ -120,15 +120,6 @@ export default function OrganizationUsers() {
       ),
     },
     {
-      key: 'specialization',
-      header: 'Specialization',
-      render: (member) => (
-        <Badge variant="outline">
-          {member.profile_data?.specialization || 'N/A'}
-        </Badge>
-      ),
-    },
-    {
       key: 'actions',
       header: '',
       render: (member) => (

@@ -102,7 +102,6 @@ export const useTeamMembers = () => {
     last_name: string;
     phone?: string;
     role?: string;
-    specialization?: string;
     certifications?: string[];
     radio_call_sign?: string;
   }) => {
