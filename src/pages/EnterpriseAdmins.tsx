@@ -15,10 +15,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEmailService } from "@/hooks/useEmailService";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
-import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { DataTable, type ColumnDef, type FilterConfig } from "@/components/ui/data-table";
 import { useDataTable } from "@/hooks/useDataTable";
 import { useCrudModals } from "@/hooks/useCrudModals";
+import { BulkSelectionToolbar } from "@/components/BulkSelectionToolbar";
 interface EnterpriseAdmin {
   id: string;
   user_id: string;
@@ -241,19 +241,7 @@ export default function EnterpriseUsers() {
     {
       key: 'activation_status',
       header: 'Status',
-      render: (admin) => (
-        <div className="flex items-center gap-2">
-          <UserStatusBadge status={admin.activation_status} />
-          {admin.activation_status === 'pending' && (
-            <ResendActivationButton 
-              userId={admin.user_id} 
-              email={admin.email} 
-              fullName={`${admin.firstName} ${admin.lastName}`} 
-              size="sm" 
-            />
-          )}
-        </div>
-      ),
+      render: (admin) => <UserStatusBadge status={admin.activation_status} />,
     },
     {
       key: 'email',
@@ -321,6 +309,32 @@ export default function EnterpriseUsers() {
         </Button>
       </div>
 
+      <BulkSelectionToolbar
+        selectedCount={selectedAdmins.length}
+        totalCount={admins.length}
+        onClearSelection={() => setSelectedAdmins([])}
+        actions={[
+          {
+            label: isResending ? 'Resending...' : 'Resend Activation',
+            icon: Send,
+            onClick: handleBulkResend,
+            disabled: isResending,
+            variant: 'outline',
+          },
+          {
+            label: 'Delete Selected',
+            icon: Trash2,
+            onClick: () => {
+              toast({
+                title: "Coming Soon",
+                description: "Bulk delete functionality will be available soon.",
+              });
+            },
+            variant: 'destructive',
+          },
+        ]}
+      />
+
       <DataTable
         data={dataTable.paginatedData}
         columns={columns}
@@ -338,18 +352,6 @@ export default function EnterpriseUsers() {
         totalRecords={dataTable.totalRecords}
         onPageChange={dataTable.handlePageChange}
         onRowsPerPageChange={dataTable.handleRowsPerPageChange}
-        actions={
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2" 
-            onClick={handleBulkResend} 
-            disabled={selectedAdmins.length === 0 || isResending}
-          >
-            <Send className="h-4 w-4" />
-            {isResending ? 'Resending...' : `Resend Activation Email${selectedAdmins.length ? ` (${selectedAdmins.length})` : ''}`}
-          </Button>
-        }
       />
 
       <UserModal

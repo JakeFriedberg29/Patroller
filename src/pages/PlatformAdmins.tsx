@@ -214,19 +214,7 @@ export default function PlatformAdmins() {
     {
       key: 'activation_status',
       header: 'Status',
-      render: (admin) => (
-        <div className="flex items-center gap-2">
-          <UserStatusBadge status={admin.activation_status} />
-          {admin.activation_status === 'pending' && (
-            <ResendActivationButton 
-              userId={admin.user_id} 
-              email={admin.email} 
-              fullName={`${admin.firstName} ${admin.lastName}`} 
-              size="sm" 
-            />
-          )}
-        </div>
-      ),
+      render: (admin) => <UserStatusBadge status={admin.activation_status} />,
     },
     {
       key: 'phone',

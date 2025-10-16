@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -13,17 +14,22 @@ import { UserModal } from "@/components/user-management/UserModal";
 import { DeleteUserModal } from "@/components/user-management/DeleteUserModal";
 import { useToast } from "@/hooks/use-toast";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
-import { ResendActivationButton } from "@/components/ResendActivationButton";
 import { DataTable, type ColumnDef, type FilterConfig } from "@/components/ui/data-table";
 import { useDataTable } from "@/hooks/useDataTable";
 import { useCrudModals } from "@/hooks/useCrudModals";
 import { createStatusFilter } from "@/lib/filterConfigs";
+import { BulkSelectionToolbar } from "@/components/BulkSelectionToolbar";
+import { useEmailService } from "@/hooks/useEmailService";
+import { Send, Trash2 } from "lucide-react";
 
 export default function OrganizationUsers() {
   const { id } = useParams();
   const modals = useCrudModals<any>();
   const { toast } = useToast();
   const { teamMembers, loading, updateTeamMember } = useTeamMembers();
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [isResending, setIsResending] = useState(false);
+  const { sendActivationEmail } = useEmailService();
 
   const statusOptions = [...new Set(teamMembers.map(member => member.status))];
 
@@ -31,7 +37,50 @@ export default function OrganizationUsers() {
     createStatusFilter(statusOptions)
   ];
 
+  const handleBulkResend = async () => {
+    if (selectedMembers.length === 0) return;
+    setIsResending(true);
+    try {
+      const selected = teamMembers.filter(m => selectedMembers.includes(m.id));
+      for (const member of selected) {
+        await sendActivationEmail({
+          userId: member.id,
+          email: member.email,
+          fullName: member.full_name,
+          isResend: true,
+          organizationName: 'Emergency Management Platform'
+        });
+      }
+      toast({
+        title: "Success",
+        description: `Activation emails sent to ${selectedMembers.length} member(s)`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send activation emails",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const columns: ColumnDef<any>[] = [
+    {
+      key: 'select',
+      header: '',
+      render: (member) => (
+        <Checkbox 
+          checked={selectedMembers.includes(member.id)} 
+          onCheckedChange={(checked) => {
+            setSelectedMembers(prev => 
+              checked ? [...prev, member.id] : prev.filter(id => id !== member.id)
+            );
+          }} 
+        />
+      ),
+    },
     {
       key: 'full_name',
       header: 'Name',
@@ -52,19 +101,7 @@ export default function OrganizationUsers() {
     {
       key: 'status',
       header: 'Status',
-      render: (member) => (
-        <div className="flex items-center gap-2">
-          <UserStatusBadge status={member.status as 'pending' | 'active' | 'disabled' | 'deleted'} />
-          {member.status === 'pending' && (
-            <ResendActivationButton 
-              userId={member.id} 
-              email={member.email} 
-              fullName={member.full_name} 
-              size="sm" 
-            />
-          )}
-        </div>
-      ),
+      render: (member) => <UserStatusBadge status={member.status as 'pending' | 'active' | 'disabled' | 'deleted'} />,
     },
     {
       key: 'email',
@@ -145,6 +182,32 @@ export default function OrganizationUsers() {
           Add User
         </Button>
       </div>
+
+      <BulkSelectionToolbar
+        selectedCount={selectedMembers.length}
+        totalCount={teamMembers.length}
+        onClearSelection={() => setSelectedMembers([])}
+        actions={[
+          {
+            label: isResending ? 'Resending...' : 'Resend Activation',
+            icon: Send,
+            onClick: handleBulkResend,
+            disabled: isResending,
+            variant: 'outline',
+          },
+          {
+            label: 'Delete Selected',
+            icon: Trash2,
+            onClick: () => {
+              toast({
+                title: "Coming Soon",
+                description: "Bulk delete functionality will be available soon.",
+              });
+            },
+            variant: 'destructive',
+          },
+        ]}
+      />
 
       <DataTable
         data={dataTable.paginatedData}
