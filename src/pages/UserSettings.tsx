@@ -115,7 +115,7 @@ export default function UserSettings() {
     return <div className="flex items-center justify-center min-h-[200px]">
         <div className="text-center">
           <p className="text-destructive mb-4">Error loading profile: {error}</p>
-          <Button onClick={refetch}>Try Again</Button>
+          <Button onClick={() => refetch()}>Try Again</Button>
         </div>
       </div>;
   }
