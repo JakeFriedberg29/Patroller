@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Users, Plus, Phone, Mail, MoreHorizontal } from "lucide-react";
+import { Users, Plus, Phone, Mail, MoreHorizontal, Edit } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { UserModal } from "@/components/user-management/UserModal";
 import { DeleteUserModal } from "@/components/user-management/DeleteUserModal";
@@ -143,17 +143,15 @@ export default function OrganizationUsers() {
             <DropdownMenuItem 
               onClick={() => modals.edit.open(member)}
             >
-              Edit Member
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => {
-                toast({
-                  title: "View Profile",
-                  description: `Viewing profile for ${member.full_name}`,
-                });
-              }}
+              onClick={() => modals.delete.open(member)}
+              className="text-destructive focus:text-destructive"
             >
-              View Profile
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -195,17 +193,6 @@ export default function OrganizationUsers() {
             disabled: isResending,
             variant: 'outline',
           },
-          {
-            label: 'Delete Selected',
-            icon: Trash2,
-            onClick: () => {
-              toast({
-                title: "Coming Soon",
-                description: "Bulk delete functionality will be available soon.",
-              });
-            },
-            variant: 'destructive',
-          },
         ]}
       />
 
@@ -241,6 +228,22 @@ export default function OrganizationUsers() {
           });
         }}
       />
+
+      {modals.selected && (
+        <DeleteUserModal
+          open={modals.delete.isOpen}
+          onOpenChange={(open) => !open && modals.delete.close()}
+          user={modals.selected}
+          accountType="organization"
+          onSuccess={() => {
+            toast({
+              title: "Member Deleted",
+              description: "Team member has been deleted successfully.",
+            });
+            modals.delete.close();
+          }}
+        />
+      )}
 
       {/* Edit Member Modal */}
       <Dialog open={modals.edit.isOpen} onOpenChange={(open) => !open && modals.edit.close()}>

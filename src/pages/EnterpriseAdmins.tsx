@@ -321,17 +321,6 @@ export default function EnterpriseUsers() {
             disabled: isResending,
             variant: 'outline',
           },
-          {
-            label: 'Delete Selected',
-            icon: Trash2,
-            onClick: () => {
-              toast({
-                title: "Coming Soon",
-                description: "Bulk delete functionality will be available soon.",
-              });
-            },
-            variant: 'destructive',
-          },
         ]}
       />
 

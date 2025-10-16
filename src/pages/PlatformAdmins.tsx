@@ -285,12 +285,6 @@ export default function PlatformAdmins() {
             disabled: isResending,
             variant: 'outline',
           },
-          {
-            label: 'Delete Selected',
-            icon: Trash2,
-            onClick: () => setIsBulkDeleteOpen(true),
-            variant: 'destructive',
-          },
         ]}
       />
 
