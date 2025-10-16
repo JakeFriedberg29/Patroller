@@ -83,7 +83,7 @@ export function UserModal({
       phone: "",
       accessRole: accountType === "organization" ? undefined : "read",
       roleTypes: {
-        admin: accountType === "organization",
+        admin: false,
         patroller: false
       }
     }
@@ -124,7 +124,7 @@ export function UserModal({
         phone: "",
         accessRole: accountType === "organization" ? undefined : "read",
         roleTypes: {
-          admin: accountType === "organization",
+          admin: false,
           patroller: false
         }
       });
