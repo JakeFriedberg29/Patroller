@@ -24,6 +24,7 @@ export const ResendActivationButton = ({
     sendActivationEmail
   } = useEmailService();
   const handleResendActivation = async () => {
+    console.log('ResendActivation clicked for user:', { userId, email, fullName });
     setIsLoading(true);
     try {
       const result = await sendActivationEmail({
@@ -33,7 +34,10 @@ export const ResendActivationButton = ({
         isResend: true,
         organizationName: 'Emergency Management Platform'
       });
+      console.log('sendActivationEmail result:', result);
+      
       if (!result.success) {
+        console.error('Activation email failed:', result.error);
         toast.error(result.error || 'Failed to resend activation email');
         return;
       }

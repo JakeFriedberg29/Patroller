@@ -19,12 +19,16 @@ export const useEmailService = () => {
   const EMAIL_PROVIDER: EmailProvider = (import.meta as any)?.env?.VITE_EMAIL_PROVIDER as EmailProvider || 'resend';
 
   const invokeCreateInvitation = async (request: SendEmailRequest) => {
+    console.log('Invoking invitations edge function with:', { userId: request.userId, email: request.email });
+    
     const { data, error } = await supabase.functions.invoke('invitations', {
       body: {
         ...request,
         organizationName: request.organizationName || 'Patroller Platform'
       }
     });
+    
+    console.log('Edge function response:', { data, error });
     return { data, error };
   };
 
@@ -32,10 +36,11 @@ export const useEmailService = () => {
     setIsLoading(true);
     
     try {
+      console.log('Starting sendActivationEmail with request:', request);
       const { data: response, error } = await invokeCreateInvitation(request);
 
       if (error) {
-        console.error(`Error sending email via ${EMAIL_PROVIDER}:`, error);
+        console.error(`Error invoking edge function:`, error);
         
         // Handle specific Resend domain verification error
         if (error.message?.includes('Domain verification required')) {
@@ -61,14 +66,14 @@ export const useEmailService = () => {
 
       if (!response?.success) {
         const errorMessage = response?.error || 'Failed to send activation email';
-        toast.error(errorMessage);
+        console.error('Edge function returned error:', errorMessage);
         return { success: false, error: errorMessage };
       }
 
       const action = request.isResend ? 'resent' : 'sent';
-      toast.success(`Activation email ${action} successfully!`);
+      console.log(`Activation email ${action} successfully via edge function`);
       
-      return { 
+      return {
         success: true, 
         message: response.message,
         provider: EMAIL_PROVIDER === 'supabase' && response?.emailId ? 'resend' : EMAIL_PROVIDER,
