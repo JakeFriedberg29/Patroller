@@ -36,7 +36,8 @@ serve(async (req: Request): Promise<Response> => {
     const isDevOrigin = origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('.dev');
 
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    const resendFrom = Deno.env.get('RESEND_FROM') || 'Patroller <notifications@patroller.io>';
+    // Use Resend's testing domain or a verified domain
+    const resendFrom = Deno.env.get('RESEND_FROM') || 'Patroller <onboarding@resend.dev>';
     const resend = resendApiKey ? new Resend(resendApiKey as string) : null;
 
     const supabase = createClient(
