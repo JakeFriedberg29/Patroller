@@ -51,25 +51,49 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
           // Assignments via repository_assignments (type or org-level)
           let assignedTemplateIds: string[] = [];
           if (resolvedTenantId) {
+            console.log('[useOrganizationReportTemplates] Looking up templates for:', {
+              orgId,
+              orgType,
+              orgSubtype,
+              resolvedTenantId
+            });
+
             // Subtype-based (FK)
             if (orgSubtype) {
               // Resolve subtype name for this org to id
-              const { data: subtypeRow } = await supabase
+              const { data: subtypeRow, error: subtypeErr } = await supabase
                 .from('organization_subtypes')
                 .select('id')
                 .eq('tenant_id', resolvedTenantId)
                 .eq('name', orgSubtype)
                 .single();
+              
+              console.log('[useOrganizationReportTemplates] Subtype lookup:', {
+                orgSubtype,
+                tenantId: resolvedTenantId,
+                subtypeRow,
+                error: subtypeErr
+              });
+
               const subtypeId = subtypeRow?.id as string | undefined;
               if (subtypeId) {
-                const { data: typeAssignments } = await supabase
+                const { data: typeAssignments, error: assignErr } = await supabase
                   .from('repository_assignments')
                   .select('element_id')
                   .eq('tenant_id', resolvedTenantId)
                   .eq('element_type', 'report_template')
                   .eq('target_type', 'organization_type')
                   .eq('target_organization_subtype_id', subtypeId);
+                
+                console.log('[useOrganizationReportTemplates] Assignment lookup:', {
+                  subtypeId,
+                  assignments: typeAssignments,
+                  error: assignErr
+                });
+
                 assignedTemplateIds.push(...((typeAssignments || []).map((r: any) => r.element_id)));
+              } else {
+                console.warn('[useOrganizationReportTemplates] No subtype ID found - subtype may not exist in organization_subtypes table for this tenant');
               }
             }
             // Org-level
@@ -84,23 +108,36 @@ export const useOrganizationReportTemplates = (organizationId?: string, tenantId
           }
 
           const allIds = [...new Set(assignedTemplateIds)];
+          console.log('[useOrganizationReportTemplates] Found template IDs:', allIds);
+
           if (allIds.length > 0) {
-            const { data: templatesData } = await supabase
+            // Query templates by ID only - don't filter by tenant_id because
+            // platform templates belong to the platform tenant but are available to all orgs
+            const { data: templatesData, error: templateErr } = await supabase
               .from('report_templates')
               .select('id, name, description, tenant_id, status')
               .in('id', allIds)
-              .eq('tenant_id', resolvedTenantId as string)
-              .eq('status', 'published');
+              .eq('status', 'published')
+              .is('organization_id', null); // Only platform-level templates
+            
+            console.log('[useOrganizationReportTemplates] Template query result:', {
+              foundTemplates: templatesData?.length || 0,
+              templates: templatesData,
+              error: templateErr
+            });
+
             if (templatesData && templatesData.length > 0) {
               setTemplates(templatesData.map(t => ({ id: t.id as any, name: t.name as any, description: (t.description as any) || '' })));
               setLoading(false);
               return;
             }
+          } else {
+            console.warn('[useOrganizationReportTemplates] No assigned template IDs found for this organization');
           }
         }
       } catch (err: any) {
         // Swallow errors and fall back to default
-        console.warn('Falling back to default report templates:', err?.message || err);
+        console.error('[useOrganizationReportTemplates] Error fetching templates:', err);
         setError(null);
       } finally {
         setLoading(false);

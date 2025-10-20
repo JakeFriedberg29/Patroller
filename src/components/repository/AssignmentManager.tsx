@@ -40,11 +40,10 @@ export function AssignmentManager({ tenantId, isOpen, onClose, templateId, onAss
         : ([...(Constants.public.Enums.organization_type as readonly string[])] as string[]);
       setAllOrgTypes(orgTypes);
 
-      // Get current assignments
+      // Get current assignments across ALL tenants (show as assigned if ANY tenant has it)
       const { data: typeAssignRows, error: typeAssignErr } = await supabase
         .from('repository_assignments')
-        .select('target_organization_subtype_id')
-        .eq('tenant_id', tenantId)
+        .select('target_organization_subtype_id, tenant_id')
         .eq('element_type', 'report_template')
         .eq('element_id', tId)
         .eq('target_type', 'organization_type');
@@ -53,20 +52,19 @@ export function AssignmentManager({ tenantId, isOpen, onClose, templateId, onAss
       const subtypeIds = Array.from(new Set((typeAssignRows || []).map((r: any) => r.target_organization_subtype_id).filter(Boolean)));
       let typeAssigned: string[] = [];
       if (subtypeIds.length > 0) {
+        // Get all subtype names from any tenant (they could be in different tenants)
         const { data: subtypeRows } = await supabase
           .from('organization_subtypes')
           .select('id,name')
-          .eq('tenant_id', tenantId)
           .in('id', subtypeIds as any);
         typeAssigned = Array.from(new Set((subtypeRows || []).map((s: any) => String(s.name)).filter(Boolean)));
       }
 
-      // Organization-level assignments
+      // Organization-level assignments across all tenants
       let orgSubtypeAssigned: string[] = [];
       const { data: orgAssignRows } = await supabase
         .from('repository_assignments')
         .select('target_organization_id')
-        .eq('tenant_id', tenantId)
         .eq('element_type', 'report_template')
         .eq('element_id', tId)
         .eq('target_type', 'organization');
@@ -75,7 +73,6 @@ export function AssignmentManager({ tenantId, isOpen, onClose, templateId, onAss
         const { data: orgRows } = await supabase
           .from('organizations')
           .select('organization_subtype')
-          .eq('tenant_id', tenantId)
           .in('id', orgIds as any);
         orgSubtypeAssigned = Array.from(new Set((orgRows || []).map((o: any) => String(o.organization_subtype)).filter(Boolean)));
       }
@@ -124,84 +121,138 @@ export function AssignmentManager({ tenantId, isOpen, onClose, templateId, onAss
         setAllOrgTypes(prev => Array.from(new Set([...prev, ...needsCatalogAdd])));
       }
 
-      // Add new assignments
+      // Add new assignments across ALL tenants that have organizations with these subtypes
       if (toAdd.length > 0) {
-        const { data: subtypeRows } = await supabase
-          .from('organization_subtypes')
-          .select('id,name')
-          .eq('tenant_id', tenantId)
-          .in('name', toAdd as any);
-        const nameToId: Record<string, string> = {};
-        (subtypeRows || []).forEach((s: any) => { nameToId[String(s.name)] = String(s.id); });
-        const rows = toAdd
-          .map(subtypeName => nameToId[subtypeName])
-          .filter(Boolean)
-          .map(subtypeId => ({
-            tenant_id: tenantId,
-            element_type: 'report_template' as const,
-            element_id: templateId,
-            target_type: 'organization_type' as const,
-            target_organization_subtype_id: subtypeId,
-          }));
+        // Step 1: Find all tenants that have organizations with the target subtypes
+        const { data: orgsWithSubtypes } = await supabase
+          .from('organizations')
+          .select('tenant_id, organization_subtype')
+          .in('organization_subtype', toAdd as any)
+          .not('tenant_id', 'is', null);
         
-        for (const row of rows) {
-          const { data: existing } = await supabase
-            .from('repository_assignments')
-            .select('id')
-            .eq('tenant_id', row.tenant_id)
-            .eq('element_type', row.element_type)
-            .eq('element_id', row.element_id)
-            .eq('target_type', row.target_type)
-            .eq('target_organization_subtype_id', row.target_organization_subtype_id)
-            .maybeSingle();
+        // Get unique tenant IDs
+        const affectedTenantIds = Array.from(
+          new Set((orgsWithSubtypes || []).map((o: any) => o.tenant_id).filter(Boolean))
+        );
+        
+        if (affectedTenantIds.length === 0) {
+          toast({ 
+            title: 'No organizations found', 
+            description: `No organizations found with subtypes: ${toAdd.join(', ')}`,
+            variant: 'destructive' 
+          });
+          return;
+        }
+
+        // Step 2: For each affected tenant, get the subtype IDs and create assignments
+        for (const affectedTenantId of affectedTenantIds) {
+          const { data: subtypeRows } = await supabase
+            .from('organization_subtypes')
+            .select('id,name')
+            .eq('tenant_id', affectedTenantId)
+            .in('name', toAdd as any);
           
-          if (!existing) {
-            const { error: insertErr } = await supabase
+          const nameToId: Record<string, string> = {};
+          (subtypeRows || []).forEach((s: any) => { nameToId[String(s.name)] = String(s.id); });
+          
+          const rows = toAdd
+            .map(subtypeName => nameToId[subtypeName])
+            .filter(Boolean)
+            .map(subtypeId => ({
+              tenant_id: affectedTenantId,
+              element_type: 'report_template' as const,
+              element_id: templateId,
+              target_type: 'organization_type' as const,
+              target_organization_subtype_id: subtypeId,
+            }));
+          
+          for (const row of rows) {
+            const { data: existing } = await supabase
               .from('repository_assignments')
-              .insert(row);
-            if (insertErr) throw insertErr;
+              .select('id')
+              .eq('tenant_id', row.tenant_id)
+              .eq('element_type', row.element_type)
+              .eq('element_id', row.element_id)
+              .eq('target_type', row.target_type)
+              .eq('target_organization_subtype_id', row.target_organization_subtype_id)
+              .maybeSingle();
+            
+            if (!existing) {
+              const { error: insertErr } = await supabase
+                .from('repository_assignments')
+                .insert(row);
+              if (insertErr) throw insertErr;
+            }
           }
         }
       }
 
-      // Remove assignments
+      // Remove assignments across ALL tenants
       if (toRemove.length > 0) {
-        const { data: subtypesToRemove } = await supabase
-          .from('organization_subtypes')
-          .select('id')
-          .eq('tenant_id', tenantId)
-          .in('name', toRemove as any);
-        const toRemoveIds = (subtypesToRemove || []).map((s: any) => s.id);
-        const { error: delErr } = await supabase
+        // Find all tenants that might have this assignment
+        const { data: existingAssignments } = await supabase
           .from('repository_assignments')
-          .delete()
-          .eq('tenant_id', tenantId)
+          .select('tenant_id, target_organization_subtype_id')
           .eq('element_type', 'report_template')
-          .eq('target_type', 'organization_type')
           .eq('element_id', templateId)
-          .in('target_organization_subtype_id', toRemoveIds as any);
-        if (delErr) throw delErr;
-      }
+          .eq('target_type', 'organization_type');
+        
+        const affectedTenantIds = Array.from(
+          new Set((existingAssignments || []).map((a: any) => a.tenant_id).filter(Boolean))
+        );
 
-      // Clean up legacy org-level rows
-      if (toRemove.length > 0) {
+        // For each tenant, remove assignments for the specified subtypes
+        for (const affectedTenantId of affectedTenantIds) {
+          const { data: subtypesToRemove } = await supabase
+            .from('organization_subtypes')
+            .select('id')
+            .eq('tenant_id', affectedTenantId)
+            .in('name', toRemove as any);
+          
+          const toRemoveIds = (subtypesToRemove || []).map((s: any) => s.id);
+          
+          if (toRemoveIds.length > 0) {
+            const { error: delErr } = await supabase
+              .from('repository_assignments')
+              .delete()
+              .eq('tenant_id', affectedTenantId)
+              .eq('element_type', 'report_template')
+              .eq('target_type', 'organization_type')
+              .eq('element_id', templateId)
+              .in('target_organization_subtype_id', toRemoveIds as any);
+            if (delErr) throw delErr;
+          }
+        }
+
+        // Clean up legacy org-level rows across all tenants
         const inCriteria = `(${toRemove.map(quoteForIn).join(',')})`;
         const { data: orgRows } = await supabase
           .from('organizations')
-          .select('id')
-          .eq('tenant_id', tenantId)
+          .select('id, tenant_id')
           .filter('organization_subtype', 'in', inCriteria);
-        const orgIds = (orgRows || []).map((r: any) => r.id);
-        if (orgIds.length > 0) {
-          const { error: delErr } = await supabase
-            .from('repository_assignments')
-            .delete()
-            .eq('tenant_id', tenantId)
-            .eq('element_type', 'report_template')
-            .eq('target_type', 'organization')
-            .eq('element_id', templateId)
-            .in('target_organization_id', orgIds as any);
-          if (delErr) throw delErr;
+        
+        // Group by tenant for efficient deletion
+        const orgIdsByTenant: Record<string, string[]> = {};
+        (orgRows || []).forEach((org: any) => {
+          const tid = org.tenant_id;
+          if (tid) {
+            if (!orgIdsByTenant[tid]) orgIdsByTenant[tid] = [];
+            orgIdsByTenant[tid].push(org.id);
+          }
+        });
+
+        for (const [tid, orgIds] of Object.entries(orgIdsByTenant)) {
+          if (orgIds.length > 0) {
+            const { error: delErr } = await supabase
+              .from('repository_assignments')
+              .delete()
+              .eq('tenant_id', tid)
+              .eq('element_type', 'report_template')
+              .eq('target_type', 'organization')
+              .eq('element_id', templateId)
+              .in('target_organization_id', orgIds as any);
+            if (delErr) throw delErr;
+          }
         }
       }
 
