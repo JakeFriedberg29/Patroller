@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "./useUserProfile";
 import { queryKeys, queryConfig } from "@/lib/queryClient";
 import { useMemo } from "react";
+import { isValidUUID } from "@/lib/uuidValidation";
+import { toast } from "sonner";
 
 interface PermissionsData {
   hasTenantWrite: boolean;
@@ -23,6 +25,19 @@ const fetchPermissions = async (
       hasOrgWrite: false,
       hasOrgRead: false,
     };
+  }
+  
+  // Validate UUIDs before database queries
+  if (!isValidUUID(userId)) {
+    console.error("Invalid user ID when checking permissions:", userId);
+    toast.error("Authentication error. Please sign in again.");
+    throw new Error("Invalid user ID");
+  }
+  
+  if (!isValidUUID(tenantId)) {
+    console.error("Invalid tenant ID:", tenantId);
+    toast.error("Invalid account data. Please refresh the page.");
+    throw new Error("Invalid tenant ID");
   }
 
   const { data, error } = await supabase

@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { queryKeys } from "@/lib/queryClient";
+import { isValidUUID } from "@/lib/uuidValidation";
+import { toast } from "sonner";
 
 interface UserProfile {
   id: string;
@@ -20,6 +22,13 @@ interface UserProfile {
 
 const fetchUserProfile = async (userId: string | undefined): Promise<UserProfile | null> => {
   if (!userId) return null;
+  
+  // Validate UUID before making database call
+  if (!isValidUUID(userId)) {
+    console.error("Invalid user ID in auth session:", userId);
+    toast.error("Authentication error. Please sign in again.");
+    throw new Error("Invalid user ID in session");
+  }
 
   const { data, error } = await supabase
     .from('users')
