@@ -23,7 +23,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarProvider } from "@/components/ui/sidebar";
-import { Home, FileText, BarChart3, Users as UsersIcon } from "lucide-react";
+import { Home, FileText, BarChart3, Users as UsersIcon, Mail, Phone } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
 
 export default function Styleguide() {
   return (
@@ -745,6 +746,77 @@ export default function Styleguide() {
                 <Progress value={100} />
               </div>
             </div>
+          </div>
+
+          {/* DataTable */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Data Table</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Comprehensive table with search, filters, pagination, and custom cell rendering.
+            </p>
+            <DataTable
+              title="Team Members"
+              data={[
+                { id: 1, name: "John Doe", email: "john@example.com", role: "Admin", status: "Active" },
+                { id: 2, name: "Jane Smith", email: "jane@example.com", role: "User", status: "Active" },
+                { id: 3, name: "Bob Johnson", email: "bob@example.com", role: "User", status: "Inactive" },
+                { id: 4, name: "Alice Brown", email: "alice@example.com", role: "Admin", status: "Active" },
+                { id: 5, name: "Charlie Wilson", email: "charlie@example.com", role: "User", status: "Active" },
+              ]}
+              columns={[
+                { key: "name", header: "Name" },
+                { 
+                  key: "email", 
+                  header: "Email",
+                  cell: (row) => (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span>{row.email}</span>
+                    </div>
+                  )
+                },
+                { key: "role", header: "Role" },
+                { 
+                  key: "status", 
+                  header: "Status",
+                  cell: (row) => (
+                    <Badge variant={row.status === "Active" ? "default" : "secondary"}>
+                      {row.status}
+                    </Badge>
+                  )
+                },
+              ]}
+              searchable={true}
+              searchPlaceholder="Search members..."
+              filters={[
+                {
+                  key: "role",
+                  label: "Role",
+                  options: [
+                    { label: "Admin", value: "Admin" },
+                    { label: "User", value: "User" },
+                  ]
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  options: [
+                    { label: "Active", value: "Active" },
+                    { label: "Inactive", value: "Inactive" },
+                  ]
+                }
+              ]}
+              currentPage={1}
+              totalPages={1}
+              rowsPerPage={10}
+              totalRecords={5}
+              actions={
+                <Button size="sm">
+                  <UsersIcon className="mr-2 h-4 w-4" />
+                  Add Member
+                </Button>
+              }
+            />
           </div>
         </div>
       </section>
