@@ -25,13 +25,372 @@ import { toast } from "sonner";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarProvider } from "@/components/ui/sidebar";
 import { Home, FileText, BarChart3, Users as UsersIcon, Mail, Phone } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
+import { Copy, Check } from "lucide-react";
 
 export default function Styleguide() {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyExport = async () => {
+    const exportText = `# Design System Export - Patroller Console
+
+## 1. Install Required Dependencies
+
+\`\`\`bash
+npm install lucide-react sonner
+\`\`\`
+
+## 2. Install shadcn/ui Components
+
+\`\`\`bash
+npx shadcn@latest add button input label card badge switch checkbox radio-group select separator alert dialog dropdown-menu popover tabs tooltip textarea skeleton progress avatar accordion sidebar table toast
+\`\`\`
+
+## 3. Add Design Tokens to src/index.css
+
+\`\`\`css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Patroller Console Design System - Emergency Response Platform
+   All colors MUST be HSL for proper theming
+*/
+
+@layer base {
+  :root {
+    /* Core Backgrounds */
+    --background: 250 50% 98%;
+    --foreground: 215 25% 15%;
+
+    /* Card System */
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    /* Interactive Elements */
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    /* Patroller Console Brand Colors */
+    --primary: 217 91% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 217 91% 55%;
+
+    /* Status & Alert System */
+    --critical: 0 84% 60%;
+    --critical-foreground: 0 0% 100%;
+    --critical-bg: 0 84% 97%;
+
+    --warning: 35 91% 65%;
+    --warning-foreground: 0 0% 100%;
+    --warning-bg: 35 91% 97%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --success-bg: 142 76% 97%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+    --info-bg: 217 91% 97%;
+
+    /* Neutral System */
+    --secondary: 215 15% 95%;
+    --secondary-foreground: 215 25% 25%;
+
+    --muted: 215 15% 96%;
+    --muted-foreground: 215 13% 45%;
+
+    --accent: 217 91% 97%;
+    --accent-foreground: 217 91% 35%;
+
+    /* Semantic Colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Form Elements */
+    --border: 215 20% 90%;
+    --input: 215 20% 95%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar System */
+    --sidebar-background: 215 30% 7%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 30% 12%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 30% 15%;
+    --sidebar-ring: 217 91% 60%;
+
+    /* Typography Scale */
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+
+    /* Spacing Scale */
+    --space-tight: 0.25rem;
+    --space-normal: 0.5rem;
+    --space-comfortable: 1rem;
+    --space-spacious: 1.5rem;
+
+    /* Shadows */
+    --shadow-subtle: 0 1px 2px 0 hsl(215 25% 15% / 0.05);
+    --shadow-soft: 0 1px 3px 0 hsl(215 25% 15% / 0.1), 0 1px 2px -1px hsl(215 25% 15% / 0.1);
+    --shadow-medium: 0 4px 6px -1px hsl(215 25% 15% / 0.1), 0 2px 4px -2px hsl(215 25% 15% / 0.1);
+    --shadow-strong: 0 10px 15px -3px hsl(215 25% 15% / 0.1), 0 4px 6px -4px hsl(215 25% 15% / 0.1);
+
+    /* Animation Timing */
+    --duration-fast: 0.15s;
+    --duration-normal: 0.2s;
+    --duration-slow: 0.3s;
+  }
+
+  .dark {
+    /* Core Backgrounds */
+    --background: 215 30% 7%;
+    --foreground: 215 15% 95%;
+
+    /* Card System */
+    --card: 215 30% 9%;
+    --card-foreground: 215 15% 95%;
+
+    /* Interactive Elements */
+    --popover: 215 30% 9%;
+    --popover-foreground: 215 15% 95%;
+
+    /* Patroller Console Brand Colors */
+    --primary: 217 91% 65%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 217 91% 60%;
+
+    /* Status & Alert System - Dark Mode */
+    --critical: 0 84% 65%;
+    --critical-foreground: 0 0% 100%;
+    --critical-bg: 0 84% 10%;
+
+    --warning: 35 91% 70%;
+    --warning-foreground: 0 0% 100%;
+    --warning-bg: 35 91% 10%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-bg: 142 76% 10%;
+
+    --info: 217 91% 65%;
+    --info-foreground: 0 0% 100%;
+    --info-bg: 217 91% 10%;
+
+    /* Neutral System */
+    --secondary: 215 30% 15%;
+    --secondary-foreground: 215 15% 85%;
+
+    --muted: 215 30% 12%;
+    --muted-foreground: 215 15% 60%;
+
+    --accent: 215 30% 15%;
+    --accent-foreground: 217 91% 70%;
+
+    /* Semantic Colors */
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Form Elements */
+    --border: 215 30% 20%;
+    --input: 215 30% 15%;
+    --ring: 217 91% 65%;
+
+    /* Sidebar System - Dark Mode */
+    --sidebar-background: 215 35% 5%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 217 91% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 35% 8%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 35% 12%;
+    --sidebar-ring: 217 91% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+\`\`\`
+
+## 4. Update tailwind.config.ts
+
+\`\`\`typescript
+import type { Config } from "tailwindcss";
+
+export default {
+  darkMode: ["class"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
+  prefix: "",
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px"
+      }
+    },
+    extend: {
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+          hover: "hsl(var(--primary-hover))"
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))"
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))"
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))"
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))"
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))"
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))"
+        },
+        critical: {
+          DEFAULT: "hsl(var(--critical))",
+          foreground: "hsl(var(--critical-foreground))",
+          bg: "hsl(var(--critical-bg))"
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+          bg: "hsl(var(--warning-bg))"
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+          bg: "hsl(var(--success-bg))"
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+          bg: "hsl(var(--info-bg))"
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))"
+        }
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)"
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" }
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" }
+        }
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out"
+      }
+    }
+  },
+  plugins: [require("tailwindcss-animate")],
+} satisfies Config;
+\`\`\`
+
+## 5. Component Usage Examples
+
+All components follow semantic color tokens and support dark mode out of the box.
+
+### Status Colors
+- \`critical\` - Error states
+- \`warning\` - Warning states
+- \`success\` - Success states
+- \`info\` - Informational states
+
+### Sidebar Navigation
+Active state uses: \`bg-primary/20 text-primary font-semibold border-r-2 border-primary shadow-sm\`
+Hover state uses: \`hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1\`
+
+### Forms
+All form elements use semantic tokens like \`border\`, \`input\`, \`ring\` for consistent theming.
+
+Visit the styleguide for live component examples and patterns.
+`;
+
+    try {
+      await navigator.clipboard.writeText(exportText);
+      setCopied(true);
+      toast.success("Design system exported!", { description: "All configuration copied to clipboard" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error("Failed to copy", { description: "Please try again" });
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 space-y-12">
-      <div>
-        <h1 className="text-4xl font-bold mb-2">Design System Styleguide</h1>
-        <p className="text-muted-foreground">Patroller Console - Emergency Response Platform</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">Design System Styleguide</h1>
+          <p className="text-muted-foreground">Patroller Console - Emergency Response Platform</p>
+        </div>
+        <Button onClick={handleCopyExport} className="gap-2">
+          {copied ? (
+            <>
+              <Check className="h-4 w-4" />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Copy className="h-4 w-4" />
+              Export Design System
+            </>
+          )}
+        </Button>
       </div>
 
       <Separator />
