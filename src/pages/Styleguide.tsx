@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +9,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, CheckCircle, Info, AlertTriangle } from "lucide-react";
+import { AlertCircle, CheckCircle, Info, AlertTriangle, ChevronDown, User, Settings, LogOut, HelpCircle, Calendar } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { toast } from "sonner";
 
 export default function Styleguide() {
   return (
@@ -274,6 +286,10 @@ export default function Styleguide() {
                 <Label htmlFor="disabled">Disabled Input</Label>
                 <Input id="disabled" placeholder="Disabled" disabled />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="textarea">Textarea</Label>
+                <Textarea id="textarea" placeholder="Enter longer text..." />
+              </div>
             </CardContent>
           </Card>
 
@@ -331,6 +347,257 @@ export default function Styleguide() {
           <ShadowDemo name="Soft" shadow="0 1px 3px 0 hsl(215 25% 15% / 0.1), 0 1px 2px -1px hsl(215 25% 15% / 0.1)" />
           <ShadowDemo name="Medium" shadow="0 4px 6px -1px hsl(215 25% 15% / 0.1), 0 2px 4px -2px hsl(215 25% 15% / 0.1)" />
           <ShadowDemo name="Strong" shadow="0 10px 15px -3px hsl(215 25% 15% / 0.1), 0 4px 6px -4px hsl(215 25% 15% / 0.1)" />
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Interactive Components */}
+      <section className="space-y-6">
+        <h2 className="text-3xl font-bold">Interactive Components</h2>
+        
+        <div className="space-y-8">
+          {/* Dialog */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Dialog / Modal</h3>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">Open Dialog</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Are you sure?</DialogTitle>
+                  <DialogDescription>
+                    This action cannot be undone. This will permanently delete your data.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline">Cancel</Button>
+                  <Button>Confirm</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Dropdown Menu */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Dropdown Menu</h3>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Open Menu <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Popover */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Popover</h3>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline">Open Popover</Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Dimensions</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Set the dimensions for the layer.
+                  </p>
+                  <div className="grid gap-2">
+                    <div className="grid grid-cols-3 items-center gap-4">
+                      <Label htmlFor="width">Width</Label>
+                      <Input id="width" defaultValue="100%" className="col-span-2" />
+                    </div>
+                    <div className="grid grid-cols-3 items-center gap-4">
+                      <Label htmlFor="height">Height</Label>
+                      <Input id="height" defaultValue="25px" className="col-span-2" />
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Tooltip */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Tooltip</h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline">
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>This is a helpful tooltip</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          {/* Toast */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Toast Notifications</h3>
+            <div className="flex flex-wrap gap-4">
+              <Button 
+                variant="outline"
+                onClick={() => toast.success("Success!", { description: "Your changes have been saved." })}
+              >
+                Show Success
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => toast.error("Error!", { description: "Something went wrong." })}
+              >
+                Show Error
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => toast.info("Info", { description: "This is an informational message." })}
+              >
+                Show Info
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Navigation Components */}
+      <section className="space-y-6">
+        <h2 className="text-3xl font-bold">Navigation Components</h2>
+        
+        <div className="space-y-8">
+          {/* Tabs */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Tabs</h3>
+            <Tabs defaultValue="tab1" className="w-full">
+              <TabsList>
+                <TabsTrigger value="tab1">Account</TabsTrigger>
+                <TabsTrigger value="tab2">Password</TabsTrigger>
+                <TabsTrigger value="tab3">Settings</TabsTrigger>
+              </TabsList>
+              <TabsContent value="tab1" className="space-y-4">
+                <p className="text-sm text-muted-foreground">Make changes to your account here.</p>
+              </TabsContent>
+              <TabsContent value="tab2" className="space-y-4">
+                <p className="text-sm text-muted-foreground">Change your password here.</p>
+              </TabsContent>
+              <TabsContent value="tab3" className="space-y-4">
+                <p className="text-sm text-muted-foreground">Update your preferences here.</p>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Accordion */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Accordion</h3>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger>Is it accessible?</AccordionTrigger>
+                <AccordionContent>
+                  Yes. It adheres to the WAI-ARIA design pattern.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-2">
+                <AccordionTrigger>Is it styled?</AccordionTrigger>
+                <AccordionContent>
+                  Yes. It comes with default styles that match the design system.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-3">
+                <AccordionTrigger>Is it animated?</AccordionTrigger>
+                <AccordionContent>
+                  Yes. It's animated by default with smooth transitions.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Data Display Components */}
+      <section className="space-y-6">
+        <h2 className="text-3xl font-bold">Data Display Components</h2>
+        
+        <div className="space-y-8">
+          {/* Skeleton */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Skeleton Loaders</h3>
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Avatar */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Avatar</h3>
+            <div className="flex flex-wrap gap-4 items-center">
+              <Avatar>
+                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+              <Avatar>
+                <AvatarFallback>JD</AvatarFallback>
+              </Avatar>
+              <Avatar className="h-16 w-16">
+                <AvatarFallback className="text-lg">AB</AvatarFallback>
+              </Avatar>
+            </div>
+          </div>
+
+          {/* Progress */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Progress Bar</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Progress</span>
+                  <span className="text-muted-foreground">33%</span>
+                </div>
+                <Progress value={33} />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Loading</span>
+                  <span className="text-muted-foreground">66%</span>
+                </div>
+                <Progress value={66} />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Complete</span>
+                  <span className="text-muted-foreground">100%</span>
+                </div>
+                <Progress value={100} />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
