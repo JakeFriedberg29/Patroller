@@ -709,6 +709,447 @@ import { Progress } from "@/components/ui/progress";
 - \`info\` - Informational states (hsl(var(--info)))
 
 All components use semantic color tokens and support dark mode automatically.
+
+## 6. DataTable Component
+
+### Create src/components/ui/data-table.tsx
+\`\`\`tsx
+import React from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+export interface ColumnDef<T> {
+  key: string;
+  header: string;
+  cell?: (row: T) => React.ReactNode;
+  className?: string;
+  headerClassName?: string;
+}
+
+export interface FilterConfig {
+  key: string;
+  label: string;
+  options: Array<{ label: string; value: string }>;
+}
+
+export interface DataTableProps<T> {
+  title?: string;
+  data: T[];
+  columns: ColumnDef<T>[];
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  filters?: FilterConfig[];
+  activeFilters?: Record<string, string>;
+  onFilterChange?: (key: string, value: string) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange?: (page: number) => void;
+  rowsPerPage: number;
+  onRowsPerPageChange?: (rows: number) => void;
+  totalRecords: number;
+  loading?: boolean;
+  emptyMessage?: string;
+  actions?: React.ReactNode;
+}
+
+export function DataTable<T extends Record<string, any>>({
+  title,
+  data,
+  columns,
+  searchable = false,
+  searchPlaceholder = "Search...",
+  searchValue = "",
+  onSearchChange,
+  filters = [],
+  activeFilters = {},
+  onFilterChange,
+  currentPage,
+  totalPages,
+  onPageChange,
+  rowsPerPage,
+  onRowsPerPageChange,
+  totalRecords,
+  loading = false,
+  emptyMessage = "No data available",
+  actions,
+}: DataTableProps<T>) {
+  const startRecord = (currentPage - 1) * rowsPerPage + 1;
+  const endRecord = Math.min(currentPage * rowsPerPage, totalRecords);
+
+  return (
+    <div className="space-y-4">
+      {/* Header with title and actions */}
+      {(title || actions) && (
+        <div className="flex items-center justify-between">
+          {title && <h2 className="text-2xl font-bold">{title}</h2>}
+          {actions && <div>{actions}</div>}
+        </div>
+      )}
+
+      {/* Search and Filters */}
+      {(searchable || filters.length > 0) && (
+        <div className="flex flex-col sm:flex-row gap-4">
+          {searchable && (
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={searchPlaceholder}
+                value={searchValue}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          )}
+          {filters.map((filter) => (
+            <Select
+              key={filter.key}
+              value={activeFilters[filter.key] || ""}
+              onValueChange={(value) => onFilterChange?.(filter.key, value)}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder={filter.label} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All {filter.label}</SelectItem>
+                {filter.options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ))}
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {columns.map((column) => (
+                <TableHead key={column.key} className={column.headerClassName}>
+                  {column.header}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              // Loading state
+              Array.from({ length: rowsPerPage }).map((_, i) => (
+                <TableRow key={i}>
+                  {columns.map((column) => (
+                    <TableCell key={column.key}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : data.length === 0 ? (
+              // Empty state
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            ) : (
+              // Data rows
+              data.map((row, index) => (
+                <TableRow key={index}>
+                  {columns.map((column) => (
+                    <TableCell key={column.key} className={column.className}>
+                      {column.cell ? column.cell(row) : row[column.key]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Rows per page:</span>
+          <Select
+            value={rowsPerPage.toString()}
+            onValueChange={(value) => onRowsPerPageChange?.(Number(value))}
+          >
+            <SelectTrigger className="w-[70px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">
+            {startRecord}-{endRecord} of {totalRecords}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange?.(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange?.(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+\`\`\`
+
+### Create src/hooks/useDataTable.tsx
+\`\`\`tsx
+import { useState, useMemo } from "react";
+
+interface FilterConfig {
+  key: string;
+  label: string;
+  options: Array<{ label: string; value: string }>;
+}
+
+interface UseDataTableProps<T> {
+  data: T[];
+  searchKeys?: (keyof T)[];
+  filterConfigs?: FilterConfig[];
+}
+
+export function useDataTable<T extends Record<string, any>>({
+  data,
+  searchKeys = [],
+  filterConfigs = [],
+}: UseDataTableProps<T>) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Apply search and filters
+  const filteredData = useMemo(() => {
+    let result = [...data];
+
+    // Apply search
+    if (searchTerm && searchKeys.length > 0) {
+      const lowerSearch = searchTerm.toLowerCase();
+      result = result.filter((item) =>
+        searchKeys.some((key) => {
+          const value = item[key];
+          return value?.toString().toLowerCase().includes(lowerSearch);
+        })
+      );
+    }
+
+    // Apply filters
+    Object.entries(activeFilters).forEach(([key, value]) => {
+      if (value) {
+        result = result.filter((item) => item[key] === value);
+      }
+    });
+
+    return result;
+  }, [data, searchTerm, searchKeys, activeFilters]);
+
+  // Paginate data
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredData.slice(start, end);
+  }, [filteredData, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const totalRecords = filteredData.length;
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page
+  };
+
+  const handleFilter = (key: string, value: string) => {
+    setActiveFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+    setCurrentPage(1); // Reset to first page
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleRowsPerPageChange = (rows: number) => {
+    setRowsPerPage(rows);
+    setCurrentPage(1); // Reset to first page
+  };
+
+  return {
+    searchTerm,
+    activeFilters,
+    currentPage,
+    rowsPerPage,
+    totalPages,
+    totalRecords,
+    filteredData,
+    paginatedData,
+    handleSearch,
+    handleFilter,
+    handlePageChange,
+    handleRowsPerPageChange,
+  };
+}
+\`\`\`
+
+### DataTable Usage Example
+\`\`\`tsx
+import { DataTable, ColumnDef } from "@/components/ui/data-table";
+import { useDataTable } from "@/hooks/useDataTable";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Mail, Plus } from "lucide-react";
+
+interface TeamMember {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+}
+
+export function TeamMembersTable() {
+  const members: TeamMember[] = [
+    { id: 1, name: "John Doe", email: "john@example.com", role: "Admin", status: "Active" },
+    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "User", status: "Active" },
+    { id: 3, name: "Bob Johnson", email: "bob@example.com", role: "User", status: "Inactive" },
+  ];
+
+  const {
+    searchTerm,
+    activeFilters,
+    currentPage,
+    rowsPerPage,
+    totalPages,
+    totalRecords,
+    paginatedData,
+    handleSearch,
+    handleFilter,
+    handlePageChange,
+    handleRowsPerPageChange,
+  } = useDataTable({
+    data: members,
+    searchKeys: ["name", "email"],
+    filterConfigs: [
+      {
+        key: "role",
+        label: "Role",
+        options: [
+          { label: "Admin", value: "Admin" },
+          { label: "User", value: "User" },
+        ],
+      },
+      {
+        key: "status",
+        label: "Status",
+        options: [
+          { label: "Active", value: "Active" },
+          { label: "Inactive", value: "Inactive" },
+        ],
+      },
+    ],
+  });
+
+  const columns: ColumnDef<TeamMember>[] = [
+    { key: "name", header: "Name" },
+    {
+      key: "email",
+      header: "Email",
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          <Mail className="h-4 w-4 text-muted-foreground" />
+          <span>{row.email}</span>
+        </div>
+      ),
+    },
+    { key: "role", header: "Role" },
+    {
+      key: "status",
+      header: "Status",
+      cell: (row) => (
+        <Badge variant={row.status === "Active" ? "default" : "secondary"}>
+          {row.status}
+        </Badge>
+      ),
+    },
+  ];
+
+  return (
+    <DataTable
+      title="Team Members"
+      data={paginatedData}
+      columns={columns}
+      searchable={true}
+      searchPlaceholder="Search members..."
+      searchValue={searchTerm}
+      onSearchChange={handleSearch}
+      filters={[
+        {
+          key: "role",
+          label: "Role",
+          options: [
+            { label: "Admin", value: "Admin" },
+            { label: "User", value: "User" },
+          ],
+        },
+        {
+          key: "status",
+          label: "Status",
+          options: [
+            { label: "Active", value: "Active" },
+            { label: "Inactive", value: "Inactive" },
+          ],
+        },
+      ]}
+      activeFilters={activeFilters}
+      onFilterChange={handleFilter}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={handlePageChange}
+      rowsPerPage={rowsPerPage}
+      onRowsPerPageChange={handleRowsPerPageChange}
+      totalRecords={totalRecords}
+      actions={
+        <Button size="sm">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Member
+        </Button>
+      }
+    />
+  );
+}
+\`\`\`
 `;
 
     try {
