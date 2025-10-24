@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, CheckCircle, Info, AlertTriangle, ChevronDown, User, Settings, LogOut, HelpCircle, Calendar } from "lucide-react";
+import { AlertCircle, CheckCircle, Info, AlertTriangle, ChevronDown, User, Settings, LogOut, HelpCircle, Calendar, Shield, MoreHorizontal } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -539,20 +539,20 @@ export default function Styleguide() {
           <div>
             <h3 className="text-xl font-semibold mb-4">Sidebar Navigation</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Collapsible sidebar with grouped navigation items. Supports icon-only collapsed state.
+              Collapsible sidebar with grouped navigation items. Active states use primary color with border accent and shadow.
             </p>
             
             <div className="border rounded-lg overflow-hidden">
               <SidebarProvider defaultOpen={true}>
                 <div className="flex h-[500px] w-full bg-background">
-                  <Sidebar collapsible="icon" className="border-r">
+                  <Sidebar collapsible="icon">
                     <SidebarHeader className="border-b border-sidebar-border p-4">
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-                          <Home className="h-4 w-4 text-primary-foreground" />
+                          <Shield className="h-5 w-5 text-primary-foreground" />
                         </div>
                         <div>
-                          <h2 className="text-base font-semibold text-sidebar-foreground">App Name</h2>
+                          <h2 className="text-lg font-bold text-sidebar-foreground">Patroller Console</h2>
                           <p className="text-xs text-sidebar-foreground/70">Platform View</p>
                         </div>
                       </div>
@@ -560,12 +560,11 @@ export default function Styleguide() {
 
                     <SidebarContent className="px-3 py-4">
                       <SidebarGroup>
-                        <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
                         <SidebarGroupContent>
                           <SidebarMenu>
                             <SidebarMenuItem>
                               <SidebarMenuButton asChild>
-                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60">
+                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1">
                                   <Home className="mr-3 h-4 w-4" />
                                   <span>Dashboard</span>
                                 </a>
@@ -573,7 +572,7 @@ export default function Styleguide() {
                             </SidebarMenuItem>
                             <SidebarMenuItem>
                               <SidebarMenuButton asChild>
-                                <a href="#" className="bg-primary/20 text-primary font-semibold border-r-2 border-primary">
+                                <a href="#" className="bg-primary/20 text-primary font-semibold border-r-2 border-primary shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-primary/30">
                                   <FileText className="mr-3 h-4 w-4" />
                                   <span>Reports</span>
                                 </a>
@@ -581,7 +580,7 @@ export default function Styleguide() {
                             </SidebarMenuItem>
                             <SidebarMenuItem>
                               <SidebarMenuButton asChild>
-                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60">
+                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1">
                                   <BarChart3 className="mr-3 h-4 w-4" />
                                   <span>Analytics</span>
                                 </a>
@@ -589,7 +588,7 @@ export default function Styleguide() {
                             </SidebarMenuItem>
                             <SidebarMenuItem>
                               <SidebarMenuButton asChild>
-                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60">
+                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1">
                                   <UsersIcon className="mr-3 h-4 w-4" />
                                   <span>Team</span>
                                 </a>
@@ -599,13 +598,13 @@ export default function Styleguide() {
                         </SidebarGroupContent>
                       </SidebarGroup>
 
-                      <SidebarGroup className="mt-4">
+                      <SidebarGroup>
                         <SidebarGroupLabel>Settings</SidebarGroupLabel>
                         <SidebarGroupContent>
                           <SidebarMenu>
                             <SidebarMenuItem>
                               <SidebarMenuButton asChild>
-                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60">
+                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1">
                                   <Settings className="mr-3 h-4 w-4" />
                                   <span>Preferences</span>
                                 </a>
@@ -617,14 +616,33 @@ export default function Styleguide() {
                     </SidebarContent>
 
                     <SidebarFooter className="border-t border-sidebar-border p-3">
-                      <SidebarMenu>
-                        <SidebarMenuItem>
-                          <SidebarMenuButton className="w-full justify-start gap-2 bg-sidebar-accent/50 hover:bg-sidebar-accent">
-                            <User className="h-4 w-4" />
-                            <span className="flex-1 text-left">John Doe</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      </SidebarMenu>
+                      <SidebarGroup>
+                        <SidebarGroupContent>
+                          <SidebarMenu>
+                            <SidebarMenuItem>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <SidebarMenuButton className="w-full justify-start gap-2 bg-sidebar-accent/50 hover:bg-sidebar-accent">
+                                    <User className="h-4 w-4" />
+                                    <span className="flex-1 text-left">John Doe</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </SidebarMenuButton>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56">
+                                  <DropdownMenuItem>
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    Settings
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    Sign out
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </SidebarMenuItem>
+                          </SidebarMenu>
+                        </SidebarGroupContent>
+                      </SidebarGroup>
                     </SidebarFooter>
                   </Sidebar>
 
@@ -632,28 +650,28 @@ export default function Styleguide() {
                     <Card>
                       <CardHeader>
                         <CardTitle>Sidebar Features</CardTitle>
-                        <CardDescription>Key characteristics of the sidebar component</CardDescription>
+                        <CardDescription>Key characteristics matching the app's sidebar</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-2">
                         <div className="flex items-start gap-2">
                           <CheckCircle className="h-4 w-4 text-success mt-0.5" />
-                          <p className="text-sm">Collapsible to icon-only view</p>
+                          <p className="text-sm">Active state: bg-primary/20 with border-r-2 and shadow</p>
                         </div>
                         <div className="flex items-start gap-2">
                           <CheckCircle className="h-4 w-4 text-success mt-0.5" />
-                          <p className="text-sm">Grouped navigation items with labels</p>
+                          <p className="text-sm">Hover effect: translate-x-1 animation on inactive items</p>
                         </div>
                         <div className="flex items-start gap-2">
                           <CheckCircle className="h-4 w-4 text-success mt-0.5" />
-                          <p className="text-sm">Active state highlighting with border accent</p>
+                          <p className="text-sm">Icon-only collapsed state support</p>
                         </div>
                         <div className="flex items-start gap-2">
                           <CheckCircle className="h-4 w-4 text-success mt-0.5" />
-                          <p className="text-sm">Header and footer sections</p>
+                          <p className="text-sm">User dropdown menu in footer</p>
                         </div>
                         <div className="flex items-start gap-2">
                           <CheckCircle className="h-4 w-4 text-success mt-0.5" />
-                          <p className="text-sm">Semantic color tokens for theming</p>
+                          <p className="text-sm">Smooth transitions with duration-200</p>
                         </div>
                       </CardContent>
                     </Card>
