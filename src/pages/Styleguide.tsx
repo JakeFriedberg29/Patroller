@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, CheckCircle, Info, AlertTriangle, ChevronDown, User, Settings, LogOut, HelpCircle, Calendar, Shield, MoreHorizontal } from "lucide-react";
+import { AlertCircle, CheckCircle, Info, AlertTriangle, ChevronDown, User, Settings, LogOut, HelpCircle, Calendar, Shield, MoreHorizontal, ChevronRight, ChevronLeft } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -1150,6 +1150,151 @@ export function TeamMembersTable() {
   );
 }
 \`\`\`
+
+### Dual List Box
+\`\`\`tsx
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronRight, ChevronLeft } from "lucide-react";
+
+interface DualListBoxProps {
+  availableItems: string[];
+  selectedItems: string[];
+  onSelectionChange: (selected: string[]) => void;
+  availableLabel?: string;
+  selectedLabel?: string;
+}
+
+export function DualListBox({
+  availableItems: initialAvailable,
+  selectedItems: initialSelected,
+  onSelectionChange,
+  availableLabel = "Available",
+  selectedLabel = "Selected",
+}: DualListBoxProps) {
+  const [leftList, setLeftList] = useState<string[]>(initialAvailable);
+  const [rightList, setRightList] = useState<string[]>(initialSelected);
+  const [leftSelected, setLeftSelected] = useState<string[]>([]);
+  const [rightSelected, setRightSelected] = useState<string[]>([]);
+
+  const moveRight = () => {
+    const toMove = leftSelected;
+    const newRightList = [...rightList, ...toMove].sort();
+    setRightList(newRightList);
+    setLeftList(prev => prev.filter(i => !toMove.includes(i)));
+    setLeftSelected([]);
+    onSelectionChange(newRightList);
+  };
+
+  const moveLeft = () => {
+    const toMove = rightSelected;
+    const newRightList = rightList.filter(i => !toMove.includes(i));
+    setLeftList(prev => [...prev, ...toMove].sort());
+    setRightList(newRightList);
+    setRightSelected([]);
+    onSelectionChange(newRightList);
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="border rounded-md p-3">
+        <div className="font-medium mb-2 text-sm">{availableLabel}</div>
+        <div className="space-y-1 max-h-60 overflow-auto">
+          {leftList.map(item => (
+            <label key={item} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent/50 p-1 rounded">
+              <input 
+                type="checkbox" 
+                className="accent-primary cursor-pointer" 
+                checked={leftSelected.includes(item)} 
+                onChange={(e) => {
+                  setLeftSelected(prev => e.target.checked ? [...prev, item] : prev.filter(i => i !== item));
+                }} 
+              />
+              <span>{item}</span>
+            </label>
+          ))}
+          {leftList.length === 0 && (
+            <div className="text-xs text-muted-foreground">None</div>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col items-center justify-center gap-2 py-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={moveRight}
+          disabled={leftSelected.length === 0}
+          className="w-32 gap-2"
+        >
+          <span>Add</span>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={moveLeft}
+          disabled={rightSelected.length === 0}
+          className="w-32 gap-2"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Remove</span>
+        </Button>
+      </div>
+      <div className="border rounded-md p-3">
+        <div className="font-medium mb-2 text-sm">{selectedLabel}</div>
+        <div className="space-y-1 max-h-60 overflow-auto">
+          {rightList.map(item => (
+            <label key={item} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent/50 p-1 rounded">
+              <input 
+                type="checkbox" 
+                className="accent-primary cursor-pointer" 
+                checked={rightSelected.includes(item)} 
+                onChange={(e) => {
+                  setRightSelected(prev => e.target.checked ? [...prev, item] : prev.filter(i => i !== item));
+                }} 
+              />
+              <span>{item}</span>
+            </label>
+          ))}
+          {rightList.length === 0 && (
+            <div className="text-xs text-muted-foreground">None</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+\`\`\`
+
+### Dual List Box Usage Example
+\`\`\`tsx
+import { DualListBox } from "@/components/ui/dual-list-box";
+import { useState } from "react";
+
+export function AssignmentManager() {
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([
+    "Ski Patrol",
+    "Harbor Master",
+  ]);
+
+  const availableTypes = [
+    "Search and Rescue",
+    "Lifeguard Service",
+    "Park Service",
+    "Event Medical",
+  ];
+
+  return (
+    <DualListBox
+      availableItems={availableTypes}
+      selectedItems={selectedTypes}
+      onSelectionChange={setSelectedTypes}
+      availableLabel="Available Organization Types"
+      selectedLabel="Assigned Organization Types"
+    />
+  );
+}
+\`\`\`
 `;
 
     try {
@@ -1973,6 +2118,28 @@ export function TeamMembersTable() {
 
       <Separator />
 
+      {/* Dual List Box */}
+      <section className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold mb-2">Dual List Box</h2>
+          <p className="text-muted-foreground">Move items between two lists with Add/Remove buttons</p>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Assignment Manager</CardTitle>
+              <CardDescription>Select and assign items between available and selected lists</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DualListBoxDemo />
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <Separator />
+
       {/* Design Tokens Reference */}
       <section className="space-y-6">
         <h2 className="text-3xl font-bold">Design Tokens Reference</h2>
@@ -2053,5 +2220,103 @@ function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
         <p className="text-xs text-muted-foreground">Shadow effect</p>
       </CardContent>
     </Card>
+  );
+}
+
+function DualListBoxDemo() {
+  const [leftList, setLeftList] = useState<string[]>([
+    "Search and Rescue",
+    "Lifeguard Service",
+    "Park Service",
+    "Event Medical",
+  ]);
+  const [rightList, setRightList] = useState<string[]>([
+    "Ski Patrol",
+    "Harbor Master",
+  ]);
+  const [leftSelected, setLeftSelected] = useState<string[]>([]);
+  const [rightSelected, setRightSelected] = useState<string[]>([]);
+
+  const moveRight = () => {
+    const toMove = leftSelected;
+    setRightList(prev => [...prev, ...toMove].sort());
+    setLeftList(prev => prev.filter(i => !toMove.includes(i)));
+    setLeftSelected([]);
+  };
+
+  const moveLeft = () => {
+    const toMove = rightSelected;
+    setLeftList(prev => [...prev, ...toMove].sort());
+    setRightList(prev => prev.filter(i => !toMove.includes(i)));
+    setRightSelected([]);
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="border rounded-md p-3">
+        <div className="font-medium mb-2 text-sm">Available</div>
+        <div className="space-y-1 max-h-60 overflow-auto">
+          {leftList.map(item => (
+            <label key={item} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent/50 p-1 rounded">
+              <input 
+                type="checkbox" 
+                className="accent-primary cursor-pointer" 
+                checked={leftSelected.includes(item)} 
+                onChange={(e) => {
+                  setLeftSelected(prev => e.target.checked ? [...prev, item] : prev.filter(i => i !== item));
+                }} 
+              />
+              <span>{item}</span>
+            </label>
+          ))}
+          {leftList.length === 0 && (
+            <div className="text-xs text-muted-foreground">None</div>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col items-center justify-center gap-2 py-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={moveRight}
+          disabled={leftSelected.length === 0}
+          className="w-32 gap-2"
+        >
+          <span>Add</span>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={moveLeft}
+          disabled={rightSelected.length === 0}
+          className="w-32 gap-2"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Remove</span>
+        </Button>
+      </div>
+      <div className="border rounded-md p-3">
+        <div className="font-medium mb-2 text-sm">Selected</div>
+        <div className="space-y-1 max-h-60 overflow-auto">
+          {rightList.map(item => (
+            <label key={item} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent/50 p-1 rounded">
+              <input 
+                type="checkbox" 
+                className="accent-primary cursor-pointer" 
+                checked={rightSelected.includes(item)} 
+                onChange={(e) => {
+                  setRightSelected(prev => e.target.checked ? [...prev, item] : prev.filter(i => i !== item));
+                }} 
+              />
+              <span>{item}</span>
+            </label>
+          ))}
+          {rightList.length === 0 && (
+            <div className="text-xs text-muted-foreground">None</div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
