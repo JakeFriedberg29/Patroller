@@ -22,6 +22,8 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarProvider } from "@/components/ui/sidebar";
+import { Home, FileText, BarChart3, Users as UsersIcon } from "lucide-react";
 
 export default function Styleguide() {
   return (
@@ -531,6 +533,134 @@ export default function Styleguide() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+          </div>
+
+          {/* Sidebar */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Sidebar Navigation</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Collapsible sidebar with grouped navigation items. Supports icon-only collapsed state.
+            </p>
+            
+            <div className="border rounded-lg overflow-hidden">
+              <SidebarProvider defaultOpen={true}>
+                <div className="flex h-[500px] w-full bg-background">
+                  <Sidebar collapsible="icon" className="border-r">
+                    <SidebarHeader className="border-b border-sidebar-border p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
+                          <Home className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                        <div>
+                          <h2 className="text-base font-semibold text-sidebar-foreground">App Name</h2>
+                          <p className="text-xs text-sidebar-foreground/70">Platform View</p>
+                        </div>
+                      </div>
+                    </SidebarHeader>
+
+                    <SidebarContent className="px-3 py-4">
+                      <SidebarGroup>
+                        <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                          <SidebarMenu>
+                            <SidebarMenuItem>
+                              <SidebarMenuButton asChild>
+                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60">
+                                  <Home className="mr-3 h-4 w-4" />
+                                  <span>Dashboard</span>
+                                </a>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                              <SidebarMenuButton asChild>
+                                <a href="#" className="bg-primary/20 text-primary font-semibold border-r-2 border-primary">
+                                  <FileText className="mr-3 h-4 w-4" />
+                                  <span>Reports</span>
+                                </a>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                              <SidebarMenuButton asChild>
+                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60">
+                                  <BarChart3 className="mr-3 h-4 w-4" />
+                                  <span>Analytics</span>
+                                </a>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                              <SidebarMenuButton asChild>
+                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60">
+                                  <UsersIcon className="mr-3 h-4 w-4" />
+                                  <span>Team</span>
+                                </a>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          </SidebarMenu>
+                        </SidebarGroupContent>
+                      </SidebarGroup>
+
+                      <SidebarGroup className="mt-4">
+                        <SidebarGroupLabel>Settings</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                          <SidebarMenu>
+                            <SidebarMenuItem>
+                              <SidebarMenuButton asChild>
+                                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60">
+                                  <Settings className="mr-3 h-4 w-4" />
+                                  <span>Preferences</span>
+                                </a>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          </SidebarMenu>
+                        </SidebarGroupContent>
+                      </SidebarGroup>
+                    </SidebarContent>
+
+                    <SidebarFooter className="border-t border-sidebar-border p-3">
+                      <SidebarMenu>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton className="w-full justify-start gap-2 bg-sidebar-accent/50 hover:bg-sidebar-accent">
+                            <User className="h-4 w-4" />
+                            <span className="flex-1 text-left">John Doe</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </SidebarMenu>
+                    </SidebarFooter>
+                  </Sidebar>
+
+                  <div className="flex-1 p-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Sidebar Features</CardTitle>
+                        <CardDescription>Key characteristics of the sidebar component</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-success mt-0.5" />
+                          <p className="text-sm">Collapsible to icon-only view</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-success mt-0.5" />
+                          <p className="text-sm">Grouped navigation items with labels</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-success mt-0.5" />
+                          <p className="text-sm">Active state highlighting with border accent</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-success mt-0.5" />
+                          <p className="text-sm">Header and footer sections</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-success mt-0.5" />
+                          <p className="text-sm">Semantic color tokens for theming</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </SidebarProvider>
+            </div>
           </div>
         </div>
       </section>
