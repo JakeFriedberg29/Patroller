@@ -863,14 +863,14 @@ export function DataTable<T extends Record<string, any>>({
           {filters.map((filter) => (
             <Select
               key={filter.key}
-              value={activeFilters[filter.key] || ""}
-              onValueChange={(value) => onFilterChange?.(filter.key, value)}
+              value={activeFilters[filter.key] || "all"}
+              onValueChange={(value) => onFilterChange?.(filter.key, value === "all" ? "" : value)}
             >
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder={filter.label} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All {filter.label}</SelectItem>
+                <SelectItem value="all">All {filter.label}</SelectItem>
                 {filter.options.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -1277,14 +1277,14 @@ export function FilterSelect({
         {label}:
       </span>
       <div className="flex items-center gap-1">
-        <Select value={value} onValueChange={onChange}>
+        <Select value={value || "all"} onValueChange={(val) => onChange(val === "all" ? "" : val)}>
           <SelectTrigger className="h-9 w-[180px]">
             <SelectValue placeholder={placeholder}>
               {selectedOption?.label || placeholder}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
