@@ -36,7 +36,7 @@ export default function Styleguide() {
 ## 1. Install Required Dependencies
 
 \`\`\`bash
-npm install lucide-react sonner
+npm install lucide-react sonner @radix-ui/react-separator @radix-ui/react-tooltip @radix-ui/react-progress
 \`\`\`
 
 ## 2. Install shadcn/ui Components
@@ -343,22 +343,372 @@ export default {
 
 ## 5. Component Usage Examples
 
-All components follow semantic color tokens and support dark mode out of the box.
+### Buttons
+\`\`\`tsx
+import { Button } from "@/components/ui/button";
 
-### Status Colors
-- \`critical\` - Error states
-- \`warning\` - Warning states
-- \`success\` - Success states
-- \`info\` - Informational states
+// Variants
+<Button variant="default">Default</Button>
+<Button variant="secondary">Secondary</Button>
+<Button variant="destructive">Destructive</Button>
+<Button variant="outline">Outline</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="link">Link</Button>
+
+// Sizes
+<Button size="sm">Small</Button>
+<Button size="default">Default</Button>
+<Button size="lg">Large</Button>
+<Button size="icon"><Icon /></Button>
+\`\`\`
+
+### Badges
+\`\`\`tsx
+import { Badge } from "@/components/ui/badge";
+
+<Badge variant="default">Default</Badge>
+<Badge variant="secondary">Secondary</Badge>
+<Badge variant="destructive">Destructive</Badge>
+<Badge variant="outline">Outline</Badge>
+\`\`\`
+
+### Alerts
+\`\`\`tsx
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info, CheckCircle, AlertTriangle, AlertCircle } from "lucide-react";
+
+// Info Alert
+<Alert>
+  <Info className="h-4 w-4" />
+  <AlertTitle>Info</AlertTitle>
+  <AlertDescription>This is an informational alert message.</AlertDescription>
+</Alert>
+
+// Success Alert
+<Alert className="border-success text-success">
+  <CheckCircle className="h-4 w-4" />
+  <AlertTitle>Success</AlertTitle>
+  <AlertDescription>Your changes have been saved.</AlertDescription>
+</Alert>
+
+// Warning Alert
+<Alert className="border-warning text-warning">
+  <AlertTriangle className="h-4 w-4" />
+  <AlertTitle>Warning</AlertTitle>
+  <AlertDescription>Please review carefully.</AlertDescription>
+</Alert>
+
+// Error Alert
+<Alert variant="destructive">
+  <AlertCircle className="h-4 w-4" />
+  <AlertTitle>Error</AlertTitle>
+  <AlertDescription>Something went wrong.</AlertDescription>
+</Alert>
+\`\`\`
+
+### Cards
+\`\`\`tsx
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+<Card>
+  <CardHeader>
+    <CardTitle>Card Title</CardTitle>
+    <CardDescription>Card description</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <p>Card content</p>
+  </CardContent>
+</Card>
+
+// With variants
+<Card className="border-primary">...</Card>
+<Card className="bg-muted">...</Card>
+\`\`\`
+
+### Form Elements
+\`\`\`tsx
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+// Input
+<div className="space-y-2">
+  <Label htmlFor="email">Email</Label>
+  <Input id="email" type="email" placeholder="email@example.com" />
+</div>
+
+// Textarea
+<div className="space-y-2">
+  <Label htmlFor="message">Message</Label>
+  <Textarea id="message" placeholder="Enter text..." />
+</div>
+
+// Select
+<Select>
+  <SelectTrigger>
+    <SelectValue placeholder="Select option" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="1">Option 1</SelectItem>
+    <SelectItem value="2">Option 2</SelectItem>
+  </SelectContent>
+</Select>
+
+// Switch
+<div className="flex items-center space-x-2">
+  <Switch id="switch" />
+  <Label htmlFor="switch">Enable feature</Label>
+</div>
+
+// Checkbox
+<div className="flex items-center space-x-2">
+  <Checkbox id="check" />
+  <Label htmlFor="check">Accept terms</Label>
+</div>
+
+// Radio Group
+<RadioGroup defaultValue="option1">
+  <div className="flex items-center space-x-2">
+    <RadioGroupItem value="option1" id="r1" />
+    <Label htmlFor="r1">Option 1</Label>
+  </div>
+  <div className="flex items-center space-x-2">
+    <RadioGroupItem value="option2" id="r2" />
+    <Label htmlFor="r2">Option 2</Label>
+  </div>
+</RadioGroup>
+\`\`\`
+
+### Dialog / Modal
+\`\`\`tsx
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+<Dialog>
+  <DialogTrigger asChild>
+    <Button variant="outline">Open Dialog</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Are you sure?</DialogTitle>
+      <DialogDescription>
+        This action cannot be undone.
+      </DialogDescription>
+    </DialogHeader>
+    <DialogFooter>
+      <Button variant="outline">Cancel</Button>
+      <Button>Confirm</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+\`\`\`
+
+### Dropdown Menu
+\`\`\`tsx
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { User, Settings, LogOut } from "lucide-react";
+
+<DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button variant="outline">Open Menu</Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent>
+    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+    <DropdownMenuSeparator />
+    <DropdownMenuItem>
+      <User className="mr-2 h-4 w-4" />
+      Profile
+    </DropdownMenuItem>
+    <DropdownMenuItem>
+      <Settings className="mr-2 h-4 w-4" />
+      Settings
+    </DropdownMenuItem>
+    <DropdownMenuSeparator />
+    <DropdownMenuItem className="text-destructive">
+      <LogOut className="mr-2 h-4 w-4" />
+      Logout
+    </DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
+\`\`\`
+
+### Popover
+\`\`\`tsx
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+<Popover>
+  <PopoverTrigger asChild>
+    <Button variant="outline">Open Popover</Button>
+  </PopoverTrigger>
+  <PopoverContent className="w-80">
+    <div className="space-y-2">
+      <h4 className="font-medium">Dimensions</h4>
+      <div className="grid gap-2">
+        <div className="grid grid-cols-3 items-center gap-4">
+          <Label htmlFor="width">Width</Label>
+          <Input id="width" defaultValue="100%" className="col-span-2" />
+        </div>
+      </div>
+    </div>
+  </PopoverContent>
+</Popover>
+\`\`\`
+
+### Tooltip
+\`\`\`tsx
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+<TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button variant="outline">Hover me</Button>
+    </TooltipTrigger>
+    <TooltipContent>
+      <p>Helpful tooltip text</p>
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+\`\`\`
+
+### Toast Notifications
+\`\`\`tsx
+import { toast } from "sonner";
+
+// Success
+toast.success("Success!", { description: "Changes saved." });
+
+// Error
+toast.error("Error!", { description: "Something went wrong." });
+
+// Info
+toast.info("Info", { description: "Informational message." });
+\`\`\`
+
+### Tabs
+\`\`\`tsx
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+<Tabs defaultValue="tab1">
+  <TabsList>
+    <TabsTrigger value="tab1">Account</TabsTrigger>
+    <TabsTrigger value="tab2">Password</TabsTrigger>
+    <TabsTrigger value="tab3">Settings</TabsTrigger>
+  </TabsList>
+  <TabsContent value="tab1">Account content</TabsContent>
+  <TabsContent value="tab2">Password content</TabsContent>
+  <TabsContent value="tab3">Settings content</TabsContent>
+</Tabs>
+\`\`\`
+
+### Accordion
+\`\`\`tsx
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
+<Accordion type="single" collapsible>
+  <AccordionItem value="item-1">
+    <AccordionTrigger>Is it accessible?</AccordionTrigger>
+    <AccordionContent>
+      Yes. It adheres to WAI-ARIA design pattern.
+    </AccordionContent>
+  </AccordionItem>
+  <AccordionItem value="item-2">
+    <AccordionTrigger>Is it styled?</AccordionTrigger>
+    <AccordionContent>
+      Yes. It comes with default styles.
+    </AccordionContent>
+  </AccordionItem>
+</Accordion>
+\`\`\`
 
 ### Sidebar Navigation
-Active state uses: \`bg-primary/20 text-primary font-semibold border-r-2 border-primary shadow-sm\`
-Hover state uses: \`hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1\`
+\`\`\`tsx
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarProvider } from "@/components/ui/sidebar";
+import { Home, FileText, Settings } from "lucide-react";
 
-### Forms
-All form elements use semantic tokens like \`border\`, \`input\`, \`ring\` for consistent theming.
+<SidebarProvider>
+  <Sidebar collapsible="icon">
+    <SidebarHeader className="border-b border-sidebar-border p-4">
+      <h2 className="text-lg font-bold">App Name</h2>
+    </SidebarHeader>
 
-Visit the styleguide for live component examples and patterns.
+    <SidebarContent className="px-3 py-4">
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <a href="#" className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all duration-200">
+                  <Home className="mr-3 h-4 w-4" />
+                  <span>Dashboard</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <a href="#" className="bg-primary/20 text-primary font-semibold border-r-2 border-primary shadow-sm">
+                  <FileText className="mr-3 h-4 w-4" />
+                  <span>Reports (Active)</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </SidebarContent>
+
+    <SidebarFooter className="border-t p-3">
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton>
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarFooter>
+  </Sidebar>
+</SidebarProvider>
+
+// Active state: bg-primary/20 text-primary font-semibold border-r-2 border-primary shadow-sm
+// Hover state: hover:bg-sidebar-accent/60 transition-all duration-200 hover:translate-x-1
+\`\`\`
+
+### Data Display Components
+\`\`\`tsx
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+
+// Skeleton
+<div className="space-y-4">
+  <Skeleton className="h-12 w-12 rounded-full" />
+  <Skeleton className="h-4 w-full" />
+  <Skeleton className="h-4 w-3/4" />
+</div>
+
+// Avatar
+<Avatar>
+  <AvatarImage src="url" alt="User" />
+  <AvatarFallback>JD</AvatarFallback>
+</Avatar>
+
+// Progress
+<Progress value={66} />
+\`\`\`
+
+### Status Colors
+- \`critical\` - Error states (hsl(var(--critical)))
+- \`warning\` - Warning states (hsl(var(--warning)))
+- \`success\` - Success states (hsl(var(--success)))
+- \`info\` - Informational states (hsl(var(--info)))
+
+All components use semantic color tokens and support dark mode automatically.
 `;
 
     try {
