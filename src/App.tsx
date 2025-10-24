@@ -38,6 +38,7 @@ const ReportBuilder = lazy(() => import("./pages/ReportBuilder"));
 const PatrollerDashboard = lazy(() => import("./pages/PatrollerDashboard"));
 const LicensesCatalog = lazy(() => import("./pages/LicensesCatalog"));
 const Billing = lazy(() => import("./pages/Billing"));
+const Styleguide = lazy(() => import("./pages/Styleguide"));
 
 const queryClient = new QueryClient();
 
@@ -113,7 +114,7 @@ const App = () => (
                           <Route path="admins" element={<PlatformAdmins />} />
                           <Route path="subtypes" element={<Subtypes />} />
                           <Route path="repository" element={<Repository />} />
-                          
+                          <Route path="styleguide" element={<Styleguide />} />
                           <Route path="logs" element={<Logs />} />
                           <Route path="settings" element={<UserSettings />} />
                           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
